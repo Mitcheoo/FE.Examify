@@ -1,6 +1,5 @@
 ﻿import { Component, OnInit } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
-import { HttpClient } from '@angular/common/http';
 import { AuthService } from './services/auth.service';
 
 @Component({
@@ -10,21 +9,22 @@ import { AuthService } from './services/auth.service';
   template: '<router-outlet></router-outlet>'
 })
 export class AppComponent implements OnInit {
-  constructor(
-    private http: HttpClient,
-    private authService: AuthService
-  ) {}
+  constructor(private authService: AuthService) {}
 
   ngOnInit() {
-    // Test interceptor
     const token = this.authService.getToken();
-    console.log('AppComponent - Token on init:', !!token);
+    const currentUser = this.authService.getCurrentUser();
     
-    if (token) {
-      this.http.get('https://localhost:7241/api/auth/profile').subscribe({
-        next: (res) => console.log('Profile loaded from AppComponent:', res),
-        error: (err) => console.error('Profile error from AppComponent:', err.status)
-      });
-    }
+    console.log('🚀 AppComponent - Token exists:', !!token);
+    console.log('🚀 AppComponent - User from storage:', currentUser?.fullName || 'No user');
+    console.log('🚀 AppComponent - isLoggedIn:', this.authService.isLoggedIn());
+    
+    // Không cần gọi API ở đây nữa vì AuthService đã tự động load profile
+    // Nếu muốn kiểm tra, có thể subscribe vào currentUser$
+    this.authService.currentUser$.subscribe(user => {
+      if (user) {
+        console.log('✅ AppComponent - User loaded:', user.fullName);
+      }
+    });
   }
 }

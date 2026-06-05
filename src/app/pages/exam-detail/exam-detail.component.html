@@ -1,0 +1,54 @@
+﻿<div class="exam-detail-container">
+  <div class="exam-detail-container">
+  <!-- DEBUG -->
+  <div style="background: yellow; padding: 10px; margin: 10px; border: 2px solid red;">
+    <strong>DEBUG:</strong><br>
+    isLoading = {{ isLoading }}<br>
+    errorMessage = {{ errorMessage }}<br>
+    exam = {{ exam?.title || 'null' }}<br>
+    skills.length = {{ skills.length }}
+  </div>
+
+  <div class="loading" *ngIf="isLoading">
+    ...
+  </div>
+  ...
+</div>
+  <div class="loading" *ngIf="isLoading">
+    <div class="spinner"></div>
+    <p>Đang tải đề thi...</p>
+  </div>
+
+  <div class="error-state" *ngIf="!isLoading && errorMessage">
+    <p>{{ errorMessage }}</p>
+    <button class="btn-retry" routerLink="/exam-list">← Quay lại danh sách</button>
+  </div>
+
+  <div *ngIf="!isLoading && !errorMessage && exam">
+    <div class="exam-header">
+      <h1>{{ exam.title }}</h1>
+      <p>{{ exam.description || 'Luyện thi VSTEP 4 kỹ năng' }}</p>
+    </div>
+
+    <div class="skills-container">
+      <div *ngFor="let skill of skills" class="skill-card" [class.completed]="skill.status === 'completed'">
+        <div class="skill-icon">{{ getSkillIcon(skill.skillType) }}</div>
+        <div class="skill-info">
+          <h3>{{ skill.skillName }}</h3>
+          <p>⏱️ {{ skill.duration }} phút</p>
+          <div class="skill-status">
+            <span class="status-badge" [class]="skill.status">{{ getStatusText(skill.status) }}</span>
+            <span *ngIf="skill.score !== undefined" class="skill-score">Điểm: {{ skill.score }}/10</span>
+          </div>
+        </div>
+        <button class="btn-start-skill" [disabled]="skill.status === 'locked'" (click)="startSkill(skill.skillType)">
+          {{ skill.status === 'completed' ? 'Xem lại' : 'Làm bài' }}
+        </button>
+      </div>
+    </div>
+
+    <div class="exam-footer">
+      <button class="btn-back" routerLink="/exam-list">← Quay lại danh sách</button>
+    </div>
+  </div>
+</div>

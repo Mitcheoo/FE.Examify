@@ -1,0 +1,40 @@
+﻿<div class="reading-container">
+  <div class="reading-header">
+    <h1>📖 {{ exam?.title || 'Reading Comprehension' }}</h1>
+    <div class="timer" [class.warning]="timeRemaining <= 300">
+      ⏱️ {{ formatTime(timeRemaining) }}
+    </div>
+  </div>
+
+  <div class="reading-content" *ngIf="exam">
+    <div *ngFor="let part of exam.parts" class="part">
+      <h3>Part {{ part.partNumber }}: {{ part.title }}</h3>
+      <div class="part-content" [innerHTML]="part.passage"></div>
+    </div>
+
+    <div class="questions-section">
+      <h3>Câu hỏi ({{ exam.totalQuestions }} câu)</h3>
+      <div *ngFor="let question of exam.questions" class="question-card">
+        <div class="question-header">
+          <span class="question-number">Câu {{ question.orderNumber }}:</span>
+          <span class="question-text">{{ question.questionText }}</span>
+        </div>
+        <div class="options-list">
+          <label *ngFor="let opt of question.options" class="option-label">
+            <input type="radio" [name]="'q' + question.id" [value]="opt.key" [(ngModel)]="answers[question.id]">
+            <span><strong>{{ opt.key }}.</strong> {{ opt.value }}</span>
+          </label>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="reading-footer">
+    <div class="progress-info">
+      Đã trả lời: {{ answeredCount }}/{{ exam?.totalQuestions || 0 }} câu
+    </div>
+    <button class="btn-submit" (click)="submitExam()" [disabled]="isSubmitting">
+      {{ isSubmitting ? 'Đang nộp bài...' : 'Nộp bài' }}
+    </button>
+  </div>
+</div>

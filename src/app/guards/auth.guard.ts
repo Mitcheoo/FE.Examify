@@ -1,15 +1,18 @@
 ﻿import { inject } from '@angular/core';
 import { Router } from '@angular/router';
-import { AuthService } from '../services/auth.service';
 
 export const authGuard = () => {
-  const authService = inject(AuthService);
   const router = inject(Router);
+  const token = localStorage.getItem('access_token');
   
-  if (authService.isLoggedIn()) {
+  console.log('🔐 AuthGuard - Token exists:', !!token);
+  
+  if (token) {
+    console.log('✅ AuthGuard - Access granted');
     return true;
   }
   
+  console.log('❌ AuthGuard - No token, redirect to login');
   router.navigate(['/login']);
   return false;
 };

@@ -1,0 +1,96 @@
+<div class="profile-container">
+  <div class="profile-card">
+    <!-- Header hiển thị avatar -->
+    <div class="profile-header">
+      <div class="avatar-large">
+        <img *ngIf="profile?.avatarUrl && profile?.avatarUrl !== '/uploads/avatars/'" 
+             [src]="profile?.avatarUrl" 
+             alt="Avatar"
+             (error)="profile!.avatarUrl = null">
+        <span *ngIf="!profile?.avatarUrl || profile?.avatarUrl === '/uploads/avatars/'" class="avatar-text">
+          {{ userInitial }}
+        </span>
+      </div>
+      <h2>{{ profile?.fullName || 'Loading...' }}</h2>
+      <p>@{{ profile?.userName }}</p>
+      <p class="email">{{ profile?.email }}</p>
+    </div>
+
+    <!-- Tabs -->
+    <div class="profile-tabs">
+      <button class="tab" [class.active]="activeTab === 'info'" (click)="activeTab = 'info'">
+        📝 Thông tin cá nhân
+      </button>
+      <button class="tab" [class.active]="activeTab === 'password'" (click)="activeTab = 'password'">
+        🔒 Đổi mật khẩu
+      </button>
+    </div>
+
+    <!-- Tab Thông tin -->
+    <div class="tab-content" *ngIf="activeTab === 'info'">
+      <div *ngIf="isLoading" class="loading">Đang tải thông tin...</div>
+      
+      <div *ngIf="!isLoading && profile">
+        <div class="info-group">
+          <label>Họ và tên</label>
+          <input type="text" [(ngModel)]="editFullName" [disabled]="!isEditing" class="info-input">
+        </div>
+
+        <div class="info-group">
+          <label>Tên đăng nhập</label>
+          <input type="text" [value]="profile.userName" disabled class="info-input">
+        </div>
+
+        <div class="info-group">
+          <label>Email</label>
+          <input type="email" [value]="profile.email" disabled class="info-input">
+        </div>
+
+        <div class="info-group">
+          <label>Ngày tạo</label>
+          <input type="text" [value]="(profile.createdAt | date:'dd/MM/yyyy')" disabled class="info-input">
+        </div>
+
+        <div class="button-group">
+          <button *ngIf="!isEditing" class="btn-edit" (click)="startEdit()">✏️ Chỉnh sửa</button>
+          <button *ngIf="isEditing" class="btn-save" (click)="saveProfile()" [disabled]="isSaving">💾 Lưu thay đổi</button>
+          <button *ngIf="isEditing" class="btn-cancel" (click)="cancelEdit()">❌ Hủy</button>
+        </div>
+
+        <div class="message success" *ngIf="successMessage">{{ successMessage }}</div>
+        <div class="message error" *ngIf="errorMessage">{{ errorMessage }}</div>
+      </div>
+    </div>
+
+    <!-- Tab Đổi mật khẩu -->
+    <div class="tab-content" *ngIf="activeTab === 'password'">
+      <form [formGroup]="passwordForm" (ngSubmit)="changePassword()">
+        <div class="form-group">
+          <label>Mật khẩu hiện tại</label>
+          <input type="password" formControlName="currentPassword" placeholder="Nhập mật khẩu hiện tại">
+        </div>
+
+        <div class="form-group">
+          <label>Mật khẩu mới</label>
+          <input type="password" formControlName="newPassword" placeholder="Nhập mật khẩu mới (ít nhất 6 ký tự)">
+        </div>
+
+        <div class="form-group">
+          <label>Xác nhận mật khẩu mới</label>
+          <input type="password" formControlName="confirmPassword" placeholder="Xác nhận mật khẩu mới">
+        </div>
+
+        <div class="error-message" *ngIf="passwordForm.hasError('mismatch') && passwordForm.get('confirmPassword')?.touched">
+          Mật khẩu xác nhận không khớp
+        </div>
+
+        <button type="submit" class="btn-change-password" [disabled]="passwordForm.invalid || isChangingPassword">
+          {{ isChangingPassword ? 'Đang xử lý...' : 'Đổi mật khẩu' }}
+        </button>
+
+        <div class="message success" *ngIf="passwordSuccessMessage">{{ passwordSuccessMessage }}</div>
+        <div class="message error" *ngIf="passwordErrorMessage">{{ passwordErrorMessage }}</div>
+      </form>
+    </div>
+  </div>
+</div>

@@ -1,16 +1,17 @@
-﻿import { Injectable } from '@angular/core';
+﻿import { Injectable, inject } from '@angular/core';
 import { HttpInterceptor, HttpRequest, HttpHandler, HttpEvent } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { AuthService } from '../services/auth.service';
 
 @Injectable()
 export class AuthInterceptor implements HttpInterceptor {
-  constructor(private authService: AuthService) {}
+  private authService = inject(AuthService);
 
   intercept(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
     const token = this.authService.getToken();
-    console.log('Class Interceptor - URL:', req.url);
-    console.log('Class Interceptor - Token exists:', !!token);
+    
+    console.log('🔍 INTERCEPTOR - URL:', req.url);
+    console.log('🔍 INTERCEPTOR - Token exists:', !!token);
     
     if (token) {
       const cloned = req.clone({
@@ -18,9 +19,11 @@ export class AuthInterceptor implements HttpInterceptor {
           Authorization: 'Bearer ' + token
         }
       });
-      console.log('Class Interceptor - Added token to:', req.url);
+      console.log('✅ INTERCEPTOR - Added Authorization header');
       return next.handle(cloned);
     }
+    
+    console.log('⚠️ INTERCEPTOR - No token, sending without auth');
     return next.handle(req);
   }
 }
