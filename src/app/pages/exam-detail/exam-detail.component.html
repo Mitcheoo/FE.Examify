@@ -1,18 +1,9 @@
 ﻿<div class="exam-detail-container">
-  <div class="exam-detail-container">
-  <!-- DEBUG -->
   <div style="background: yellow; padding: 10px; margin: 10px; border: 2px solid red;">
-    <strong>DEBUG:</strong><br>
-    isLoading = {{ isLoading }}<br>
-    errorMessage = {{ errorMessage }}<br>
-    exam = {{ exam?.title || 'null' }}<br>
-    skills.length = {{ skills.length }}
-  </div>
-
-  <div class="loading" *ngIf="isLoading">
-    ...
-  </div>
-  ...
+  <strong>🔍 DEBUG:</strong><br>
+  isLoading = {{ isLoading }}<br>
+  exam = {{ exam?.title || 'null' }}<br>
+  skills.length = {{ skills.length }}
 </div>
   <div class="loading" *ngIf="isLoading">
     <div class="spinner"></div>

@@ -1,4 +1,4 @@
-﻿import { Component, inject, OnInit } from '@angular/core';
+﻿import { Component, inject, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { ExamService, Exercise } from '../../services/exam.service';
@@ -13,54 +13,49 @@ import { ExamService, Exercise } from '../../services/exam.service';
 export class ExamListComponent implements OnInit {
   private examService = inject(ExamService);
   private router = inject(Router);
+  private cdr = inject(ChangeDetectorRef);
   
   exams: Exercise[] = [];
   filteredExams: Exercise[] = [];
   isLoading = true;
-  levels: number[] = [3, 4, 5];
-  selectedLevel: number | null = null;
-
-  // Thứ tự ưu tiên hiển thị: Reading → Listening → Writing → Speaking
-  private skillOrder: Record<string, number> = {
-    'Reading': 1,
-    'Listening': 2,
-    'Writing': 3,
-    'Speaking': 4
-  };
 
   ngOnInit() {
+    console.log('🔵 ExamListComponent initialized');
     this.loadExams();
   }
 
   loadExams() {
+    console.log('🔄 Loading exams...');
     this.isLoading = true;
+    
     this.examService.getExercisesList().subscribe({
       next: (response: any) => {
-        let exams = response.items || response;
+        console.log('📦 Response received:', response);
         
-        // Sắp xếp theo thứ tự ưu tiên: Reading trước, sau đó Listening, Writing, Speaking
-        exams = exams.sort((a: any, b: any) => {
-          const orderA = this.skillOrder[a.skillName] || 99;
-          const orderB = this.skillOrder[b.skillName] || 99;
-          return orderA - orderB;
-        });
+        let allExams = response.items || [];
         
-        this.exams = exams;
-        this.filteredExams = exams;
+        // Chỉ lấy Full Test
+        let fullTests = allExams.filter((exam: any) => exam.isFullTest === true);
+        
+        console.log('📦 Full Tests found:', fullTests.length);
+        
+        this.exams = [...fullTests];
+        this.filteredExams = [...this.exams];
         this.isLoading = false;
+        
+        console.log('✅ Assigned:', this.exams.length, 'exams');
+        this.cdr.detectChanges();
       },
-      error: () => {
+      error: (err) => {
+        console.error('❌ Error loading exams:', err);
         this.isLoading = false;
+        this.cdr.detectChanges();
       }
     });
   }
 
-  filterByLevel(level: number | null) {
-    this.selectedLevel = level;
-    this.filteredExams = level ? this.exams.filter(e => e.vstepLevel === level) : this.exams;
-  }
-
   onExamClick(exam: Exercise) {
+    console.log('📌 Clicked exam:', exam.title);
     this.router.navigate(['/exam', exam.id]);
   }
 }

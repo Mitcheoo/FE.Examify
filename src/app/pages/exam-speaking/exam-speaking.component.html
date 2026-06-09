@@ -1,0 +1,69 @@
+<div class="speaking-container">
+  <div class="speaking-header">
+    <h1>🎙️ {{ exam?.title || 'Speaking Test' }}</h1>
+    <div class="timer" [class.warning]="timeRemaining <= 180">
+      ⏱️ {{ formatTime(timeRemaining) }}
+    </div>
+  </div>
+
+  <div class="speaking-content" *ngIf="exam">
+    <div *ngFor="let part of exam.parts" class="part-card">
+      <h3>Part {{ part.partNumber }}: {{ part.title }}</h3>
+      <div class="part-instructions">
+        <p>{{ part.instructions || 'Listen to the question and answer accordingly.' }}</p>
+      </div>
+      <div class="time-info">
+        <span>⏱️ Chuẩn bị: {{ part.preparationTime || 30 }} giây</span>
+        <span>🎤 Thời gian nói: {{ part.speakingTime || 60 }} giây</span>
+      </div>
+      <div class="questions-list">
+        <div *ngFor="let question of part.questions" class="question-item">
+          <p><strong>Câu hỏi {{ question.orderNumber }}:</strong> {{ question.questionText }}</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="recording-section">
+      <h3>🎙️ Ghi âm câu trả lời của bạn</h3>
+      
+      <div class="recording-controls">
+        <button class="btn-record" [class.recording]="isRecording" (click)="startRecording()" [disabled]="isRecording">
+          🎤 Bắt đầu ghi âm
+        </button>
+        <button class="btn-stop" (click)="stopRecording()" [disabled]="!isRecording">
+          ⏹️ Dừng ghi âm
+        </button>
+        <button class="btn-play" (click)="playRecording()" [disabled]="!audioUrl">
+          🔈 Nghe lại
+        </button>
+        <button class="btn-upload" (click)="uploadAudio()">
+          📁 Tải file audio lên
+        </button>
+        <input type="file" #fileInput accept="audio/*" style="display: none" (change)="onFileSelected($event)">
+      </div>
+
+      <div class="audio-player" *ngIf="audioUrl">
+        <audio #audioPlayer [src]="audioUrl" controls style="width: 100%;"></audio>
+      </div>
+
+      <div class="transcript-section">
+        <label for="transcript">Transcript (bản ghi chép):</label>
+        <textarea 
+          id="transcript" 
+          [(ngModel)]="transcript" 
+          placeholder="Nhập nội dung bạn đã nói (không bắt buộc)..."
+          rows="5">
+        </textarea>
+      </div>
+    </div>
+  </div>
+
+  <div class="speaking-footer">
+    <div class="progress-info">
+      {{ audioFile ? '✅ Đã ghi âm xong' : '⏳ Chưa ghi âm' }}
+    </div>
+    <button class="btn-submit" (click)="submitExam()" [disabled]="isSubmitting || !audioFile">
+      {{ isSubmitting ? 'Đang nộp bài...' : 'Nộp bài' }}
+    </button>
+  </div>
+</div>

@@ -6,13 +6,13 @@ import { ExamService } from '../../services/exam.service';
 import { AuthService } from '../../services/auth.service';
 
 @Component({
-  selector: 'app-exam-reading',
+  selector: 'app-exam-writing',
   standalone: true,
   imports: [CommonModule, FormsModule],
-  templateUrl: './exam-reading.component.html',
-  styleUrls: ['./exam-reading.component.scss']
+  templateUrl: './exam-writing.component.html',
+  styleUrls: ['./exam-writing.component.scss']
 })
-export class ExamReadingComponent implements OnInit, OnDestroy {
+export class ExamWritingComponent implements OnInit, OnDestroy {
   private examService = inject(ExamService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
@@ -20,35 +20,34 @@ export class ExamReadingComponent implements OnInit, OnDestroy {
   private authService = inject(AuthService);
 
   exam: any = null;
-  answers: Record<string, string> = {};
+  essayText: string = '';
   timeRemaining: number = 3600;
   isSubmitting = false;
+  wordCount: number = 0;
   private timerInterval: any;
   private examId: string = '';
   private fullTestId: string = '';
   private userId: string = '';
+  private currentTaskIndex: number = 0;
+  private tasks: any[] = [];
 
   ngOnInit() {
-    // Lấy userId
     this.userId = this.authService.getCurrentUser()?.id || 'anonymous';
     
-    // Lấy fullTestId từ navigation state
     const navigation = this.router.getCurrentNavigation();
     const state = navigation?.extras?.state as { fullTestId?: string };
     
     if (state?.fullTestId) {
       this.fullTestId = state.fullTestId;
-      console.log('📌 Received fullTestId from state:', this.fullTestId);
     }
     
     if (!this.fullTestId && history.state?.fullTestId) {
       this.fullTestId = history.state.fullTestId;
-      console.log('📌 Received fullTestId from history.state:', this.fullTestId);
     }
     
     this.route.params.subscribe(params => {
       this.examId = params['id'];
-      console.log('📌 Reading Exam ID:', this.examId);
+      console.log('✍️ Writing Exam ID:', this.examId);
       console.log('📌 User ID:', this.userId);
       console.log('📌 Full Test ID:', this.fullTestId);
       this.loadExam();
@@ -56,59 +55,40 @@ export class ExamReadingComponent implements OnInit, OnDestroy {
   }
 
   loadExam() {
-    console.log('🔄 Loading Reading exam...');
-    this.examService.getReadingExam(this.examId).subscribe({
+    console.log('🔄 Loading Writing exam...');
+    this.examService.getWritingExam(this.examId).subscribe({
       next: (data: any) => {
-        console.log('✅ Raw exam data:', data);
+        console.log('✅ Raw Writing data:', data);
         
-        const parsedQuestions = (data.questions || []).map((q: any) => {
-          let options: { key: string; value: string }[] = [];
-          try {
-            const optsJson = q.optionsJson;
-            if (optsJson) {
-              const parsed = typeof optsJson === 'string' ? JSON.parse(optsJson) : optsJson;
-              options = Object.entries(parsed).map(([key, value]) => ({ key, value: value as string }));
-            }
-          } catch (e) {
-            console.error('Error parsing options:', e);
-          }
-          return {
-            id: q.id,
-            orderNumber: q.orderNumber,
-            questionText: q.questionText,
-            options: options
-          };
-        });
-        
+        this.tasks = data.tasks || [];
         this.exam = {
           exerciseId: data.exerciseId,
           title: data.title,
-          timeLimitSeconds: data.timeLimitSeconds,
-          totalQuestions: data.totalQuestions,
-          parts: data.parts || [],
-          questions: parsedQuestions
+          timeLimitSeconds: data.timeLimitSeconds || 3600,
+          tasks: this.tasks,
+          totalQuestions: data.totalQuestions
         };
         
-        console.log('✅ Parsed exam:', this.exam);
-        this.timeRemaining = this.exam.timeLimitSeconds || 3600;
-        console.log('✅ timeRemaining set to:', this.timeRemaining);
+        console.log('✅ Parsed Writing exam:', this.exam);
+        this.timeRemaining = this.exam.timeLimitSeconds;
         
         this.startTimer();
         this.cdr.detectChanges();
       },
       error: (err) => {
-        console.error('❌ Error loading Reading exam:', err);
-        alert('Không thể tải đề thi Reading. Vui lòng thử lại!');
+        console.error('❌ Error loading Writing exam:', err);
+        alert('Không thể tải đề thi Writing. Vui lòng thử lại!');
       }
     });
   }
 
   startTimer() {
-    console.log('🕐 Starting timer with:', this.timeRemaining);
+    console.log('🕐 Starting Writing timer with:', this.timeRemaining);
     
     this.timerInterval = setInterval(() => {
       if (this.timeRemaining > 0) {
         this.timeRemaining--;
+        this.updateWordCount();
         this.cdr.detectChanges();
       } else {
         console.log('⏰ Time is up!');
@@ -117,14 +97,27 @@ export class ExamReadingComponent implements OnInit, OnDestroy {
     }, 1000);
   }
 
+  updateWordCount() {
+    if (this.essayText) {
+      this.wordCount = this.essayText.trim().split(/\s+/).filter(w => w.length > 0).length;
+    } else {
+      this.wordCount = 0;
+    }
+  }
+
   formatTime(seconds: number): string {
     const minutes = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${minutes}:${secs.toString().padStart(2, '0')}`;
   }
 
-  get answeredCount(): number {
-    return Object.keys(this.answers).filter(key => this.answers[key]?.trim()).length;
+  getTaskTypeName(taskType: number): string {
+    const types: any = {
+      0: 'Letter',
+      1: 'Essay',
+      2: 'Report'
+    };
+    return types[taskType] || 'Writing Task';
   }
 
   submitExam() {
@@ -134,31 +127,24 @@ export class ExamReadingComponent implements OnInit, OnDestroy {
     }
 
     const totalTime = (this.exam?.timeLimitSeconds || 3600) - this.timeRemaining;
-    
-    const answersDict: Record<string, string> = {};
-    Object.entries(this.answers).forEach(([id, answer]) => {
-      if (answer) answersDict[id] = answer;
-    });
 
     const submitData = {
       exerciseId: this.examId,
-      answers: answersDict,
+      essayText: this.essayText,
       timeSpentSeconds: totalTime
     };
 
-    console.log('📤 Submitting Reading:', submitData);
+    console.log('📤 Submitting Writing:', submitData);
 
     this.isSubmitting = true;
-    this.examService.submitReading(submitData).subscribe({
+    this.examService.submitWriting(submitData).subscribe({
       next: (result) => {
         console.log('✅ Submit success:', result);
         
-        // Lưu kết quả theo userId
-        const storageKey = `${this.getSkillType()}_result_${this.examId}_${this.userId}`;
+        const storageKey = `writing_result_${this.examId}_${this.userId}`;
         localStorage.setItem(storageKey, JSON.stringify(result));
         console.log('💾 Saved to:', storageKey);
         
-        // Quay về Full Test nếu có
         const returnUrl = this.fullTestId || this.examId;
         this.router.navigate(['/exam', returnUrl]);
       },
@@ -168,10 +154,6 @@ export class ExamReadingComponent implements OnInit, OnDestroy {
         this.isSubmitting = false;
       }
     });
-  }
-
-  getSkillType(): string {
-    return 'reading';
   }
 
   ngOnDestroy() {

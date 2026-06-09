@@ -29,6 +29,7 @@ export interface SkillProgress {
   duration: number;
   status: string;
   score?: number;
+   examId?: string; 
 }
 
 @Injectable({
@@ -60,6 +61,7 @@ export class ExamService {
     const headers = this.getAuthHeaders();
     return this.http.get(this.apiUrl + '/exercises/' + exerciseId + '/progress', { headers });
   }
+  //reading và listening sẽ có endpoint riêng vì dữ liệu trả về khác nhau
 
   getReadingExam(id: string): Observable<any> {
     const headers = this.getAuthHeaders();
@@ -70,4 +72,41 @@ export class ExamService {
     const headers = this.getAuthHeaders();
     return this.http.post(this.apiUrl + '/reading/submit', data, { headers });
   }
+
+getListeningExam(id: string): Observable<any> {
+  console.log('📡 API CALL: GET /listening/exam/' + id);
+  const headers = this.getAuthHeaders();
+  return this.http.get(this.apiUrl + '/listening/exam/' + id, { headers });
+}
+
+submitListening(data: any): Observable<any> {
+  console.log('📡 API CALL: POST /listening/submit');
+  const headers = this.getAuthHeaders();
+  return this.http.post(this.apiUrl + '/listening/submit', data, { headers });
+}
+// Thêm vào ExamService class
+
+getWritingExam(id: string): Observable<any> {
+  console.log('📡 API CALL: GET /writing/exam/' + id);
+  const headers = this.getAuthHeaders();
+  return this.http.get(this.apiUrl + '/writing/exam/' + id, { headers });
+}
+
+submitWriting(data: any): Observable<any> {
+  console.log('📡 API CALL: POST /writing/submit');
+  const headers = this.getAuthHeaders();
+  return this.http.post(this.apiUrl + '/writing/submit', data, { headers });
+}
+
+getSpeakingExam(id: string): Observable<any> {
+  console.log('📡 API CALL: GET /speaking/exam/' + id);
+  const headers = this.getAuthHeaders();
+  return this.http.get(this.apiUrl + '/speaking/exam/' + id, { headers });
+}
+
+submitSpeaking(data: FormData): Observable<any> {
+  console.log('📡 API CALL: POST /speaking/submit');
+  const headers = this.getAuthHeaders();
+  return this.http.post(this.apiUrl + '/speaking/submit', data, { headers });
+}
 }

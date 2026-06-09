@@ -1,0 +1,169 @@
+.listening-container {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 2rem;
+  margin-top: 80px;
+}
+
+.listening-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+}
+
+.listening-header h1 {
+  font-size: 1.8rem;
+  color: #1a1a2e;
+}
+
+.timer {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #27ae60;
+  background: #f0f0f0;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+}
+
+.timer.warning {
+  color: #e74c3c;
+  animation: blink 1s infinite;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.audio-player {
+  background: #f0f0f0;
+  padding: 1rem;
+  border-radius: 12px;
+  text-align: center;
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.play-btn {
+  padding: 0.75rem 1.5rem;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1rem;
+}
+
+.play-btn:hover {
+  transform: translateY(-2px);
+}
+
+.audio-note {
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.part {
+  background: #f8f9fa;
+  padding: 1.5rem;
+  border-radius: 12px;
+  margin-bottom: 1.5rem;
+}
+
+.part h3 {
+  margin-top: 0;
+  color: #2c3e50;
+}
+
+.part-content {
+  line-height: 1.6;
+}
+
+.questions-section {
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.question-card {
+  border-bottom: 1px solid #eee;
+  padding: 1rem 0;
+}
+
+.question-card:last-child {
+  border-bottom: none;
+}
+
+.question-header {
+  margin-bottom: 0.75rem;
+}
+
+.question-number {
+  font-weight: bold;
+  color: #667eea;
+}
+
+.question-text {
+  margin-left: 0.5rem;
+}
+
+.options-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-left: 1.5rem;
+}
+
+.option-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+}
+
+.listening-footer {
+  margin-top: 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  background: #f8f9fa;
+  border-radius: 12px;
+}
+
+.progress-info {
+  font-weight: 500;
+  color: #2c3e50;
+}
+
+.btn-submit {
+  padding: 0.75rem 2rem;
+  background: linear-gradient(135deg, #27ae60, #2ecc71);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-submit:hover:not(:disabled) {
+  transform: translateY(-2px);
+}
+
+.btn-submit:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+@media (max-width: 768px) {
+  .listening-container { padding: 1rem; margin-top: 70px; }
+  .listening-header { flex-direction: column; gap: 1rem; text-align: center; }
+}

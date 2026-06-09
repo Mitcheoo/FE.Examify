@@ -4,16 +4,6 @@
     <p>Chọn đề thi phù hợp với trình độ của bạn</p>
   </div>
 
-  <div class="filters-section">
-    <div class="filter-group">
-      <label>Lọc theo bậc:</label>
-      <div class="level-filters">
-        <button class="level-filter" [class.active]="selectedLevel === null" (click)="filterByLevel(null)">Tất cả</button>
-        <button *ngFor="let level of levels" class="level-filter" [class.active]="selectedLevel === level" (click)="filterByLevel(level)">Bậc {{ level }}</button>
-      </div>
-    </div>
-  </div>
-
   <div class="loading" *ngIf="isLoading">
     <div class="spinner"></div>
     <p>Đang tải đề thi...</p>
@@ -23,10 +13,9 @@
     <div class="exam-card" *ngFor="let exam of filteredExams" (click)="onExamClick(exam)">
       <div class="exam-card-content">
         <h3>{{ exam.title }}</h3>
-        <p>{{ exam.description }}</p>
+        <p>{{ exam.description || 'Đề thi đầy đủ 4 kỹ năng Reading, Listening, Writing, Speaking' }}</p>
         <div class="exam-meta">
-          <span class="level-badge">Bậc {{ exam.vstepLevel }}</span>
-          <span class="price">{{ (exam.price || 0).toLocaleString() }}đ</span>
+          <span class="price">{{ (exam.price || 15000).toLocaleString() }}đ</span>
         </div>
         <button class="btn-start">Bắt đầu</button>
       </div>

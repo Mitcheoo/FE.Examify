@@ -1,0 +1,46 @@
+<div class="writing-container">
+  <div class="writing-header">
+    <h1>✍️ {{ exam?.title || 'Writing Test' }}</h1>
+    <div class="timer" [class.warning]="timeRemaining <= 300">
+      ⏱️ {{ formatTime(timeRemaining) }}
+    </div>
+  </div>
+
+  <div class="writing-content" *ngIf="exam">
+    <div *ngFor="let task of exam.tasks; let i = index" class="task-card">
+      <h3>Task {{ task.taskNumber || (i+1) }}: {{ getTaskTypeName(task.taskType) }}</h3>
+      <div class="task-prompt">
+        <p><strong>Đề bài:</strong></p>
+        <p>{{ task.promptText }}</p>
+      </div>
+      <div class="task-requirements">
+        <span>📝 Số từ tối thiểu: {{ task.minWords || 150 }}</span>
+        <span>📝 Số từ tối đa: {{ task.maxWords || 250 }}</span>
+        <span>⏱️ Thời gian khuyến nghị: {{ task.recommendedTimeMinutes || 30 }} phút</span>
+      </div>
+    </div>
+
+    <div class="essay-section">
+      <label for="essay">Bài viết của bạn:</label>
+      <textarea 
+        id="essay" 
+        [(ngModel)]="essayText" 
+        (input)="updateWordCount()"
+        placeholder="Nhập bài viết của bạn tại đây..."
+        rows="15">
+      </textarea>
+      <div class="word-count" [class.warning]="wordCount < (exam?.tasks?.[0]?.minWords || 150)">
+        📊 Số từ: {{ wordCount }} / {{ exam?.tasks?.[0]?.minWords || 150 }} (tối thiểu)
+      </div>
+    </div>
+  </div>
+
+  <div class="writing-footer">
+    <div class="progress-info">
+      Bài viết của bạn đã có {{ wordCount }} từ
+    </div>
+    <button class="btn-submit" (click)="submitExam()" [disabled]="isSubmitting">
+      {{ isSubmitting ? 'Đang nộp bài...' : 'Nộp bài' }}
+    </button>
+  </div>
+</div>

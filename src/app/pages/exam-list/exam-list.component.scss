@@ -4,90 +4,64 @@
   padding: 2rem;
   margin-top: 80px;
 }
+
 .page-header {
   text-align: center;
   margin-bottom: 2rem;
 }
+
 .page-header h1 {
   font-size: 2rem;
   color: #1a1a2e;
 }
-.filters-section {
-  background: white;
-  padding: 1.5rem;
-  border-radius: 12px;
-  margin-bottom: 2rem;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-}
-.filter-group label {
-  font-weight: 600;
-  margin-bottom: 0.5rem;
-  display: block;
-}
-.level-filters {
-  display: flex;
-  gap: 1rem;
-  flex-wrap: wrap;
-}
-.level-filter {
-  padding: 0.5rem 1.5rem;
-  border: 2px solid #ddd;
-  border-radius: 20px;
-  background: white;
-  cursor: pointer;
-}
-.level-filter.active {
-  background: #667eea;
-  border-color: #667eea;
-  color: white;
-}
+
 .exam-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
   gap: 1.5rem;
 }
+
 .exam-card {
   background: white;
   border-radius: 16px;
   overflow: hidden;
   box-shadow: 0 4px 12px rgba(0,0,0,0.1);
   cursor: pointer;
-  transition: transform 0.3s;
+  transition: transform 0.3s, box-shadow 0.3s;
 }
+
 .exam-card:hover {
   transform: translateY(-4px);
   box-shadow: 0 8px 24px rgba(0,0,0,0.15);
 }
+
 .exam-card-content {
   padding: 1.5rem;
 }
+
 .exam-card h3 {
   margin: 0 0 0.5rem;
+  font-size: 1.3rem;
   color: #1a1a2e;
 }
+
 .exam-card p {
   color: #666;
   font-size: 0.9rem;
   margin-bottom: 1rem;
+  line-height: 1.4;
 }
+
 .exam-meta {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
   margin-bottom: 1rem;
 }
-.level-badge {
-  padding: 0.25rem 0.75rem;
-  border-radius: 20px;
-  font-size: 0.8rem;
-  font-weight: 600;
-  background: #3498db;
-  color: white;
-}
+
 .price {
   font-weight: 600;
   color: #667eea;
+  font-size: 1.1rem;
 }
+
 .btn-start {
   width: 100%;
   padding: 0.75rem;
@@ -97,11 +71,18 @@
   border-radius: 8px;
   font-weight: 600;
   cursor: pointer;
+  transition: transform 0.2s;
 }
+
+.btn-start:hover {
+  transform: translateY(-2px);
+}
+
 .loading {
   text-align: center;
   padding: 3rem;
 }
+
 .spinner {
   width: 40px;
   height: 40px;
@@ -111,12 +92,24 @@
   animation: spin 1s linear infinite;
   margin: 0 auto 1rem;
 }
+
 @keyframes spin {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
 }
+
 .empty-state {
   text-align: center;
   padding: 3rem;
   color: #666;
+}
+
+@media (max-width: 768px) {
+  .exam-list-container {
+    padding: 1rem;
+    margin-top: 70px;
+  }
+  .exam-grid {
+    grid-template-columns: 1fr;
+  }
 }

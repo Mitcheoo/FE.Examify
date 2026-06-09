@@ -1,4 +1,4 @@
-﻿import { Component, inject, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
+import { Component, inject, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -6,13 +6,13 @@ import { ExamService } from '../../services/exam.service';
 import { AuthService } from '../../services/auth.service';
 
 @Component({
-  selector: 'app-exam-reading',
+  selector: 'app-exam-listening',
   standalone: true,
   imports: [CommonModule, FormsModule],
-  templateUrl: './exam-reading.component.html',
-  styleUrls: ['./exam-reading.component.scss']
+  templateUrl: './exam-listening.component.html',
+  styleUrls: ['./exam-listening.component.scss']
 })
-export class ExamReadingComponent implements OnInit, OnDestroy {
+export class ExamListeningComponent implements OnInit, OnDestroy {
   private examService = inject(ExamService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
@@ -21,34 +21,32 @@ export class ExamReadingComponent implements OnInit, OnDestroy {
 
   exam: any = null;
   answers: Record<string, string> = {};
-  timeRemaining: number = 3600;
+  timeRemaining: number = 2400;
   isSubmitting = false;
+  isPlaying = false;
   private timerInterval: any;
   private examId: string = '';
   private fullTestId: string = '';
   private userId: string = '';
+  private audioElement: HTMLAudioElement | null = null;
 
   ngOnInit() {
-    // Lấy userId
     this.userId = this.authService.getCurrentUser()?.id || 'anonymous';
     
-    // Lấy fullTestId từ navigation state
     const navigation = this.router.getCurrentNavigation();
     const state = navigation?.extras?.state as { fullTestId?: string };
     
     if (state?.fullTestId) {
       this.fullTestId = state.fullTestId;
-      console.log('📌 Received fullTestId from state:', this.fullTestId);
     }
     
     if (!this.fullTestId && history.state?.fullTestId) {
       this.fullTestId = history.state.fullTestId;
-      console.log('📌 Received fullTestId from history.state:', this.fullTestId);
     }
     
     this.route.params.subscribe(params => {
       this.examId = params['id'];
-      console.log('📌 Reading Exam ID:', this.examId);
+      console.log('🎧 Listening Exam ID:', this.examId);
       console.log('📌 User ID:', this.userId);
       console.log('📌 Full Test ID:', this.fullTestId);
       this.loadExam();
@@ -56,10 +54,10 @@ export class ExamReadingComponent implements OnInit, OnDestroy {
   }
 
   loadExam() {
-    console.log('🔄 Loading Reading exam...');
-    this.examService.getReadingExam(this.examId).subscribe({
+    console.log('🔄 Loading Listening exam...');
+    this.examService.getListeningExam(this.examId).subscribe({
       next: (data: any) => {
-        console.log('✅ Raw exam data:', data);
+        console.log('✅ Raw Listening data:', data);
         
         const parsedQuestions = (data.questions || []).map((q: any) => {
           let options: { key: string; value: string }[] = [];
@@ -83,28 +81,55 @@ export class ExamReadingComponent implements OnInit, OnDestroy {
         this.exam = {
           exerciseId: data.exerciseId,
           title: data.title,
-          timeLimitSeconds: data.timeLimitSeconds,
+          timeLimitSeconds: data.timeLimitSeconds || 2400,
           totalQuestions: data.totalQuestions,
+          audioUrl: data.audioUrl,
           parts: data.parts || [],
           questions: parsedQuestions
         };
         
-        console.log('✅ Parsed exam:', this.exam);
-        this.timeRemaining = this.exam.timeLimitSeconds || 3600;
-        console.log('✅ timeRemaining set to:', this.timeRemaining);
+        console.log('✅ Parsed Listening exam:', this.exam);
+        this.timeRemaining = this.exam.timeLimitSeconds;
         
         this.startTimer();
+        this.initAudio();
         this.cdr.detectChanges();
       },
       error: (err) => {
-        console.error('❌ Error loading Reading exam:', err);
-        alert('Không thể tải đề thi Reading. Vui lòng thử lại!');
+        console.error('❌ Error loading Listening exam:', err);
+        alert('Không thể tải đề thi Listening. Vui lòng thử lại!');
       }
     });
   }
 
+  initAudio() {
+    if (this.exam?.audioUrl) {
+      this.audioElement = new Audio(this.exam.audioUrl);
+      this.audioElement.addEventListener('ended', () => {
+        this.isPlaying = false;
+        this.cdr.detectChanges();
+      });
+    }
+  }
+
+  playAudio() {
+    if (this.audioElement) {
+      if (this.isPlaying) {
+        this.audioElement.pause();
+        this.isPlaying = false;
+      } else {
+        this.audioElement.play();
+        this.isPlaying = true;
+      }
+      this.cdr.detectChanges();
+    } else {
+      console.warn('No audio URL available');
+      alert('Không có file audio cho bài thi này');
+    }
+  }
+
   startTimer() {
-    console.log('🕐 Starting timer with:', this.timeRemaining);
+    console.log('🕐 Starting Listening timer with:', this.timeRemaining);
     
     this.timerInterval = setInterval(() => {
       if (this.timeRemaining > 0) {
@@ -133,7 +158,11 @@ export class ExamReadingComponent implements OnInit, OnDestroy {
       this.timerInterval = null;
     }
 
-    const totalTime = (this.exam?.timeLimitSeconds || 3600) - this.timeRemaining;
+    if (this.audioElement) {
+      this.audioElement.pause();
+    }
+
+    const totalTime = (this.exam?.timeLimitSeconds || 2400) - this.timeRemaining;
     
     const answersDict: Record<string, string> = {};
     Object.entries(this.answers).forEach(([id, answer]) => {
@@ -146,19 +175,17 @@ export class ExamReadingComponent implements OnInit, OnDestroy {
       timeSpentSeconds: totalTime
     };
 
-    console.log('📤 Submitting Reading:', submitData);
+    console.log('📤 Submitting Listening:', submitData);
 
     this.isSubmitting = true;
-    this.examService.submitReading(submitData).subscribe({
+    this.examService.submitListening(submitData).subscribe({
       next: (result) => {
         console.log('✅ Submit success:', result);
         
-        // Lưu kết quả theo userId
-        const storageKey = `${this.getSkillType()}_result_${this.examId}_${this.userId}`;
+        const storageKey = `listening_result_${this.examId}_${this.userId}`;
         localStorage.setItem(storageKey, JSON.stringify(result));
         console.log('💾 Saved to:', storageKey);
         
-        // Quay về Full Test nếu có
         const returnUrl = this.fullTestId || this.examId;
         this.router.navigate(['/exam', returnUrl]);
       },
@@ -170,13 +197,13 @@ export class ExamReadingComponent implements OnInit, OnDestroy {
     });
   }
 
-  getSkillType(): string {
-    return 'reading';
-  }
-
   ngOnDestroy() {
     if (this.timerInterval) {
       clearInterval(this.timerInterval);
+    }
+    if (this.audioElement) {
+      this.audioElement.pause();
+      this.audioElement = null;
     }
   }
 }

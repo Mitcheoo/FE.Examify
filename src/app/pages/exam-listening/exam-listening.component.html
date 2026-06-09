@@ -1,9 +1,17 @@
-﻿<div class="reading-container">
-  <div class="reading-header">
-    <h1>📖 {{ exam?.title || 'Reading Comprehension' }}</h1>
+<div class="listening-container">
+  <div class="listening-header">
+    <h1>🎧 {{ exam?.title || 'Listening Comprehension' }}</h1>
     <div class="timer" [class.warning]="timeRemaining <= 300">
-      ⏱️ {{ timeRemaining }} giây
+      ⏱️ {{ formatTime(timeRemaining) }}
     </div>
+  </div>
+
+  <!-- Audio Player -->
+  <div class="audio-player" *ngIf="exam?.audioUrl">
+    <button class="play-btn" (click)="playAudio()">
+      {{ isPlaying ? '⏸️ Tạm dừng' : '▶️ Phát audio' }}
+    </button>
+    <span class="audio-note">🎧 Nghe kỹ đoạn hội thoại và trả lời câu hỏi</span>
   </div>
 
   <!-- TIMER DEBUG -->
@@ -19,10 +27,10 @@
     questions.length = {{ exam?.questions?.length }}
   </div>
 
-  <div class="reading-content" *ngIf="exam">
+  <div class="listening-content" *ngIf="exam">
     <div *ngFor="let part of exam.parts" class="part">
       <h3>Part {{ part.partNumber }}: {{ part.title }}</h3>
-      <div class="part-content" [innerHTML]="part.passage"></div>
+      <div class="part-content" [innerHTML]="part.content"></div>
     </div>
 
     <div class="questions-section">
@@ -42,7 +50,7 @@
     </div>
   </div>
 
-  <div class="reading-footer">
+  <div class="listening-footer">
     <div class="progress-info">
       Đã trả lời: {{ answeredCount }}/{{ exam?.totalQuestions || 0 }} câu
     </div>
