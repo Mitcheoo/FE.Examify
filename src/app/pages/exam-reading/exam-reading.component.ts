@@ -23,16 +23,15 @@ export class ExamReadingComponent implements OnInit, OnDestroy {
   answers: Record<string, string> = {};
   timeRemaining: number = 3600;
   isSubmitting = false;
+  showResults = false;
   private timerInterval: any;
   private examId: string = '';
   private fullTestId: string = '';
   private userId: string = '';
 
   ngOnInit() {
-    // Lấy userId
     this.userId = this.authService.getCurrentUser()?.id || 'anonymous';
     
-    // Lấy fullTestId từ navigation state
     const navigation = this.router.getCurrentNavigation();
     const state = navigation?.extras?.state as { fullTestId?: string };
     
@@ -52,7 +51,20 @@ export class ExamReadingComponent implements OnInit, OnDestroy {
       console.log('📌 User ID:', this.userId);
       console.log('📌 Full Test ID:', this.fullTestId);
       this.loadExam();
+      this.loadSavedAnswers();
     });
+  }
+
+  loadSavedAnswers() {
+    const saved = localStorage.getItem('reading_answers_' + this.examId);
+    if (saved) {
+      try {
+        this.answers = JSON.parse(saved);
+        console.log('📦 Loaded saved answers:', Object.keys(this.answers).length);
+      } catch(e) {
+        console.error('Error loading saved answers:', e);
+      }
+    }
   }
 
   loadExam() {
@@ -76,7 +88,8 @@ export class ExamReadingComponent implements OnInit, OnDestroy {
             id: q.id,
             orderNumber: q.orderNumber,
             questionText: q.questionText,
-            options: options
+            options: options,
+            correctAnswer: q.correctAnswer
           };
         });
         
@@ -120,11 +133,16 @@ export class ExamReadingComponent implements OnInit, OnDestroy {
   formatTime(seconds: number): string {
     const minutes = Math.floor(seconds / 60);
     const secs = seconds % 60;
-    return `${minutes}:${secs.toString().padStart(2, '0')}`;
+    return minutes + ':' + secs.toString().padStart(2, '0');
   }
 
   get answeredCount(): number {
     return Object.keys(this.answers).filter(key => this.answers[key]?.trim()).length;
+  }
+
+  onAnswerChange() {
+    console.log('Answer changed, answered:', this.answeredCount);
+    localStorage.setItem('reading_answers_' + this.examId, JSON.stringify(this.answers));
   }
 
   submitExam() {
@@ -153,12 +171,10 @@ export class ExamReadingComponent implements OnInit, OnDestroy {
       next: (result) => {
         console.log('✅ Submit success:', result);
         
-        // Lưu kết quả theo userId
-        const storageKey = `${this.getSkillType()}_result_${this.examId}_${this.userId}`;
+        const storageKey = 'reading_result_' + this.examId + '_' + this.userId;
         localStorage.setItem(storageKey, JSON.stringify(result));
-        console.log('💾 Saved to:', storageKey);
+        localStorage.removeItem('reading_answers_' + this.examId);
         
-        // Quay về Full Test nếu có
         const returnUrl = this.fullTestId || this.examId;
         this.router.navigate(['/exam', returnUrl]);
       },

@@ -1,53 +1,97 @@
 ﻿<div class="reading-container">
+  <!-- Header với thông tin và timer -->
   <div class="reading-header">
-    <h1>📖 {{ exam?.title || 'Reading Comprehension' }}</h1>
-    <div class="timer" [class.warning]="timeRemaining <= 300">
-      ⏱️ {{ timeRemaining }} giây
+    <div class="exam-info">
+      <h1>📖 {{ exam?.title || 'Reading Comprehension' }}</h1>
+      <p class="instruction">Đọc đoạn văn và trả lời câu hỏi. Chọn đáp án đúng nhất cho mỗi câu hỏi.</p>
+    </div>
+    <div class="timer-box" [class.warning]="timeRemaining <= 300">
+      <div class="timer-icon">⏱️</div>
+      <div class="timer-value">{{ formatTime(timeRemaining) }}</div>
+      <div class="timer-label">Thời gian còn lại</div>
     </div>
   </div>
 
-  <!-- TIMER DEBUG -->
-  <div style="background: red; color: white; padding: 8px; margin: 8px; font-weight: bold;">
-    🔴 TIMER VALUE: {{ timeRemaining }} giây
-  </div>
-
-  <!-- Debug -->
-  <div style="background: yellow; padding: 10px; margin: 10px;">
-    <strong>DEBUG:</strong><br>
-    totalQuestions = {{ exam?.totalQuestions }}<br>
-    parts.length = {{ exam?.parts?.length }}<br>
-    questions.length = {{ exam?.questions?.length }}
-  </div>
-
-  <div class="reading-content" *ngIf="exam">
-    <div *ngFor="let part of exam.parts" class="part">
-      <h3>Part {{ part.partNumber }}: {{ part.title }}</h3>
-      <div class="part-content" [innerHTML]="part.passage"></div>
+  <!-- Progress Bar -->
+  <div class="progress-bar-container">
+    <div class="progress-info">
+      <span>Tiến độ làm bài</span>
+      <span>{{ answeredCount }}/{{ exam?.totalQuestions || 0 }} câu đã trả lời</span>
     </div>
+    <div class="progress-bar">
+      <div class="progress-fill" [style.width]="(answeredCount / (exam?.totalQuestions || 1)) * 100 + '%'"></div>
+    </div>
+  </div>
 
-    <div class="questions-section">
-      <h3>Câu hỏi ({{ exam.totalQuestions }} câu)</h3>
-      <div *ngFor="let question of exam.questions" class="question-card">
-        <div class="question-header">
-          <span class="question-number">Câu {{ question.orderNumber }}:</span>
-          <span class="question-text">{{ question.questionText }}</span>
+  <!-- Main Content: 2 columns layout -->
+  <div class="reading-main" *ngIf="exam">
+    <!-- LEFT COLUMN: Reading Passages -->
+    <div class="passages-column">
+      <div class="passages-container">
+        <div *ngFor="let part of exam.parts; let i = index" class="passage-card">
+          <div class="passage-header">
+            <span class="passage-number">PART {{ part.partNumber }}</span>
+            <h3 class="passage-title">{{ part.title }}</h3>
+          </div>
+          <div class="passage-content" [innerHTML]="part.passage"></div>
         </div>
-        <div class="options-list">
-          <label *ngFor="let opt of question.options" class="option-label">
-            <input type="radio" [name]="'q' + question.id" [value]="opt.key" [(ngModel)]="answers[question.id]">
-            <span><strong>{{ opt.key }}.</strong> {{ opt.value }}</span>
-          </label>
+      </div>
+    </div>
+
+    <!-- RIGHT COLUMN: Questions -->
+    <div class="questions-column">
+      <div class="questions-container">
+        <div class="questions-header">
+          <h3>Câu hỏi</h3>
+          <p>Chọn đáp án đúng cho mỗi câu hỏi bên dưới</p>
+        </div>
+        
+        <div class="questions-list">
+          <div *ngFor="let question of exam.questions" class="question-item" [class.answered]="answers[question.id]">
+            <div class="question-header">
+              <span class="question-number">Câu {{ question.orderNumber }}</span>
+              <span class="question-status" *ngIf="answers[question.id]">
+                ✅ Đã trả lời
+              </span>
+              <span class="question-status unanswered" *ngIf="!answers[question.id]">
+                ⏳ Chưa trả lời
+              </span>
+            </div>
+            <div class="question-text">{{ question.questionText }}</div>
+            <div class="options-list">
+              <label *ngFor="let opt of question.options" class="option-item" 
+                     [class.selected]="answers[question.id] === opt.key"
+                     [class.correct]="showResults && opt.key === question.correctAnswer"
+                     [class.incorrect]="showResults && answers[question.id] === opt.key && opt.key !== question.correctAnswer">
+                <input type="radio" 
+                       [name]="'q' + question.id" 
+                       [value]="opt.key" 
+                       [(ngModel)]="answers[question.id]"
+                       (change)="onAnswerChange()">
+                <span class="option-letter">{{ opt.key }}.</span>
+                <span class="option-text">{{ opt.value }}</span>
+              </label>
+            </div>
+          </div>
         </div>
       </div>
     </div>
   </div>
 
+  <!-- Footer with action buttons -->
   <div class="reading-footer">
-    <div class="progress-info">
-      Đã trả lời: {{ answeredCount }}/{{ exam?.totalQuestions || 0 }} câu
+    <div class="footer-left">
+      <div class="answered-count">
+        📝 Đã trả lời: {{ answeredCount }}/{{ exam?.totalQuestions || 0 }} câu
+      </div>
+      <div class="remaining-count" *ngIf="(exam?.totalQuestions || 0) - answeredCount > 0">
+        ⏳ Còn {{ (exam?.totalQuestions || 0) - answeredCount }} câu chưa trả lời
+      </div>
     </div>
-    <button class="btn-submit" (click)="submitExam()" [disabled]="isSubmitting">
-      {{ isSubmitting ? 'Đang nộp bài...' : 'Nộp bài' }}
-    </button>
+    <div class="footer-right">
+      <button class="btn-submit" (click)="submitExam()" [disabled]="isSubmitting">
+        {{ isSubmitting ? 'Đang nộp bài...' : '📤 Nộp bài' }}
+      </button>
+    </div>
   </div>
 </div>

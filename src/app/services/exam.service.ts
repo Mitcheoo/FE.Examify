@@ -109,4 +109,9 @@ submitSpeaking(data: FormData): Observable<any> {
   const headers = this.getAuthHeaders();
   return this.http.post(this.apiUrl + '/speaking/submit', data, { headers });
 }
+getFullTestStatus(fullTestId: string): Observable<any> {
+  console.log('📡 API CALL: GET /fulltest/' + fullTestId + '/status');
+  const headers = this.getAuthHeaders();
+  return this.http.get(this.apiUrl + '/fulltest/' + fullTestId + '/status', { headers });
+}
 }

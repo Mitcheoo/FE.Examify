@@ -4,21 +4,28 @@ import { LoginComponent } from './pages/login/login.component';
 import { RegisterComponent } from './pages/register/register.component';
 import { ProfileComponent } from './pages/profile/profile.component';
 import { ExamListComponent } from './pages/exam-list/exam-list.component';
-import { ExamDetailComponent } from './pages/exam-detail/exam-detail.component';          //reading
+import { ExamDetailComponent } from './pages/exam-detail/exam-detail.component';
 import { ExamReadingComponent } from './pages/exam-reading/exam-reading.component';
+import { ExamListeningComponent } from './pages/exam-listening/exam-listening.component';
+import { ExamWritingComponent } from './pages/exam-writing/exam-writing.component';
+import { ExamSpeakingComponent } from './pages/exam-speaking/exam-speaking.component';
+import { DashboardComponent } from './pages/dashboard/dashboard.component';
+import { AdminDashboardComponent } from './pages/admin/admin-dashboard.component';
 import { authGuard } from './guards/auth.guard';
-
-import { ExamListeningComponent } from './pages/exam-listening/exam-listening.component'; // listening
+import { adminGuard } from './guards/admin.guard';
 
 export const routes: Routes = [
   { path: '', component: HomeComponent },
   { path: 'login', component: LoginComponent },
   { path: 'register', component: RegisterComponent },
   { path: 'profile', component: ProfileComponent, canActivate: [authGuard] },
+  { path: 'dashboard', component: DashboardComponent, canActivate: [authGuard] },
   { path: 'exam-list', component: ExamListComponent },
   { path: 'exam/:id', component: ExamDetailComponent },
   { path: 'exam/:id/reading', component: ExamReadingComponent, canActivate: [authGuard] },
- 
   { path: 'exam/:id/listening', component: ExamListeningComponent, canActivate: [authGuard] },
-   { path: '**', redirectTo: '' }
+  { path: 'exam/:id/writing', component: ExamWritingComponent, canActivate: [authGuard] },
+  { path: 'exam/:id/speaking', component: ExamSpeakingComponent, canActivate: [authGuard] },
+  { path: 'admin', component: AdminDashboardComponent, canActivate: [authGuard, adminGuard] },
+  { path: '**', redirectTo: '' }
 ];

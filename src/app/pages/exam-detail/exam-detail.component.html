@@ -5,6 +5,16 @@
   exam = {{ exam?.title || 'null' }}<br>
   skills.length = {{ skills.length }}
 </div>
+<!-- Trong exam-detail.component.html, thêm dòng debug -->
+<div style="background: yellow; padding: 10px; margin: 10px; border: 2px solid red;">
+  <strong>🔍 DEBUG:</strong><br>
+  isLoading = {{ isLoading }}<br>
+  exam = {{ exam?.title || 'null' }}<br>
+  skills.length = {{ skills.length }}<br>
+  <div *ngFor="let skill of skills">
+    {{ skill.skillName }}: status={{ skill.status }}, score={{ skill.score }}, examId={{ skill.examId }}
+  </div>
+</div>
   <div class="loading" *ngIf="isLoading">
     <div class="spinner"></div>
     <p>Đang tải đề thi...</p>

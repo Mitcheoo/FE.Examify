@@ -55,43 +55,9 @@ export class ExamDetailComponent implements OnInit {
           console.log('✅ Exam assigned:', this.exam.title);
         }
         
-        // Xử lý theo loại bài thi
+        // ✅ NẾU LÀ FULL TEST, GỌI API STATUS
         if (data.isFullTest) {
-          // Full Test: 4 kỹ năng
-          this.skills = [
-            { 
-              skillType: 'reading', 
-              skillName: '📖 Reading', 
-              duration: 60, 
-              status: 'available', 
-              score: undefined,
-              examId: data.readingExerciseId
-            },
-            { 
-              skillType: 'listening', 
-              skillName: '🎧 Listening', 
-              duration: 35, 
-              status: 'locked', 
-              score: undefined,
-              examId: data.listeningExerciseId
-            },
-            { 
-              skillType: 'writing', 
-              skillName: '✍️ Writing', 
-              duration: 60, 
-              status: 'locked', 
-              score: undefined,
-              examId: data.writingExerciseId
-            },
-            { 
-              skillType: 'speaking', 
-              skillName: '🎙️ Speaking', 
-              duration: 17, 
-              status: 'locked', 
-              score: undefined,
-              examId: data.speakingExerciseId
-            }
-          ];
+          this.loadFullTestStatus();
         } else {
           // Bài thi đơn lẻ
           this.skills = [
@@ -104,12 +70,9 @@ export class ExamDetailComponent implements OnInit {
               examId: this.examId
             }
           ];
+          this.isLoading = false;
+          this.cdr.detectChanges();
         }
-        
-        this.loadProgress();
-        this.isLoading = false;
-        this.cdr.detectChanges();
-        console.log('🔴 isLoading set to false');
       },
       error: (err) => {
         console.error('❌ Error loading exam detail:', err);
@@ -120,75 +83,70 @@ export class ExamDetailComponent implements OnInit {
     });
   }
 
-  loadProgress() {
-    console.log('🔄 Loading progress for skills:', this.skills);
+  // ✅ GỌI API STATUS CHO FULL TEST
+  loadFullTestStatus() {
+    console.log('🔄 Loading full test status...');
     
-    // Đọc kết quả từ localStorage cho từng kỹ năng
+    this.examService.getFullTestStatus(this.examId).subscribe({
+      next: (statusData) => {
+        console.log('✅ Full test status loaded:', statusData);
+        
+        // Convert từ API status sang format skills của frontend
+        this.skills = statusData.skills.map((skill: any) => ({
+          skillType: this.getSkillTypeFromNumber(skill.skill),
+          skillName: this.getSkillIcon(this.getSkillTypeFromNumber(skill.skill)) + ' ' + skill.skillName,
+          duration: this.getSkillDuration(skill.skill),
+          status: skill.isUnlocked ? (skill.isCompleted ? 'completed' : 'available') : 'locked',
+          score: skill.bestScore,
+          examId: skill.exerciseId,
+          message: skill.message,
+          attempts: skill.attempts
+        }));
+        
+        this.isLoading = false;
+        this.cdr.detectChanges();
+        console.log('🔴 Skills built from API:', this.skills);
+      },
+      error: (err) => {
+        console.error('❌ Error loading full test status:', err);
+        // Fallback: nếu API lỗi, dữ liệu cũ từ localStorage
+        this.loadLegacyProgress();
+      }
+    });
+  }
+
+  // Fallback cũ (giữ lại để tương thích)
+  loadLegacyProgress() {
+    console.log('🔄 Using legacy progress loading...');
+    
+    this.skills = [
+      { skillType: 'reading', skillName: '📖 Reading', duration: 60, status: 'available', score: undefined, examId: this.exam?.readingExerciseId },
+      { skillType: 'listening', skillName: '🎧 Listening', duration: 35, status: 'locked', score: undefined, examId: this.exam?.listeningExerciseId },
+      { skillType: 'writing', skillName: '✍️ Writing', duration: 60, status: 'locked', score: undefined, examId: this.exam?.writingExerciseId },
+      { skillType: 'speaking', skillName: '🎙️ Speaking', duration: 17, status: 'locked', score: undefined, examId: this.exam?.speakingExerciseId }
+    ];
+    
+    // Đọc kết quả từ localStorage
     this.skills.forEach(skill => {
       if (skill.examId) {
         const storageKey = `${skill.skillType}_result_${skill.examId}_${this.userId}`;
         const savedResult = localStorage.getItem(storageKey);
-        
         if (savedResult) {
           const result = JSON.parse(savedResult);
           skill.status = 'completed';
           skill.score = result.totalScore;
-          console.log(`✅ ${skill.skillType} completed with score:`, result.totalScore);
           
           // Mở khóa kỹ năng tiếp theo
           const currentIndex = this.skills.findIndex(s => s.skillType === skill.skillType);
           const nextSkill = this.skills[currentIndex + 1];
           if (nextSkill && nextSkill.status === 'locked') {
             nextSkill.status = 'available';
-            console.log(`✅ ${nextSkill.skillType} unlocked`);
           }
         }
       }
     });
     
-    // ✅ XỬ LÝ WRITING (đặt đúng vị trí)
-    if (this.exam?.writingExerciseId) {
-      const savedWritingResult = localStorage.getItem(`writing_result_${this.exam.writingExerciseId}_${this.userId}`);
-      if (savedWritingResult) {
-        const result = JSON.parse(savedWritingResult);
-        const writingSkill = this.skills.find(s => s.skillType === 'writing');
-        if (writingSkill) {
-          writingSkill.status = 'completed';
-          writingSkill.score = result.totalScore;
-          console.log(`✅ writing completed with score:`, result.totalScore);
-        }
-        const speakingSkill = this.skills.find(s => s.skillType === 'speaking');
-        if (speakingSkill && speakingSkill.status === 'locked') {
-          speakingSkill.status = 'available';
-          console.log(`✅ speaking unlocked`);
-        }
-      }
-    }
-    
-    // ✅ XỬ LÝ SPEAKING (đặt đúng vị trí)
-    if (this.exam?.speakingExerciseId) {
-      const savedSpeakingResult = localStorage.getItem(`speaking_result_${this.exam.speakingExerciseId}_${this.userId}`);
-      if (savedSpeakingResult) {
-        const result = JSON.parse(savedSpeakingResult);
-        const speakingSkill = this.skills.find(s => s.skillType === 'speaking');
-        if (speakingSkill) {
-          speakingSkill.status = 'completed';
-          speakingSkill.score = result.totalScore;
-          console.log(`✅ speaking completed with score:`, result.totalScore);
-        }
-      }
-    }
-    
-    // Gọi API để lấy tiến độ từ server
-    this.examService.getExerciseProgress(this.examId).subscribe({
-      next: (progress) => {
-        console.log('✅ Progress loaded from API:', progress);
-      },
-      error: (err) => {
-        console.error('❌ Error loading progress from API:', err);
-      }
-    });
-    
+    this.isLoading = false;
     this.cdr.detectChanges();
   }
 
@@ -200,6 +158,16 @@ export class ExamDetailComponent implements OnInit {
   getSkillType(skill: number): string {
     const types: any = { 0: 'reading', 1: 'listening', 2: 'writing', 3: 'speaking' };
     return types[skill] || 'unknown';
+  }
+
+  getSkillTypeFromNumber(skill: number): string {
+    const types: any = { 0: 'reading', 1: 'listening', 2: 'writing', 3: 'speaking' };
+    return types[skill] || 'unknown';
+  }
+
+  getSkillDuration(skill: number): number {
+    const durations: any = { 0: 60, 1: 35, 2: 60, 3: 17 };
+    return durations[skill] || 30;
   }
 
   getSkillIcon(skillType: string): string {

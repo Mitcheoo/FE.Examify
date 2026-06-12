@@ -1,0 +1,31 @@
+<div class="admin-container">
+  <div class="admin-header">
+    <h1>🛠️ Admin Dashboard</h1>
+    <p>Quản lý người dùng, bài thi và thống kê hệ thống</p>
+  </div>
+
+  <div class="loading" *ngIf="isLoading">
+    <div class="spinner"></div>
+    <p>Đang tải dữ liệu...</p>
+  </div>
+
+  <div class="tabs" *ngIf="!isLoading">
+    <button class="tab" [class.active]="activeTab === 'dashboard'" (click)="activeTab = 'dashboard'">Dashboard</button>
+    <button class="tab" [class.active]="activeTab === 'users'" (click)="activeTab = 'users'">Người dùng</button>
+    <button class="tab" [class.active]="activeTab === 'exercises'" (click)="activeTab = 'exercises'">Bài thi</button>
+  </div>
+
+  <div *ngIf="activeTab === 'users' && !isLoading">
+    <h2>Danh sách người dùng</h2>
+    <div *ngFor="let user of users">
+      <p>{{ user.fullName }} - {{ user.email }}</p>
+    </div>
+  </div>
+
+  <div *ngIf="activeTab === 'exercises' && !isLoading">
+    <h2>Danh sách bài thi</h2>
+    <div *ngFor="let exercise of exercises">
+      <p>{{ exercise.title }} - {{ exercise.totalQuestions }} câu</p>
+    </div>
+  </div>
+</div>

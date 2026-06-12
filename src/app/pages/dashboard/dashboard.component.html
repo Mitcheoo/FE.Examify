@@ -1,0 +1,52 @@
+﻿<div class="dashboard-container">
+  <div class="dashboard-header">
+    <h1>📊 Dashboard</h1>
+    <p>Xin chào, {{ userFullName }}! Đây là tổng quan tiến độ học tập của bạn</p>
+  </div>
+
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-value">{{ stats.totalExercises }}</div>
+      <div class="stat-label">Bài đã làm</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value">{{ stats.averageScore }}/10</div>
+      <div class="stat-label">Điểm trung bình</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value">{{ stats.totalTimeSpent }} phút</div>
+      <div class="stat-label">Thời gian học</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value">{{ stats.currentStreak }}</div>
+      <div class="stat-label">Ngày học liên tiếp</div>
+    </div>
+  </div>
+
+  <div class="skills-section">
+    <h3>Điểm theo kỹ năng</h3>
+    <div class="skills-grid">
+      <div class="skill-card">
+        <span>📖 Reading</span>
+        <span>{{ stats.readingScore }}/10</span>
+      </div>
+      <div class="skill-card">
+        <span>🎧 Listening</span>
+        <span>{{ stats.listeningScore }}/10</span>
+      </div>
+      <div class="skill-card">
+        <span>✍️ Writing</span>
+        <span>{{ stats.writingScore }}/10</span>
+      </div>
+      <div class="skill-card">
+        <span>🎙️ Speaking</span>
+        <span>{{ stats.speakingScore }}/10</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="action-buttons">
+    <button class="btn-primary" routerLink="/exam-list">📚 Làm bài thi</button>
+    <button class="btn-secondary" routerLink="/profile">👤 Hồ sơ cá nhân</button>
+  </div>
+</div>
