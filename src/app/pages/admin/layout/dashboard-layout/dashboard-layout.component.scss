@@ -1,0 +1,25 @@
+﻿/* Dashboard styles - using Tailwind CSS */
+
+
+.btn-primary:hover, .btn-secondary:hover {
+  transform: translateY(-2px);
+}
+
+@media (max-width: 768px) {
+  .dashboard-container {
+    padding: 1rem;
+    margin-top: 70px;
+  }
+  
+  .stats-grid, .skills-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .action-buttons {
+    flex-direction: column;
+  }
+  
+  .btn-primary, .btn-secondary {
+    text-align: center;
+  }
+}

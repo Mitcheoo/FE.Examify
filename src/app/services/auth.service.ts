@@ -39,6 +39,7 @@ export interface UserProfile {
   userName: string;
   avatarUrl: string | null;
   createdAt: Date;
+  roles: string[];
 }
 
 export interface UpdateProfileDto {
@@ -186,7 +187,8 @@ export class AuthService {
             email: response.email,
             userName: response.userName,
             avatarUrl: null,
-            createdAt: new Date()
+            createdAt: new Date(),
+            roles: response.roles
           };
           this.saveUserToStorage(userProfile);
           this.currentUserSubject.next(userProfile);
@@ -210,6 +212,7 @@ export class AuthService {
     return this.http.get<UserProfile>(this.apiUrl + '/profile', { headers })
       .pipe(
         tap(profile => {
+          profile.roles ??= this.getCurrentUser()?.roles ?? [];
           console.log('✅ Profile loaded from API:', profile.fullName);
           this.currentUserSubject.next(profile);
           this.saveUserToStorage(profile);
