@@ -1,124 +1,201 @@
 .listening-container {
-  max-width: 1000px;
+  max-width: 1200px;
   margin: 0 auto;
   padding: 2rem;
   margin-top: 80px;
 }
 
+/* Header */
 .listening-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  margin-bottom: 2rem;
+  align-items: flex-start;
+  margin-bottom: 1.5rem;
   flex-wrap: wrap;
+  gap: 1rem;
 }
 
-.listening-header h1 {
+.exam-info h1 {
   font-size: 1.8rem;
+  color: #1a1a2e;
+  margin-bottom: 0.5rem;
+}
+
+.exam-info p {
+  color: #666;
+  margin: 0.25rem 0;
+}
+
+.instruction {
+  color: #e74c3c;
+  font-weight: 500;
+  background: #fee2e2;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  display: inline-block;
+}
+
+.timer-box {
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  padding: 0.75rem 1.5rem;
+  border-radius: 16px;
+  text-align: center;
+  min-width: 150px;
+}
+
+.timer-value {
+  font-size: 2rem;
+  font-weight: bold;
+  color: white;
+  font-family: monospace;
+}
+
+.timer-label {
+  font-size: 0.7rem;
+  color: rgba(255,255,255,0.8);
+}
+
+.timer-box.warning {
+  background: linear-gradient(135deg, #e74c3c, #c0392b);
+  animation: pulse 1s infinite;
+}
+
+/* Progress Bar */
+.progress-bar-container {
+  background: #f0f0f0;
+  border-radius: 12px;
+  padding: 0.75rem 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.progress-info {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  color: #666;
+  margin-bottom: 0.5rem;
+}
+
+.progress-bar {
+  height: 8px;
+  background: #ddd;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #27ae60, #2ecc71);
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+/* Part Section */
+.part-section {
+  margin-bottom: 2rem;
+  background: white;
+  border-radius: 16px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.part-header {
+  border-bottom: 2px solid #667eea;
+  padding-bottom: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.part-header h2 {
+  margin: 0;
   color: #1a1a2e;
 }
 
-.timer {
-  font-size: 1.5rem;
-  font-weight: bold;
-  color: #27ae60;
-  background: #f0f0f0;
-  padding: 0.5rem 1rem;
-  border-radius: 8px;
+.part-header p {
+  margin: 0.25rem 0 0;
+  color: #666;
+  font-size: 0.85rem;
 }
 
-.timer.warning {
-  color: #e74c3c;
-  animation: blink 1s infinite;
-}
-
-@keyframes blink {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
-}
-
-.audio-player {
-  background: #f0f0f0;
-  padding: 1rem;
-  border-radius: 12px;
-  text-align: center;
-  margin-bottom: 1.5rem;
+/* Audio Grid */
+.audio-grid {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 1rem;
-  flex-wrap: wrap;
+  flex-direction: column;
+  gap: 1.5rem;
 }
 
-.play-btn {
-  padding: 0.75rem 1.5rem;
+.audio-card {
+  background: #f8f9fa;
+  border-radius: 12px;
+  padding: 1rem;
+  border-left: 4px solid #667eea;
+}
+
+.audio-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.audio-number {
+  font-weight: bold;
+  color: #667eea;
+}
+
+.audio-status {
+  font-size: 0.7rem;
+  padding: 0.2rem 0.5rem;
+  border-radius: 20px;
+  background: #ddd;
+}
+
+.audio-status.played {
+  background: #27ae60;
+  color: white;
+}
+
+.play-audio-btn {
+  padding: 0.5rem 1rem;
   background: linear-gradient(135deg, #667eea, #764ba2);
   color: white;
   border: none;
   border-radius: 8px;
   cursor: pointer;
-  font-size: 1rem;
+  margin-bottom: 1rem;
+  transition: transform 0.2s;
 }
 
-.play-btn:hover {
+.play-audio-btn:hover:not(:disabled) {
   transform: translateY(-2px);
 }
 
-.audio-note {
-  color: #666;
-  font-size: 0.9rem;
+.play-audio-btn:disabled {
+  background: #ccc;
+  cursor: not-allowed;
 }
 
-.part {
-  background: #f8f9fa;
-  padding: 1.5rem;
-  border-radius: 12px;
-  margin-bottom: 1.5rem;
+/* Questions */
+.questions-list {
+  margin-top: 0.5rem;
 }
 
-.part h3 {
-  margin-top: 0;
-  color: #2c3e50;
-}
-
-.part-content {
-  line-height: 1.6;
-}
-
-.questions-section {
+.question-item {
   background: white;
-  border-radius: 12px;
-  padding: 1.5rem;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-}
-
-.question-card {
-  border-bottom: 1px solid #eee;
-  padding: 1rem 0;
-}
-
-.question-card:last-child {
-  border-bottom: none;
-}
-
-.question-header {
+  border-radius: 8px;
+  padding: 0.75rem;
   margin-bottom: 0.75rem;
 }
 
-.question-number {
-  font-weight: bold;
-  color: #667eea;
-}
-
 .question-text {
-  margin-left: 0.5rem;
+  font-weight: 500;
+  margin-bottom: 0.5rem;
 }
 
 .options-list {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
-  margin-left: 1.5rem;
+  margin-left: 1rem;
 }
 
 .option-label {
@@ -126,21 +203,39 @@
   align-items: center;
   gap: 0.5rem;
   cursor: pointer;
+  padding: 0.25rem;
+  border-radius: 4px;
 }
 
+.option-label:hover {
+  background: #f0f0f0;
+}
+
+/* Footer */
 .listening-footer {
-  margin-top: 2rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 1rem;
   background: #f8f9fa;
   border-radius: 12px;
+  margin-top: 1rem;
 }
 
-.progress-info {
+.footer-left {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.answered-count {
   font-weight: 500;
-  color: #2c3e50;
+  color: #27ae60;
+}
+
+.remaining-count {
+  font-size: 0.8rem;
+  color: #e74c3c;
 }
 
 .btn-submit {
@@ -152,6 +247,7 @@
   font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
+  transition: transform 0.2s;
 }
 
 .btn-submit:hover:not(:disabled) {
@@ -163,7 +259,40 @@
   cursor: not-allowed;
 }
 
+/* Responsive */
 @media (max-width: 768px) {
-  .listening-container { padding: 1rem; margin-top: 70px; }
-  .listening-header { flex-direction: column; gap: 1rem; text-align: center; }
+  .listening-container {
+    padding: 1rem;
+    margin-top: 70px;
+  }
+  
+  .listening-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .timer-box {
+    align-self: center;
+  }
+  
+  .audio-card {
+    padding: 0.75rem;
+  }
+  
+  .options-list {
+    margin-left: 0;
+  }
+  
+  .footer-left {
+    font-size: 0.8rem;
+  }
+  
+  .btn-submit {
+    padding: 0.5rem 1rem;
+  }
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.02); }
 }

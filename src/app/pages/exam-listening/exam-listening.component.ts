@@ -5,6 +5,22 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { ExamService } from '../../services/exam.service';
 import { AuthService } from '../../services/auth.service';
 
+interface AudioItem {
+  id: number;
+  url: string;
+  played: boolean;
+  partNumber: number;
+  questions: ListeningQuestion[];
+}
+
+interface ListeningQuestion {
+  id: string;
+  orderNumber: number;
+  questionText: string;
+  options: { key: string; value: string }[];
+  correctAnswer: string;
+}
+
 @Component({
   selector: 'app-exam-listening',
   standalone: true,
@@ -20,26 +36,27 @@ export class ExamListeningComponent implements OnInit, OnDestroy {
   private authService = inject(AuthService);
 
   exam: any = null;
+  audioItems: AudioItem[] = [];
   answers: Record<string, string> = {};
-  timeRemaining: number = 2400;
-  isSubmitting = false;
+  currentPlayingAudio: number | null = null;
   isPlaying = false;
+  private audioElement: HTMLAudioElement | null = null;
+  
+  timeRemaining: number = 2400; // 40 phút = 2400 giây
+  isSubmitting = false;
   private timerInterval: any;
   private examId: string = '';
   private fullTestId: string = '';
   private userId: string = '';
-  private audioElement: HTMLAudioElement | null = null;
 
   ngOnInit() {
     this.userId = this.authService.getCurrentUser()?.id || 'anonymous';
     
     const navigation = this.router.getCurrentNavigation();
     const state = navigation?.extras?.state as { fullTestId?: string };
-    
     if (state?.fullTestId) {
       this.fullTestId = state.fullTestId;
     }
-    
     if (!this.fullTestId && history.state?.fullTestId) {
       this.fullTestId = history.state.fullTestId;
     }
@@ -47,52 +64,76 @@ export class ExamListeningComponent implements OnInit, OnDestroy {
     this.route.params.subscribe(params => {
       this.examId = params['id'];
       console.log('🎧 Listening Exam ID:', this.examId);
-      console.log('📌 User ID:', this.userId);
-      console.log('📌 Full Test ID:', this.fullTestId);
       this.loadExam();
     });
   }
 
   loadExam() {
-    console.log('🔄 Loading Listening exam...');
     this.examService.getListeningExam(this.examId).subscribe({
       next: (data: any) => {
         console.log('✅ Raw Listening data:', data);
         
-        const parsedQuestions = (data.questions || []).map((q: any) => {
-          let options: { key: string; value: string }[] = [];
-          try {
-            const optsJson = q.optionsJson;
-            if (optsJson) {
-              const parsed = typeof optsJson === 'string' ? JSON.parse(optsJson) : optsJson;
-              options = Object.entries(parsed).map(([key, value]) => ({ key, value: value as string }));
-            }
-          } catch (e) {
-            console.error('Error parsing options:', e);
-          }
-          return {
-            id: q.id,
-            orderNumber: q.orderNumber,
-            questionText: q.questionText,
-            options: options
-          };
-        });
+        // Cấu trúc audio theo Part
+        // Part 1: 8 audio riêng (mỗi audio 1 câu)
+        // Part 2: 3 audio (mỗi audio 4 câu)
+        // Part 3: 3 audio (mỗi audio 5 câu)
         
+        const questions = data.questions || [];
+        
+        // Phân phối câu hỏi vào các audio
+        const audioItemsList: AudioItem[] = [];
+        
+        // Part 1: Câu 1-8 (8 audio, mỗi audio 1 câu)
+        for (let i = 0; i < 8 && i < questions.length; i++) {
+          audioItemsList.push({
+            id: i + 1,
+            url: data.audioUrl || `assets/audio/part1_${i + 1}.mp3`,
+            played: false,
+            partNumber: 1,
+            questions: [this.parseQuestion(questions[i])]
+          });
+        }
+        
+        // Part 2: Câu 9-20 (3 audio, mỗi audio 4 câu)
+        for (let i = 0; i < 3; i++) {
+          const startIdx = 8 + i * 4;
+          const partQuestions = questions.slice(startIdx, startIdx + 4).map((q: any) => this.parseQuestion(q));
+          audioItemsList.push({
+            id: 9 + i,
+            url: data.audioUrl || `assets/audio/part2_${i + 1}.mp3`,
+            played: false,
+            partNumber: 2,
+            questions: partQuestions
+          });
+        }
+        
+        // Part 3: Câu 21-35 (3 audio, mỗi audio 5 câu)
+        for (let i = 0; i < 3; i++) {
+          const startIdx = 20 + i * 5;
+          const partQuestions = questions.slice(startIdx, startIdx + 5).map((q: any) => this.parseQuestion(q));
+          audioItemsList.push({
+            id: 12 + i,
+            url: data.audioUrl || `assets/audio/part3_${i + 1}.mp3`,
+            played: false,
+            partNumber: 3,
+            questions: partQuestions
+          });
+        }
+        
+        this.audioItems = audioItemsList;
         this.exam = {
           exerciseId: data.exerciseId,
           title: data.title,
           timeLimitSeconds: data.timeLimitSeconds || 2400,
           totalQuestions: data.totalQuestions,
-          audioUrl: data.audioUrl,
-          parts: data.parts || [],
-          questions: parsedQuestions
+          audioItems: this.audioItems
         };
         
         console.log('✅ Parsed Listening exam:', this.exam);
-        this.timeRemaining = this.exam.timeLimitSeconds;
+        console.log('✅ Audio items:', this.audioItems.length);
         
+        this.timeRemaining = this.exam.timeLimitSeconds;
         this.startTimer();
-        this.initAudio();
         this.cdr.detectChanges();
       },
       error: (err) => {
@@ -102,35 +143,74 @@ export class ExamListeningComponent implements OnInit, OnDestroy {
     });
   }
 
-  initAudio() {
-    if (this.exam?.audioUrl) {
-      this.audioElement = new Audio(this.exam.audioUrl);
-      this.audioElement.addEventListener('ended', () => {
-        this.isPlaying = false;
-        this.cdr.detectChanges();
-      });
+  parseQuestion(q: any): ListeningQuestion {
+    let options: { key: string; value: string }[] = [];
+    try {
+      const optsJson = q.optionsJson;
+      if (optsJson) {
+        const parsed = typeof optsJson === 'string' ? JSON.parse(optsJson) : optsJson;
+        options = Object.entries(parsed).map(([key, value]) => ({ key, value: value as string }));
+      } else {
+        // Fallback cho cấu trúc OptionA, OptionB, OptionC, OptionD
+        options = [
+          { key: 'A', value: q.optionA || 'Option A' },
+          { key: 'B', value: q.optionB || 'Option B' },
+          { key: 'C', value: q.optionC || 'Option C' },
+          { key: 'D', value: q.optionD || 'Option D' }
+        ];
+      }
+    } catch (e) {
+      console.error('Error parsing options:', e);
     }
+    return {
+      id: q.id,
+      orderNumber: q.orderNumber,
+      questionText: q.questionText,
+      options: options,
+      correctAnswer: q.correctAnswer
+    };
   }
 
-  playAudio() {
-    if (this.audioElement) {
-      if (this.isPlaying) {
-        this.audioElement.pause();
-        this.isPlaying = false;
-      } else {
-        this.audioElement.play();
-        this.isPlaying = true;
-      }
-      this.cdr.detectChanges();
-    } else {
-      console.warn('No audio URL available');
-      alert('Không có file audio cho bài thi này');
+  playAudio(audioId: number) {
+    const audioItem = this.audioItems.find(a => a.id === audioId);
+    if (!audioItem) return;
+    
+    // Kiểm tra đã nghe chưa - chỉ được nghe 1 lần
+    if (audioItem.played) {
+      alert('⚠️ Bạn chỉ được nghe audio này một lần duy nhất!');
+      return;
     }
+    
+    // Dừng audio đang phát
+    if (this.audioElement) {
+      this.audioElement.pause();
+      this.isPlaying = false;
+    }
+    
+    this.currentPlayingAudio = audioId;
+    this.audioElement = new Audio(audioItem.url);
+    this.audioElement.play();
+    this.isPlaying = true;
+    
+    // Đánh dấu đã nghe
+    audioItem.played = true;
+    
+    this.audioElement.onended = () => {
+      this.isPlaying = false;
+      this.currentPlayingAudio = null;
+      this.cdr.detectChanges();
+    };
+    
+    this.audioElement.onerror = () => {
+      console.error('Error playing audio:', audioItem.url);
+      alert('Không thể phát audio. Vui lòng kiểm tra file audio!');
+      this.isPlaying = false;
+      this.currentPlayingAudio = null;
+      this.cdr.detectChanges();
+    };
   }
 
   startTimer() {
-    console.log('🕐 Starting Listening timer with:', this.timeRemaining);
-    
     this.timerInterval = setInterval(() => {
       if (this.timeRemaining > 0) {
         this.timeRemaining--;
@@ -152,12 +232,14 @@ export class ExamListeningComponent implements OnInit, OnDestroy {
     return Object.keys(this.answers).filter(key => this.answers[key]?.trim()).length;
   }
 
+  getPart1Audios() { return this.audioItems.filter(a => a.partNumber === 1); }
+  getPart2Audios() { return this.audioItems.filter(a => a.partNumber === 2); }
+  getPart3Audios() { return this.audioItems.filter(a => a.partNumber === 3); }
+
   submitExam() {
     if (this.timerInterval) {
       clearInterval(this.timerInterval);
-      this.timerInterval = null;
     }
-
     if (this.audioElement) {
       this.audioElement.pause();
     }
@@ -181,11 +263,8 @@ export class ExamListeningComponent implements OnInit, OnDestroy {
     this.examService.submitListening(submitData).subscribe({
       next: (result) => {
         console.log('✅ Submit success:', result);
-        
         const storageKey = `listening_result_${this.examId}_${this.userId}`;
         localStorage.setItem(storageKey, JSON.stringify(result));
-        console.log('💾 Saved to:', storageKey);
-        
         const returnUrl = this.fullTestId || this.examId;
         this.router.navigate(['/exam', returnUrl]);
       },

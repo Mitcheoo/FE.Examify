@@ -23,7 +23,8 @@ export class ExamReadingComponent implements OnInit, OnDestroy {
   answers: Record<string, string> = {};
   timeRemaining: number = 3600;
   isSubmitting = false;
-  showResults = false;
+  currentQuestionIndex: number = 0;
+  showNavigator: boolean = true;
   private timerInterval: any;
   private examId: string = '';
   private fullTestId: string = '';
@@ -32,27 +33,33 @@ export class ExamReadingComponent implements OnInit, OnDestroy {
   ngOnInit() {
     this.userId = this.authService.getCurrentUser()?.id || 'anonymous';
     
+    const savedNavState = localStorage.getItem('reading_show_navigator');
+    if (savedNavState !== null) {
+      this.showNavigator = savedNavState === 'true';
+    }
+    
     const navigation = this.router.getCurrentNavigation();
     const state = navigation?.extras?.state as { fullTestId?: string };
     
     if (state?.fullTestId) {
       this.fullTestId = state.fullTestId;
-      console.log('📌 Received fullTestId from state:', this.fullTestId);
     }
     
     if (!this.fullTestId && history.state?.fullTestId) {
       this.fullTestId = history.state.fullTestId;
-      console.log('📌 Received fullTestId from history.state:', this.fullTestId);
     }
     
     this.route.params.subscribe(params => {
       this.examId = params['id'];
       console.log('📌 Reading Exam ID:', this.examId);
-      console.log('📌 User ID:', this.userId);
-      console.log('📌 Full Test ID:', this.fullTestId);
       this.loadExam();
       this.loadSavedAnswers();
     });
+  }
+
+  toggleNavigator() {
+    this.showNavigator = !this.showNavigator;
+    localStorage.setItem('reading_show_navigator', String(this.showNavigator));
   }
 
   loadSavedAnswers() {
@@ -71,8 +78,6 @@ export class ExamReadingComponent implements OnInit, OnDestroy {
     console.log('🔄 Loading Reading exam...');
     this.examService.getReadingExam(this.examId).subscribe({
       next: (data: any) => {
-        console.log('✅ Raw exam data:', data);
-        
         const parsedQuestions = (data.questions || []).map((q: any) => {
           let options: { key: string; value: string }[] = [];
           try {
@@ -102,10 +107,7 @@ export class ExamReadingComponent implements OnInit, OnDestroy {
           questions: parsedQuestions
         };
         
-        console.log('✅ Parsed exam:', this.exam);
         this.timeRemaining = this.exam.timeLimitSeconds || 3600;
-        console.log('✅ timeRemaining set to:', this.timeRemaining);
-        
         this.startTimer();
         this.cdr.detectChanges();
       },
@@ -117,14 +119,11 @@ export class ExamReadingComponent implements OnInit, OnDestroy {
   }
 
   startTimer() {
-    console.log('🕐 Starting timer with:', this.timeRemaining);
-    
     this.timerInterval = setInterval(() => {
       if (this.timeRemaining > 0) {
         this.timeRemaining--;
         this.cdr.detectChanges();
       } else {
-        console.log('⏰ Time is up!');
         this.submitExam();
       }
     }, 1000);
@@ -141,8 +140,16 @@ export class ExamReadingComponent implements OnInit, OnDestroy {
   }
 
   onAnswerChange() {
-    console.log('Answer changed, answered:', this.answeredCount);
     localStorage.setItem('reading_answers_' + this.examId, JSON.stringify(this.answers));
+    this.cdr.detectChanges();
+  }
+
+  scrollToQuestion(index: number) {
+    this.currentQuestionIndex = index;
+    const element = document.getElementById('question-' + index);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
   }
 
   submitExam() {
@@ -164,13 +171,9 @@ export class ExamReadingComponent implements OnInit, OnDestroy {
       timeSpentSeconds: totalTime
     };
 
-    console.log('📤 Submitting Reading:', submitData);
-
     this.isSubmitting = true;
     this.examService.submitReading(submitData).subscribe({
       next: (result) => {
-        console.log('✅ Submit success:', result);
-        
         const storageKey = 'reading_result_' + this.examId + '_' + this.userId;
         localStorage.setItem(storageKey, JSON.stringify(result));
         localStorage.removeItem('reading_answers_' + this.examId);
@@ -184,10 +187,6 @@ export class ExamReadingComponent implements OnInit, OnDestroy {
         this.isSubmitting = false;
       }
     });
-  }
-
-  getSkillType(): string {
-    return 'reading';
   }
 
   ngOnDestroy() {
