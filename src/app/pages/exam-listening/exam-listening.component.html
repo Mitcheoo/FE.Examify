@@ -1,61 +1,137 @@
 <div class="listening-container">
+  <!-- Header -->
   <div class="listening-header">
-    <h1>🎧 {{ exam?.title || 'Listening Comprehension' }}</h1>
-    <div class="timer" [class.warning]="timeRemaining <= 300">
-      ⏱️ {{ formatTime(timeRemaining) }}
+    <div class="exam-info">
+      <h1>🎧 {{ exam?.title || 'Listening Comprehension' }}</h1>
+      <p>Thời gian làm bài: 40 phút | Tổng số câu: 35 câu | 14 audio</p>
+      <p class="instruction">⚠️ Mỗi audio chỉ được nghe MỘT LẦN duy nhất. Hãy tập trung lắng nghe!</p>
+    </div>
+    <div class="timer-box" [class.warning]="timeRemaining <= 300">
+      <div class="timer-icon">⏱️</div>
+      <div class="timer-value">{{ formatTime(timeRemaining) }}</div>
+      <div class="timer-label">Thời gian còn lại</div>
     </div>
   </div>
 
-  <!-- Audio Player -->
-  <div class="audio-player" *ngIf="exam?.audioUrl">
-    <button class="play-btn" (click)="playAudio()">
-      {{ isPlaying ? '⏸️ Tạm dừng' : '▶️ Phát audio' }}
-    </button>
-    <span class="audio-note">🎧 Nghe kỹ đoạn hội thoại và trả lời câu hỏi</span>
-  </div>
-
-  <!-- TIMER DEBUG -->
-  <div style="background: red; color: white; padding: 8px; margin: 8px; font-weight: bold;">
-    🔴 TIMER VALUE: {{ timeRemaining }} giây
-  </div>
-
-  <!-- Debug -->
-  <div style="background: yellow; padding: 10px; margin: 10px;">
-    <strong>DEBUG:</strong><br>
-    totalQuestions = {{ exam?.totalQuestions }}<br>
-    parts.length = {{ exam?.parts?.length }}<br>
-    questions.length = {{ exam?.questions?.length }}
-  </div>
-
-  <div class="listening-content" *ngIf="exam">
-    <div *ngFor="let part of exam.parts" class="part">
-      <h3>Part {{ part.partNumber }}: {{ part.title }}</h3>
-      <div class="part-content" [innerHTML]="part.content"></div>
+  <!-- Progress Bar -->
+  <div class="progress-bar-container">
+    <div class="progress-info">
+      <span>Tiến độ làm bài</span>
+      <span>{{ answeredCount }}/{{ exam?.totalQuestions || 0 }} câu đã trả lời</span>
     </div>
+    <div class="progress-bar">
+      <div class="progress-fill" [style.width]="(answeredCount / (exam?.totalQuestions || 1)) * 100 + '%'"></div>
+    </div>
+  </div>
 
-    <div class="questions-section">
-      <h3>Câu hỏi ({{ exam.totalQuestions }} câu)</h3>
-      <div *ngFor="let question of exam.questions" class="question-card">
-        <div class="question-header">
-          <span class="question-number">Câu {{ question.orderNumber }}:</span>
-          <span class="question-text">{{ question.questionText }}</span>
+  <!-- Part 1 -->
+  <div class="part-section" *ngIf="getPart1Audios().length > 0">
+    <div class="part-header">
+      <h2>📢 PART 1: Thông báo, hướng dẫn ngắn</h2>
+      <p>8 audio - 8 câu hỏi (mỗi audio 1 câu)</p>
+    </div>
+    <div class="audio-grid">
+      <div *ngFor="let audio of getPart1Audios(); let i = index" class="audio-card">
+        <div class="audio-header">
+          <span class="audio-number">Audio {{ i + 1 }}</span>
+          <span class="audio-status" [class.played]="audio.played">
+            {{ audio.played ? '✅ Đã nghe' : '🔊 Chưa nghe' }}
+          </span>
         </div>
-        <div class="options-list">
-          <label *ngFor="let opt of question.options" class="option-label">
-            <input type="radio" [name]="'q' + question.id" [value]="opt.key" [(ngModel)]="answers[question.id]">
-            <span><strong>{{ opt.key }}.</strong> {{ opt.value }}</span>
-          </label>
+        <button class="play-audio-btn" (click)="playAudio(audio.id)" [disabled]="audio.played">
+          {{ audio.played ? '🔒 Đã nghe' : '▶️ Nghe audio' }}
+        </button>
+        <div class="questions-list">
+          <div *ngFor="let question of audio.questions" class="question-item">
+            <div class="question-text">Câu {{ question.orderNumber }}: {{ question.questionText }}</div>
+            <div class="options-list">
+              <label *ngFor="let opt of question.options" class="option-label">
+                <input type="radio" [name]="'q' + question.id" [value]="opt.key" [(ngModel)]="answers[question.id]">
+                <span><strong>{{ opt.key }}.</strong> {{ opt.value }}</span>
+              </label>
+            </div>
+          </div>
         </div>
       </div>
     </div>
   </div>
 
-  <div class="listening-footer">
-    <div class="progress-info">
-      Đã trả lời: {{ answeredCount }}/{{ exam?.totalQuestions || 0 }} câu
+  <!-- Part 2 -->
+  <div class="part-section" *ngIf="getPart2Audios().length > 0">
+    <div class="part-header">
+      <h2>💬 PART 2: Hội thoại</h2>
+      <p>3 audio - 12 câu hỏi (mỗi audio 4 câu)</p>
     </div>
-    <button class="btn-submit" (click)="submitExam()" [disabled]="isSubmitting">
-      {{ isSubmitting ? 'Đang nộp bài...' : 'Nộp bài' }}
-    </button>
+    <div class="audio-grid">
+      <div *ngFor="let audio of getPart2Audios(); let i = index" class="audio-card">
+        <div class="audio-header">
+          <span class="audio-number">Audio {{ i + 1 }}</span>
+          <span class="audio-status" [class.played]="audio.played">
+            {{ audio.played ? '✅ Đã nghe' : '🔊 Chưa nghe' }}
+          </span>
+        </div>
+        <button class="play-audio-btn" (click)="playAudio(audio.id)" [disabled]="audio.played">
+          {{ audio.played ? '🔒 Đã nghe' : '▶️ Nghe hội thoại' }}
+        </button>
+        <div class="questions-list">
+          <div *ngFor="let question of audio.questions" class="question-item">
+            <div class="question-text">Câu {{ question.orderNumber }}: {{ question.questionText }}</div>
+            <div class="options-list">
+              <label *ngFor="let opt of question.options" class="option-label">
+                <input type="radio" [name]="'q' + question.id" [value]="opt.key" [(ngModel)]="answers[question.id]">
+                <span><strong>{{ opt.key }}.</strong> {{ opt.value }}</span>
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Part 3 -->
+  <div class="part-section" *ngIf="getPart3Audios().length > 0">
+    <div class="part-header">
+      <h2>🎓 PART 3: Bài nói / Bài giảng</h2>
+      <p>3 audio - 15 câu hỏi (mỗi audio 5 câu)</p>
+    </div>
+    <div class="audio-grid">
+      <div *ngFor="let audio of getPart3Audios(); let i = index" class="audio-card">
+        <div class="audio-header">
+          <span class="audio-number">Audio {{ i + 1 }}</span>
+          <span class="audio-status" [class.played]="audio.played">
+            {{ audio.played ? '✅ Đã nghe' : '🔊 Chưa nghe' }}
+          </span>
+        </div>
+        <button class="play-audio-btn" (click)="playAudio(audio.id)" [disabled]="audio.played">
+          {{ audio.played ? '🔒 Đã nghe' : '▶️ Nghe bài giảng' }}
+        </button>
+        <div class="questions-list">
+          <div *ngFor="let question of audio.questions" class="question-item">
+            <div class="question-text">Câu {{ question.orderNumber }}: {{ question.questionText }}</div>
+            <div class="options-list">
+              <label *ngFor="let opt of question.options" class="option-label">
+                <input type="radio" [name]="'q' + question.id" [value]="opt.key" [(ngModel)]="answers[question.id]">
+                <span><strong>{{ opt.key }}.</strong> {{ opt.value }}</span>
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div class="listening-footer">
+    <div class="footer-left">
+      <div class="answered-count">📝 Đã trả lời: {{ answeredCount }}/{{ exam?.totalQuestions || 0 }} câu</div>
+      <div class="remaining-count" *ngIf="(exam?.totalQuestions || 0) - answeredCount > 0">
+        ⏳ Còn {{ (exam?.totalQuestions || 0) - answeredCount }} câu chưa trả lời
+      </div>
+    </div>
+    <div class="footer-right">
+      <button class="btn-submit" (click)="submitExam()" [disabled]="isSubmitting">
+        {{ isSubmitting ? 'Đang nộp bài...' : '📤 Nộp bài' }}
+      </button>
+    </div>
   </div>
 </div>

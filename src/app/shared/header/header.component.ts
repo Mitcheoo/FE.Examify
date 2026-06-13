@@ -30,7 +30,9 @@ import { UserProfileDto } from '../../models/auth/auth.model';
     
           <a routerLink="/exam-list" [queryParams]="{level: 5}" class="nav-link" (click)="closeDropdown()">Khóa Học</a>
           <a routerLink="/practice" class="nav-link" (click)="closeDropdown()">Luyện tập</a>
+          <a routerLink="/practice" class="nav-link" (click)="closeDropdown()">Hướng Dẫn</a>
             <a routerLink="/practice" class="nav-link" (click)="closeDropdown()">Trò Chơi</a>
+
         </nav>
         
         <div class="auth-buttons">
