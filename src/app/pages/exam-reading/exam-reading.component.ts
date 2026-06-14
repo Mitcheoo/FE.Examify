@@ -29,6 +29,7 @@ export class ExamReadingComponent implements OnInit, OnDestroy {
   private examId: string = '';
   private fullTestId: string = '';
   private userId: string = '';
+  private sessionId: string = '';
 
   ngOnInit() {
     this.userId = this.authService.getCurrentUser()?.id || 'anonymous';
@@ -38,10 +39,26 @@ export class ExamReadingComponent implements OnInit, OnDestroy {
       this.showNavigator = savedNavState === 'true';
     }
     
-    const navigation = this.router.getCurrentNavigation();
-    const state = navigation?.extras?.state as { fullTestId?: string };
+    // ✅ LẤY SESSION ID TỪ QUERY PARAMS
+    this.route.queryParams.subscribe(params => {
+      if (params['sessionId']) {
+        this.sessionId = params['sessionId'];
+        console.log('📌 Reading received sessionId from queryParams:', this.sessionId);
+      }
+      if (params['fullTestId']) {
+        this.fullTestId = params['fullTestId'];
+        console.log('📌 Reading received fullTestId from queryParams:', this.fullTestId);
+      }
+    });
     
-    if (state?.fullTestId) {
+    // ✅ FALLBACK: Lấy từ navigation state (nếu có)
+    const navigation = this.router.getCurrentNavigation();
+    const state = navigation?.extras?.state as { fullTestId?: string; sessionId?: string };
+    if (state?.sessionId && !this.sessionId) {
+      this.sessionId = state.sessionId;
+      console.log('📌 Reading received sessionId from state:', this.sessionId);
+    }
+    if (state?.fullTestId && !this.fullTestId) {
       this.fullTestId = state.fullTestId;
     }
     
@@ -52,6 +69,8 @@ export class ExamReadingComponent implements OnInit, OnDestroy {
     this.route.params.subscribe(params => {
       this.examId = params['id'];
       console.log('📌 Reading Exam ID:', this.examId);
+      console.log('📌 Full Test ID:', this.fullTestId);
+      console.log('📌 Session ID:', this.sessionId);
       this.loadExam();
       this.loadSavedAnswers();
     });
@@ -63,7 +82,7 @@ export class ExamReadingComponent implements OnInit, OnDestroy {
   }
 
   loadSavedAnswers() {
-    const saved = localStorage.getItem('reading_answers_' + this.examId);
+    const saved = localStorage.getItem('reading_answers_' + this.examId + '_' + this.userId);
     if (saved) {
       try {
         this.answers = JSON.parse(saved);
@@ -140,7 +159,7 @@ export class ExamReadingComponent implements OnInit, OnDestroy {
   }
 
   onAnswerChange() {
-    localStorage.setItem('reading_answers_' + this.examId, JSON.stringify(this.answers));
+    localStorage.setItem('reading_answers_' + this.examId + '_' + this.userId, JSON.stringify(this.answers));
     this.cdr.detectChanges();
   }
 
@@ -168,16 +187,31 @@ export class ExamReadingComponent implements OnInit, OnDestroy {
     const submitData = {
       exerciseId: this.examId,
       answers: answersDict,
-      timeSpentSeconds: totalTime
+      timeSpentSeconds: totalTime,
+      sessionId: this.sessionId
     };
+
+    console.log('📤 Submitting Reading:', submitData);
+    console.log('📌 Session ID:', this.sessionId);
 
     this.isSubmitting = true;
     this.examService.submitReading(submitData).subscribe({
       next: (result) => {
+        console.log('✅ Submit success:', result);
+        
+        // ✅ LƯU SUBMISSION ID VÀO SESSION
+        if (this.sessionId && result.submissionId) {
+          this.examService.savePartResult(this.sessionId, 'reading', result.submissionId).subscribe({
+            next: () => console.log('✅ Saved reading result to session'),
+            error: (err) => console.error('❌ Failed to save part result:', err)
+          });
+        }
+        
         const storageKey = 'reading_result_' + this.examId + '_' + this.userId;
         localStorage.setItem(storageKey, JSON.stringify(result));
-        localStorage.removeItem('reading_answers_' + this.examId);
+        localStorage.removeItem('reading_answers_' + this.examId + '_' + this.userId);
         
+        // ✅ QUAY LẠI FULL TEST VỚI QUERY PARAMS
         const returnUrl = this.fullTestId || this.examId;
         this.router.navigate(['/exam', returnUrl]);
       },

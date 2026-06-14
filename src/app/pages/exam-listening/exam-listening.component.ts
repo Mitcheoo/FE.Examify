@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
+﻿import { Component, inject, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -42,21 +42,43 @@ export class ExamListeningComponent implements OnInit, OnDestroy {
   isPlaying = false;
   private audioElement: HTMLAudioElement | null = null;
   
-  timeRemaining: number = 2400; // 40 phút = 2400 giây
+  timeRemaining: number = 2400;
   isSubmitting = false;
   private timerInterval: any;
   private examId: string = '';
   private fullTestId: string = '';
   private userId: string = '';
+  private sessionId: string = '';
+
+  showProgressPanel: boolean = true;
+  flatQuestions: ListeningQuestion[] = [];
 
   ngOnInit() {
     this.userId = this.authService.getCurrentUser()?.id || 'anonymous';
     
+    // ✅ LẤY SESSION ID TỪ QUERY PARAMS
+    this.route.queryParams.subscribe(params => {
+      if (params['sessionId']) {
+        this.sessionId = params['sessionId'];
+        console.log('📌 Listening received sessionId from queryParams:', this.sessionId);
+      }
+      if (params['fullTestId']) {
+        this.fullTestId = params['fullTestId'];
+        console.log('📌 Listening received fullTestId from queryParams:', this.fullTestId);
+      }
+    });
+    
+    // ✅ FALLBACK: Lấy từ navigation state (nếu có)
     const navigation = this.router.getCurrentNavigation();
-    const state = navigation?.extras?.state as { fullTestId?: string };
-    if (state?.fullTestId) {
+    const state = navigation?.extras?.state as { fullTestId?: string; sessionId?: string };
+    if (state?.sessionId && !this.sessionId) {
+      this.sessionId = state.sessionId;
+      console.log('📌 Listening received sessionId from state:', this.sessionId);
+    }
+    if (state?.fullTestId && !this.fullTestId) {
       this.fullTestId = state.fullTestId;
     }
+    
     if (!this.fullTestId && history.state?.fullTestId) {
       this.fullTestId = history.state.fullTestId;
     }
@@ -64,6 +86,8 @@ export class ExamListeningComponent implements OnInit, OnDestroy {
     this.route.params.subscribe(params => {
       this.examId = params['id'];
       console.log('🎧 Listening Exam ID:', this.examId);
+      console.log('🎧 Full Test ID:', this.fullTestId);
+      console.log('🎧 Session ID:', this.sessionId);
       this.loadExam();
     });
   }
@@ -73,21 +97,15 @@ export class ExamListeningComponent implements OnInit, OnDestroy {
       next: (data: any) => {
         console.log('✅ Raw Listening data:', data);
         
-        // Cấu trúc audio theo Part
-        // Part 1: 8 audio riêng (mỗi audio 1 câu)
-        // Part 2: 3 audio (mỗi audio 4 câu)
-        // Part 3: 3 audio (mỗi audio 5 câu)
-        
         const questions = data.questions || [];
-        
-        // Phân phối câu hỏi vào các audio
+        const baseAudioUrl = 'https://localhost:7241/uploads/audio';
         const audioItemsList: AudioItem[] = [];
         
         // Part 1: Câu 1-8 (8 audio, mỗi audio 1 câu)
         for (let i = 0; i < 8 && i < questions.length; i++) {
           audioItemsList.push({
             id: i + 1,
-            url: data.audioUrl || `assets/audio/part1_${i + 1}.mp3`,
+            url: baseAudioUrl + '/TESTEXAMIFY.mp3',
             played: false,
             partNumber: 1,
             questions: [this.parseQuestion(questions[i])]
@@ -100,7 +118,7 @@ export class ExamListeningComponent implements OnInit, OnDestroy {
           const partQuestions = questions.slice(startIdx, startIdx + 4).map((q: any) => this.parseQuestion(q));
           audioItemsList.push({
             id: 9 + i,
-            url: data.audioUrl || `assets/audio/part2_${i + 1}.mp3`,
+            url: baseAudioUrl + '/TESTEXAMIFY.mp3',
             played: false,
             partNumber: 2,
             questions: partQuestions
@@ -113,7 +131,7 @@ export class ExamListeningComponent implements OnInit, OnDestroy {
           const partQuestions = questions.slice(startIdx, startIdx + 5).map((q: any) => this.parseQuestion(q));
           audioItemsList.push({
             id: 12 + i,
-            url: data.audioUrl || `assets/audio/part3_${i + 1}.mp3`,
+            url: baseAudioUrl + '/TESTEXAMIFY.mp3',
             played: false,
             partNumber: 3,
             questions: partQuestions
@@ -121,6 +139,7 @@ export class ExamListeningComponent implements OnInit, OnDestroy {
         }
         
         this.audioItems = audioItemsList;
+        this.flatQuestions = audioItemsList.flatMap(a => a.questions);
         this.exam = {
           exerciseId: data.exerciseId,
           title: data.title,
@@ -151,7 +170,6 @@ export class ExamListeningComponent implements OnInit, OnDestroy {
         const parsed = typeof optsJson === 'string' ? JSON.parse(optsJson) : optsJson;
         options = Object.entries(parsed).map(([key, value]) => ({ key, value: value as string }));
       } else {
-        // Fallback cho cấu trúc OptionA, OptionB, OptionC, OptionD
         options = [
           { key: 'A', value: q.optionA || 'Option A' },
           { key: 'B', value: q.optionB || 'Option B' },
@@ -175,13 +193,11 @@ export class ExamListeningComponent implements OnInit, OnDestroy {
     const audioItem = this.audioItems.find(a => a.id === audioId);
     if (!audioItem) return;
     
-    // Kiểm tra đã nghe chưa - chỉ được nghe 1 lần
     if (audioItem.played) {
       alert('⚠️ Bạn chỉ được nghe audio này một lần duy nhất!');
       return;
     }
     
-    // Dừng audio đang phát
     if (this.audioElement) {
       this.audioElement.pause();
       this.isPlaying = false;
@@ -191,8 +207,6 @@ export class ExamListeningComponent implements OnInit, OnDestroy {
     this.audioElement = new Audio(audioItem.url);
     this.audioElement.play();
     this.isPlaying = true;
-    
-    // Đánh dấu đã nghe
     audioItem.played = true;
     
     this.audioElement.onended = () => {
@@ -225,7 +239,7 @@ export class ExamListeningComponent implements OnInit, OnDestroy {
   formatTime(seconds: number): string {
     const minutes = Math.floor(seconds / 60);
     const secs = seconds % 60;
-    return `${minutes}:${secs.toString().padStart(2, '0')}`;
+    return minutes + ':' + secs.toString().padStart(2, '0');
   }
 
   get answeredCount(): number {
@@ -235,6 +249,21 @@ export class ExamListeningComponent implements OnInit, OnDestroy {
   getPart1Audios() { return this.audioItems.filter(a => a.partNumber === 1); }
   getPart2Audios() { return this.audioItems.filter(a => a.partNumber === 2); }
   getPart3Audios() { return this.audioItems.filter(a => a.partNumber === 3); }
+
+  getFlatQuestions(): ListeningQuestion[] {
+    return this.flatQuestions;
+  }
+
+  scrollToQuestion(questionId: string) {
+    const element = document.getElementById('question-' + questionId);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }
+
+  toggleProgressPanel() {
+    this.showProgressPanel = !this.showProgressPanel;
+  }
 
   submitExam() {
     if (this.timerInterval) {
@@ -254,17 +283,30 @@ export class ExamListeningComponent implements OnInit, OnDestroy {
     const submitData = {
       exerciseId: this.examId,
       answers: answersDict,
-      timeSpentSeconds: totalTime
+      timeSpentSeconds: totalTime,
+      sessionId: this.sessionId
     };
 
     console.log('📤 Submitting Listening:', submitData);
+    console.log('📌 Session ID:', this.sessionId);
 
     this.isSubmitting = true;
     this.examService.submitListening(submitData).subscribe({
       next: (result) => {
         console.log('✅ Submit success:', result);
-        const storageKey = `listening_result_${this.examId}_${this.userId}`;
+        
+        // ✅ LƯU SUBMISSION ID VÀO SESSION
+        if (this.sessionId && result.submissionId) {
+          this.examService.savePartResult(this.sessionId, 'listening', result.submissionId).subscribe({
+            next: () => console.log('✅ Saved listening result to session'),
+            error: (err) => console.error('❌ Failed to save part result:', err)
+          });
+        }
+        
+        const storageKey = 'listening_result_' + this.examId + '_' + this.userId;
         localStorage.setItem(storageKey, JSON.stringify(result));
+        
+        // ✅ QUAY LẠI FULL TEST
         const returnUrl = this.fullTestId || this.examId;
         this.router.navigate(['/exam', returnUrl]);
       },

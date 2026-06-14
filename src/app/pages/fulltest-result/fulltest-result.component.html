@@ -1,0 +1,91 @@
+<div class="result-container">
+  <!-- Loading -->
+  <div class="loading-container" *ngIf="isLoading">
+    <div class="spinner"></div>
+    <p>Đang tải kết quả...</p>
+  </div>
+
+  <!-- Error -->
+  <div class="error-container" *ngIf="errorMessage">
+    <div class="error-icon">❌</div>
+    <p>{{ errorMessage }}</p>
+    <button class="btn-back" (click)="goBack()">← Quay lại</button>
+  </div>
+
+  <!-- Result -->
+  <div class="result-content" *ngIf="result && !isLoading">
+    <!-- Header -->
+    <div class="result-header">
+      <button class="btn-back" (click)="goBack()">← Quay lại</button>
+      <h1>📊 KẾT QUẢ FULL TEST</h1>
+      <div class="placeholder"></div>
+    </div>
+
+    <!-- Title -->
+    <div class="result-title">
+      <h2>{{ result.fullTestTitle }}</h2>
+      <p>Hoàn thành lúc: {{ formatDate(result.completedAt) }}</p>
+    </div>
+
+    <!-- Total Score Card -->
+    <div class="total-score-card">
+      <div class="total-score-circle">
+        <div class="total-score-value">{{ result.totalScore }}</div>
+        <div class="total-score-label">/10</div>
+      </div>
+      <div class="total-score-info">
+        <div class="vstep-band">🎖️ {{ result.vstepBand }}</div>
+        <div class="total-time">⏱️ Tổng thời gian: {{ formatTime(result.totalTimeSpentSeconds) }}</div>
+      </div>
+    </div>
+
+    <!-- Skills Grid -->
+    <div class="skills-grid">
+      <div class="skill-card" *ngFor="let skill of result.skills">
+        <div class="skill-header">
+          <span class="skill-icon">{{ getSkillIcon(skill.skillName) }}</span>
+          <h3>{{ skill.skillName }}</h3>
+          <span class="skill-status" [class.completed]="skill.status === 'completed'">
+            {{ skill.status === 'completed' ? '✅ Đã hoàn thành' : '⏳ Chưa làm' }}
+          </span>
+        </div>
+
+        <div class="skill-score" *ngIf="skill.status === 'completed'">
+          <div class="score-number">{{ skill.score }}/10</div>
+          <div class="progress-bar-container">
+            <div class="progress-bar">
+              <div class="progress-fill" 
+                   [style.width]="getScorePercent(skill.score) + '%'"
+                   [style.backgroundColor]="getSkillColor(skill.score)">
+              </div>
+            </div>
+          </div>
+          <div class="skill-stats">
+            <span>✅ Đúng: {{ skill.correctCount }}/{{ skill.totalQuestions }}</span>
+            <span>📅 {{ formatDate(skill.submittedAt) }}</span>
+          </div>
+        </div>
+
+        <div class="skill-pending" *ngIf="skill.status !== 'completed'">
+          <p>⚠️ Bạn chưa làm bài thi này</p>
+        </div>
+
+        <button class="btn-view-detail" 
+                (click)="viewSkillDetail(skill.skillType, skill.examId)"
+                [disabled]="skill.status !== 'completed'">
+          {{ skill.status === 'completed' ? '📋 Xem chi tiết' : '🔒 Chưa có dữ liệu' }}
+        </button>
+      </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="action-buttons">
+      <button class="btn-retake" (click)="retakeFullTest()">
+        🔄 Làm lại Full Test
+      </button>
+      <button class="btn-home" (click)="goBack()">
+        🏠 Về trang chính
+      </button>
+    </div>
+  </div>
+</div>

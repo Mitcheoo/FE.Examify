@@ -1,236 +1,176 @@
-import { Component, inject, OnInit, OnDestroy, ChangeDetectorRef, ElementRef, ViewChild } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, Router } from '@angular/router';
+import { RouterModule, Router, ActivatedRoute } from '@angular/router';
 import { ExamService } from '../../services/exam.service';
 import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'app-exam-speaking',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, RouterModule],
   templateUrl: './exam-speaking.component.html',
   styleUrls: ['./exam-speaking.component.scss']
 })
-export class ExamSpeakingComponent implements OnInit, OnDestroy {
-  private examService = inject(ExamService);
-  private route = inject(ActivatedRoute);
-  private router = inject(Router);
-  private cdr = inject(ChangeDetectorRef);
-  private authService = inject(AuthService);
-
-  @ViewChild('audioPlayer') audioPlayer!: ElementRef<HTMLAudioElement>;
-  @ViewChild('fileInput') fileInput!: ElementRef<HTMLInputElement>;
-
-  exam: any = null;
-  transcript: string = '';
-  audioFile: File | null = null;
-  audioUrl: string | null = null;
-  isRecording = false;
-  isPlaying = false;
-  mediaRecorder: MediaRecorder | null = null;
-  audioChunks: Blob[] = [];
-  timeRemaining: number = 1020;
-  isSubmitting = false;
-  private timerInterval: any;
-  private examId: string = '';
+export class ExamSpeakingComponent implements OnInit {
+  
+  examId: string = '';
+  userId: string = '';
+  isSubmitting: boolean = false;
   private fullTestId: string = '';
-  private userId: string = '';
+  private sessionId: string = '';
 
-  ngOnInit() {
+  constructor(
+    private router: Router,
+    private route: ActivatedRoute,
+    private examService: ExamService,
+    private authService: AuthService
+  ) { }
+
+  ngOnInit(): void {
+    console.log('🎙️ Speaking page loaded - Under development');
+    
     this.userId = this.authService.getCurrentUser()?.id || 'anonymous';
     
+    // ✅ LẤY SESSION ID TỪ QUERY PARAMS
+    this.route.queryParams.subscribe(params => {
+      if (params['sessionId']) {
+        this.sessionId = params['sessionId'];
+        console.log('📌 Speaking received sessionId from queryParams:', this.sessionId);
+      }
+      if (params['fullTestId']) {
+        this.fullTestId = params['fullTestId'];
+        console.log('📌 Speaking received fullTestId from queryParams:', this.fullTestId);
+      }
+    });
+    
+    // ✅ FALLBACK: Lấy từ navigation state (nếu có)
     const navigation = this.router.getCurrentNavigation();
-    const state = navigation?.extras?.state as { fullTestId?: string };
-    
-    if (state?.fullTestId) {
-      this.fullTestId = state.fullTestId;
+    const state = navigation?.extras?.state as { fullTestId?: string; sessionId?: string };
+    if (state?.sessionId && !this.sessionId) {
+      this.sessionId = state.sessionId;
+      console.log('📌 Speaking received sessionId from state:', this.sessionId);
     }
-    
-    if (!this.fullTestId && history.state?.fullTestId) {
-      this.fullTestId = history.state.fullTestId;
+    if (state?.fullTestId && !this.fullTestId) {
+      this.fullTestId = state.fullTestId;
     }
     
     this.route.params.subscribe(params => {
       this.examId = params['id'];
       console.log('🎙️ Speaking Exam ID:', this.examId);
-      console.log('📌 User ID:', this.userId);
-      console.log('📌 Full Test ID:', this.fullTestId);
-      this.loadExam();
+      console.log('🎙️ Full Test ID:', this.fullTestId);
+      console.log('🎙️ Session ID:', this.sessionId);
     });
-    
-    this.requestMicrophonePermission();
   }
 
-  async requestMicrophonePermission() {
-    try {
-      await navigator.mediaDevices.getUserMedia({ audio: true });
-      console.log('✅ Microphone permission granted');
-    } catch (err) {
-      console.error('❌ Microphone permission denied:', err);
+  goBack(): void {
+    window.history.back();
+  }
+
+  showNotification(): void {
+    alert('🔔 Chúng tôi sẽ thông báo khi tính năng Speaking sẵn sàng!');
+  }
+
+  // Hàm nộp bài mặc định - trả về 5 điểm
+  submitDefaultScore(): void {
+    if (this.isSubmitting) return;
+    
+    this.isSubmitting = true;
+    
+    // Tạo kết quả mặc định với 5 điểm
+    const defaultResult = {
+      submissionId: 'temp-' + Date.now(),
+      userId: this.userId,
+      exerciseId: this.examId,
+      exerciseTitle: 'Speaking Test (Demo)',
+      totalScore: 5,
+      totalQuestions: 3,
+      correctCount: 0,
+      timeSpentSeconds: 1800,
+      submittedAt: new Date().toISOString(),
+      details: [
+        {
+          orderNumber: 1,
+          questionText: 'Part 1: Introduction',
+          userAnswer: 'Demo answer - Feature under development',
+          isCorrect: false,
+          aiScore: 5,
+          aiFeedback: 'Tính năng đang phát triển. Điểm tạm thời: 5/10'
+        },
+        {
+          orderNumber: 2,
+          questionText: 'Part 2: Long Turn',
+          userAnswer: 'Demo answer - Feature under development',
+          isCorrect: false,
+          aiScore: 5,
+          aiFeedback: 'Tính năng đang phát triển. Điểm tạm thời: 5/10'
+        },
+        {
+          orderNumber: 3,
+          questionText: 'Part 3: Discussion',
+          userAnswer: 'Demo answer - Feature under development',
+          isCorrect: false,
+          aiScore: 5,
+          aiFeedback: 'Tính năng đang phát triển. Điểm tạm thời: 5/10'
+        }
+      ]
+    };
+
+    console.log('📤 Submitting default speaking result:', defaultResult);
+    console.log('📌 Session ID:', this.sessionId);
+    
+    // Lưu vào localStorage
+    const storageKey = 'speaking_result_' + this.examId + '_' + this.userId;
+    localStorage.setItem(storageKey, JSON.stringify(defaultResult));
+    
+    // ✅ LƯU SUBMISSION ID VÀO SESSION
+    if (this.sessionId) {
+      this.examService.savePartResult(this.sessionId, 'speaking', defaultResult.submissionId).subscribe({
+        next: () => {
+          console.log('✅ Saved speaking result to session');
+          // Sau khi lưu xong, submit Full Test
+          this.submitFullTestSession();
+        },
+        error: (err) => {
+          console.error('❌ Failed to save part result:', err);
+          this.submitFullTestSession(); // Vẫn submit kể cả lỗi
+        }
+      });
+    } else {
+      console.log('⚠️ No sessionId, skipping savePartResult');
+      this.submitFullTestSession();
     }
-  }
-
-  loadExam() {
-    console.log('🔄 Loading Speaking exam...');
-    this.examService.getSpeakingExam(this.examId).subscribe({
-      next: (data: any) => {
-        console.log('✅ Raw Speaking data:', data);
-        
-        this.exam = {
-          exerciseId: data.exerciseId,
-          title: data.title,
-          timeLimitSeconds: data.timeLimitSeconds || 1020,
-          parts: data.parts || [],
-          totalQuestions: data.totalQuestions
-        };
-        
-        console.log('✅ Parsed Speaking exam:', this.exam);
-        this.timeRemaining = this.exam.timeLimitSeconds;
-        
-        this.startTimer();
-        this.cdr.detectChanges();
-      },
-      error: (err) => {
-        console.error('❌ Error loading Speaking exam:', err);
-        alert('Không thể tải đề thi Speaking. Vui lòng thử lại!');
-      }
-    });
-  }
-
-  startTimer() {
-    console.log('🕐 Starting Speaking timer with:', this.timeRemaining);
     
-    this.timerInterval = setInterval(() => {
-      if (this.timeRemaining > 0) {
-        this.timeRemaining--;
-        this.cdr.detectChanges();
+    // Hiển thị thông báo
+    alert('🎉 Nộp bài thành công!\nĐiểm của bạn: 5/10\n(Tính năng đang phát triển, điểm tạm thời)');
+    
+    // Chuyển về trang trước
+    setTimeout(() => {
+      this.isSubmitting = false;
+      if (this.fullTestId) {
+        this.router.navigate(['/exam', this.fullTestId]);
       } else {
-        console.log('⏰ Time is up!');
-        this.submitExam();
+        this.goBack();
       }
     }, 1000);
   }
 
-  formatTime(seconds: number): string {
-    const minutes = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${minutes}:${secs.toString().padStart(2, '0')}`;
-  }
-
-  startRecording() {
-    if (this.isRecording) return;
-    
-    navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
-      this.mediaRecorder = new MediaRecorder(stream);
-      this.audioChunks = [];
-      
-      this.mediaRecorder.ondataavailable = (event) => {
-        this.audioChunks.push(event.data);
-      };
-      
-      this.mediaRecorder.onstop = () => {
-        const audioBlob = new Blob(this.audioChunks, { type: 'audio/wav' });
-        this.audioFile = new File([audioBlob], 'recording.wav', { type: 'audio/wav' });
-        this.audioUrl = URL.createObjectURL(audioBlob);
-        this.cdr.detectChanges();
-      };
-      
-      this.mediaRecorder.start();
-      this.isRecording = true;
-      console.log('🎙️ Recording started');
-    }).catch(err => {
-      console.error('Error accessing microphone:', err);
-      alert('Không thể truy cập microphone. Vui lòng kiểm tra quyền!');
-    });
-  }
-
-  stopRecording() {
-    if (this.mediaRecorder && this.isRecording) {
-      this.mediaRecorder.stop();
-      this.isRecording = false;
-      this.mediaRecorder.stream.getTracks().forEach(track => track.stop());
-      console.log('🎙️ Recording stopped');
-    }
-  }
-
-  playRecording() {
-    if (this.audioPlayer?.nativeElement && this.audioUrl) {
-      if (this.isPlaying) {
-        this.audioPlayer.nativeElement.pause();
-        this.isPlaying = false;
-      } else {
-        this.audioPlayer.nativeElement.play();
-        this.isPlaying = true;
-        this.audioPlayer.nativeElement.onended = () => {
-          this.isPlaying = false;
-          this.cdr.detectChanges();
-        };
-      }
-    }
-  }
-
-  uploadAudio() {
-    if (this.fileInput?.nativeElement) {
-      this.fileInput.nativeElement.click();
-    }
-  }
-
-  onFileSelected(event: Event) {
-    const input = event.target as HTMLInputElement;
-    if (input.files && input.files.length > 0) {
-      this.audioFile = input.files[0];
-      this.audioUrl = URL.createObjectURL(this.audioFile);
-      console.log('📁 Audio file selected:', this.audioFile.name);
-    }
-  }
-
-  submitExam() {
-    if (this.timerInterval) {
-      clearInterval(this.timerInterval);
-      this.timerInterval = null;
-    }
-
-    const totalTime = (this.exam?.timeLimitSeconds || 1020) - this.timeRemaining;
-
-    const submitData = new FormData();
-    submitData.append('exerciseId', this.examId);
-    submitData.append('transcript', this.transcript);
-    submitData.append('timeSpentSeconds', totalTime.toString());
-    
-    if (this.audioFile) {
-      submitData.append('audioFile', this.audioFile);
-    }
-
-    console.log('📤 Submitting Speaking...');
-
-    this.isSubmitting = true;
-    this.examService.submitSpeaking(submitData).subscribe({
-      next: (result) => {
-        console.log('✅ Submit success:', result);
-        
-        const storageKey = `speaking_result_${this.examId}_${this.userId}`;
-        localStorage.setItem(storageKey, JSON.stringify(result));
-        console.log('💾 Saved to:', storageKey);
-        
-        const returnUrl = this.fullTestId || this.examId;
-        this.router.navigate(['/exam', returnUrl]);
-      },
-      error: (err) => {
-        console.error('❌ Submit error:', err);
-        alert('Có lỗi xảy ra khi nộp bài. Vui lòng thử lại!');
-        this.isSubmitting = false;
-      }
-    });
-  }
-
-  ngOnDestroy() {
-    if (this.timerInterval) {
-      clearInterval(this.timerInterval);
-    }
-    if (this.mediaRecorder && this.isRecording) {
-      this.mediaRecorder.stop();
-      this.mediaRecorder.stream.getTracks().forEach(track => track.stop());
+  // ✅ HOÀN THÀNH FULL TEST
+  submitFullTestSession() {
+    if (this.sessionId) {
+      console.log('📤 Submitting Full Test session:', this.sessionId);
+      this.examService.submitFullTest(this.sessionId).subscribe({
+        next: (result) => {
+          console.log('✅ Full Test completed! Score:', result.totalScore);
+          // Lưu kết quả Full Test vào localStorage
+          const fullTestKey = 'fulltest_result_' + this.fullTestId + '_' + this.userId;
+          localStorage.setItem(fullTestKey, JSON.stringify(result));
+        },
+        error: (err) => {
+          console.error('❌ Failed to submit Full Test:', err);
+        }
+      });
+    } else {
+      console.log('⚠️ No sessionId, cannot submit Full Test');
     }
   }
 }

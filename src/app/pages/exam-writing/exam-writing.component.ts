@@ -5,6 +5,16 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { ExamService } from '../../services/exam.service';
 import { AuthService } from '../../services/auth.service';
 
+interface WritingQuestion {
+  id: string;
+  orderNumber: number;
+  taskType: number;
+  promptText: string;
+  minWords: number;
+  maxWords: number;
+  recommendedTimeMinutes: number;
+}
+
 @Component({
   selector: 'app-exam-writing',
   standalone: true,
@@ -20,24 +30,40 @@ export class ExamWritingComponent implements OnInit, OnDestroy {
   private authService = inject(AuthService);
 
   exam: any = null;
-  essayText: string = '';
+  questions: WritingQuestion[] = [];
+  answers: Record<string, string> = {};
+  wordCounts: Record<string, number> = {};
   timeRemaining: number = 3600;
   isSubmitting = false;
-  wordCount: number = 0;
   private timerInterval: any;
   private examId: string = '';
   private fullTestId: string = '';
   private userId: string = '';
-  private currentTaskIndex: number = 0;
-  private tasks: any[] = [];
+  private sessionId: string = '';
 
   ngOnInit() {
     this.userId = this.authService.getCurrentUser()?.id || 'anonymous';
     
-    const navigation = this.router.getCurrentNavigation();
-    const state = navigation?.extras?.state as { fullTestId?: string };
+    // ✅ LẤY SESSION ID TỪ QUERY PARAMS
+    this.route.queryParams.subscribe(params => {
+      if (params['sessionId']) {
+        this.sessionId = params['sessionId'];
+        console.log('📌 Writing received sessionId from queryParams:', this.sessionId);
+      }
+      if (params['fullTestId']) {
+        this.fullTestId = params['fullTestId'];
+        console.log('📌 Writing received fullTestId from queryParams:', this.fullTestId);
+      }
+    });
     
-    if (state?.fullTestId) {
+    // ✅ FALLBACK: Lấy từ navigation state (nếu có)
+    const navigation = this.router.getCurrentNavigation();
+    const state = navigation?.extras?.state as { fullTestId?: string; sessionId?: string };
+    if (state?.sessionId && !this.sessionId) {
+      this.sessionId = state.sessionId;
+      console.log('📌 Writing received sessionId from state:', this.sessionId);
+    }
+    if (state?.fullTestId && !this.fullTestId) {
       this.fullTestId = state.fullTestId;
     }
     
@@ -48,9 +74,10 @@ export class ExamWritingComponent implements OnInit, OnDestroy {
     this.route.params.subscribe(params => {
       this.examId = params['id'];
       console.log('✍️ Writing Exam ID:', this.examId);
-      console.log('📌 User ID:', this.userId);
-      console.log('📌 Full Test ID:', this.fullTestId);
+      console.log('✍️ Full Test ID:', this.fullTestId);
+      console.log('✍️ Session ID:', this.sessionId);
       this.loadExam();
+      this.loadSavedAnswers();
     });
   }
 
@@ -60,18 +87,27 @@ export class ExamWritingComponent implements OnInit, OnDestroy {
       next: (data: any) => {
         console.log('✅ Raw Writing data:', data);
         
-        this.tasks = data.tasks || [];
+        this.questions = data.questions || [];
+        
+        this.questions.forEach((q: WritingQuestion) => {
+          if (!this.answers[q.id]) {
+            this.answers[q.id] = '';
+            this.wordCounts[q.id] = 0;
+          }
+        });
+        
         this.exam = {
           exerciseId: data.exerciseId,
           title: data.title,
           timeLimitSeconds: data.timeLimitSeconds || 3600,
-          tasks: this.tasks,
-          totalQuestions: data.totalQuestions
+          questions: this.questions,
+          totalQuestions: this.questions.length
         };
         
         console.log('✅ Parsed Writing exam:', this.exam);
-        this.timeRemaining = this.exam.timeLimitSeconds;
+        console.log('✅ Questions:', this.questions.length);
         
+        this.timeRemaining = this.exam.timeLimitSeconds;
         this.startTimer();
         this.cdr.detectChanges();
       },
@@ -82,13 +118,69 @@ export class ExamWritingComponent implements OnInit, OnDestroy {
     });
   }
 
+  loadSavedAnswers() {
+    const key = 'writing_answers_' + this.examId + '_' + this.userId;
+    const saved = localStorage.getItem(key);
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        this.answers = parsed.answers || {};
+        Object.keys(this.answers).forEach(questionId => {
+          this.updateWordCount(questionId);
+        });
+        console.log('📦 Loaded saved answers:', Object.keys(this.answers).length);
+      } catch(e) {
+        console.error('Error loading saved answers:', e);
+      }
+    }
+  }
+
+  saveAnswersToLocal() {
+    const key = 'writing_answers_' + this.examId + '_' + this.userId;
+    const toSave = {
+      answers: this.answers,
+      savedAt: new Date().toISOString()
+    };
+    localStorage.setItem(key, JSON.stringify(toSave));
+  }
+
+  updateWordCount(questionId: string) {
+    const text = this.answers[questionId] || '';
+    if (text) {
+      this.wordCounts[questionId] = text.trim().split(/\s+/).filter(function(w) { return w.length > 0; }).length;
+    } else {
+      this.wordCounts[questionId] = 0;
+    }
+    this.saveAnswersToLocal();
+  }
+
+  getWordCount(questionId: string): number {
+    return this.wordCounts[questionId] || 0;
+  }
+
+  getMinWords(question: WritingQuestion): number {
+    return question.minWords || 150;
+  }
+
+  getMaxWords(question: WritingQuestion): number {
+    return question.maxWords || 300;
+  }
+
+  isWordCountValid(questionId: string): boolean {
+    const question = this.questions.find(function(q) { return q.id === questionId; });
+    if (!question) { return true; }
+    const wordCount = this.getWordCount(questionId);
+    const minWords = this.getMinWords(question);
+    const maxWords = this.getMaxWords(question);
+    return wordCount >= minWords && wordCount <= maxWords;
+  }
+
   startTimer() {
     console.log('🕐 Starting Writing timer with:', this.timeRemaining);
     
     this.timerInterval = setInterval(() => {
       if (this.timeRemaining > 0) {
         this.timeRemaining--;
-        this.updateWordCount();
         this.cdr.detectChanges();
       } else {
         console.log('⏰ Time is up!');
@@ -97,27 +189,27 @@ export class ExamWritingComponent implements OnInit, OnDestroy {
     }, 1000);
   }
 
-  updateWordCount() {
-    if (this.essayText) {
-      this.wordCount = this.essayText.trim().split(/\s+/).filter(w => w.length > 0).length;
-    } else {
-      this.wordCount = 0;
-    }
-  }
-
   formatTime(seconds: number): string {
     const minutes = Math.floor(seconds / 60);
     const secs = seconds % 60;
-    return `${minutes}:${secs.toString().padStart(2, '0')}`;
+    return minutes + ':' + (secs < 10 ? '0' : '') + secs;
   }
 
   getTaskTypeName(taskType: number): string {
-    const types: any = {
-      0: 'Letter',
-      1: 'Essay',
-      2: 'Report'
-    };
-    return types[taskType] || 'Writing Task';
+    if (taskType === 1 || taskType === 0) {
+      return 'Letter';
+    }
+    return 'Essay';
+  }
+
+  get answeredCount(): number {
+    let count = 0;
+    for (const key in this.answers) {
+      if (this.answers[key] && this.answers[key].trim().length > 0) {
+        count++;
+      }
+    }
+    return count;
   }
 
   submitExam() {
@@ -127,24 +219,43 @@ export class ExamWritingComponent implements OnInit, OnDestroy {
     }
 
     const totalTime = (this.exam?.timeLimitSeconds || 3600) - this.timeRemaining;
+    
+    const answersDict: Record<string, string> = {};
+    this.questions.forEach((q: WritingQuestion) => {
+      if (this.answers[q.id] && this.answers[q.id].trim()) {
+        answersDict[q.id] = this.answers[q.id];
+      }
+    });
 
     const submitData = {
       exerciseId: this.examId,
-      essayText: this.essayText,
-      timeSpentSeconds: totalTime
+      answers: answersDict,
+      timeSpentSeconds: totalTime,
+      sessionId: this.sessionId
     };
 
     console.log('📤 Submitting Writing:', submitData);
+    console.log('📤 Answers count:', Object.keys(answersDict).length);
+    console.log('📌 Session ID:', this.sessionId);
 
     this.isSubmitting = true;
     this.examService.submitWriting(submitData).subscribe({
       next: (result) => {
         console.log('✅ Submit success:', result);
         
-        const storageKey = `writing_result_${this.examId}_${this.userId}`;
-        localStorage.setItem(storageKey, JSON.stringify(result));
-        console.log('💾 Saved to:', storageKey);
+        // ✅ LƯU SUBMISSION ID VÀO SESSION
+        if (this.sessionId && result.submissionId) {
+          this.examService.savePartResult(this.sessionId, 'writing', result.submissionId).subscribe({
+            next: () => console.log('✅ Saved writing result to session'),
+            error: (err) => console.error('❌ Failed to save part result:', err)
+          });
+        }
         
+        const storageKey = 'writing_result_' + this.examId + '_' + this.userId;
+        localStorage.setItem(storageKey, JSON.stringify(result));
+        localStorage.removeItem('writing_answers_' + this.examId + '_' + this.userId);
+        
+        // ✅ QUAY LẠI FULL TEST
         const returnUrl = this.fullTestId || this.examId;
         this.router.navigate(['/exam', returnUrl]);
       },
@@ -160,5 +271,6 @@ export class ExamWritingComponent implements OnInit, OnDestroy {
     if (this.timerInterval) {
       clearInterval(this.timerInterval);
     }
+    this.saveAnswersToLocal();
   }
 }
