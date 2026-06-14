@@ -13,6 +13,7 @@ import { DashboardComponent } from './pages/dashboard/dashboard.component';
 import { AdminDashboardComponent } from './pages/admin/admin-dashboard.component';
 import { authGuard } from './guards/auth.guard';
 import { adminGuard } from './guards/admin.guard';
+import { FulltestResultComponent } from './pages/fulltest-result/fulltest-result.component';
 
 export const routes: Routes = [
   { path: '', component: HomeComponent },
@@ -27,5 +28,6 @@ export const routes: Routes = [
   { path: 'exam/:id/writing', component: ExamWritingComponent, canActivate: [authGuard] },
   { path: 'exam/:id/speaking', component: ExamSpeakingComponent, canActivate: [authGuard] },
   { path: 'admin', component: AdminDashboardComponent, canActivate: [authGuard, adminGuard] },
+  { path: 'fulltest/:id/result', component: FulltestResultComponent, canActivate: [authGuard] },
   { path: '**', redirectTo: '' }
 ];

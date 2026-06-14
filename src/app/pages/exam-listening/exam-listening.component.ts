@@ -38,10 +38,8 @@ export class ExamListeningComponent implements OnInit, OnDestroy {
   exam: any = null;
   audioItems: AudioItem[] = [];
   answers: Record<string, string> = {};
-  flatQuestions: ListeningQuestion[] = [];
   currentPlayingAudio: number | null = null;
   isPlaying = false;
-  showProgressPanel: boolean = true;
   private audioElement: HTMLAudioElement | null = null;
   
   timeRemaining: number = 2400;
@@ -50,15 +48,37 @@ export class ExamListeningComponent implements OnInit, OnDestroy {
   private examId: string = '';
   private fullTestId: string = '';
   private userId: string = '';
+  private sessionId: string = '';
+
+  showProgressPanel: boolean = true;
+  flatQuestions: ListeningQuestion[] = [];
 
   ngOnInit() {
     this.userId = this.authService.getCurrentUser()?.id || 'anonymous';
     
+    // ✅ LẤY SESSION ID TỪ QUERY PARAMS
+    this.route.queryParams.subscribe(params => {
+      if (params['sessionId']) {
+        this.sessionId = params['sessionId'];
+        console.log('📌 Listening received sessionId from queryParams:', this.sessionId);
+      }
+      if (params['fullTestId']) {
+        this.fullTestId = params['fullTestId'];
+        console.log('📌 Listening received fullTestId from queryParams:', this.fullTestId);
+      }
+    });
+    
+    // ✅ FALLBACK: Lấy từ navigation state (nếu có)
     const navigation = this.router.getCurrentNavigation();
-    const state = navigation?.extras?.state as { fullTestId?: string };
-    if (state?.fullTestId) {
+    const state = navigation?.extras?.state as { fullTestId?: string; sessionId?: string };
+    if (state?.sessionId && !this.sessionId) {
+      this.sessionId = state.sessionId;
+      console.log('📌 Listening received sessionId from state:', this.sessionId);
+    }
+    if (state?.fullTestId && !this.fullTestId) {
       this.fullTestId = state.fullTestId;
     }
+    
     if (!this.fullTestId && history.state?.fullTestId) {
       this.fullTestId = history.state.fullTestId;
     }
@@ -66,12 +86,10 @@ export class ExamListeningComponent implements OnInit, OnDestroy {
     this.route.params.subscribe(params => {
       this.examId = params['id'];
       console.log('🎧 Listening Exam ID:', this.examId);
+      console.log('🎧 Full Test ID:', this.fullTestId);
+      console.log('🎧 Session ID:', this.sessionId);
       this.loadExam();
     });
-  }
-
-  toggleProgressPanel() {
-    this.showProgressPanel = !this.showProgressPanel;
   }
 
   loadExam() {
@@ -83,6 +101,7 @@ export class ExamListeningComponent implements OnInit, OnDestroy {
         const baseAudioUrl = 'https://localhost:7241/uploads/audio';
         const audioItemsList: AudioItem[] = [];
         
+        // Part 1: Câu 1-8 (8 audio, mỗi audio 1 câu)
         for (let i = 0; i < 8 && i < questions.length; i++) {
           audioItemsList.push({
             id: i + 1,
@@ -93,6 +112,7 @@ export class ExamListeningComponent implements OnInit, OnDestroy {
           });
         }
         
+        // Part 2: Câu 9-20 (3 audio, mỗi audio 4 câu)
         for (let i = 0; i < 3; i++) {
           const startIdx = 8 + i * 4;
           const partQuestions = questions.slice(startIdx, startIdx + 4).map((q: any) => this.parseQuestion(q));
@@ -105,6 +125,7 @@ export class ExamListeningComponent implements OnInit, OnDestroy {
           });
         }
         
+        // Part 3: Câu 21-35 (3 audio, mỗi audio 5 câu)
         for (let i = 0; i < 3; i++) {
           const startIdx = 20 + i * 5;
           const partQuestions = questions.slice(startIdx, startIdx + 5).map((q: any) => this.parseQuestion(q));
@@ -129,7 +150,6 @@ export class ExamListeningComponent implements OnInit, OnDestroy {
         
         console.log('✅ Parsed Listening exam:', this.exam);
         console.log('✅ Audio items:', this.audioItems.length);
-        console.log('✅ Total questions:', this.flatQuestions.length);
         
         this.timeRemaining = this.exam.timeLimitSeconds;
         this.startTimer();
@@ -140,17 +160,6 @@ export class ExamListeningComponent implements OnInit, OnDestroy {
         alert('Không thể tải đề thi Listening. Vui lòng thử lại!');
       }
     });
-  }
-
-  getFlatQuestions(): ListeningQuestion[] {
-    return this.flatQuestions;
-  }
-
-  scrollToQuestion(questionId: string) {
-    const element = document.getElementById('question-' + questionId);
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }
   }
 
   parseQuestion(q: any): ListeningQuestion {
@@ -241,6 +250,21 @@ export class ExamListeningComponent implements OnInit, OnDestroy {
   getPart2Audios() { return this.audioItems.filter(a => a.partNumber === 2); }
   getPart3Audios() { return this.audioItems.filter(a => a.partNumber === 3); }
 
+  getFlatQuestions(): ListeningQuestion[] {
+    return this.flatQuestions;
+  }
+
+  scrollToQuestion(questionId: string) {
+    const element = document.getElementById('question-' + questionId);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }
+
+  toggleProgressPanel() {
+    this.showProgressPanel = !this.showProgressPanel;
+  }
+
   submitExam() {
     if (this.timerInterval) {
       clearInterval(this.timerInterval);
@@ -259,17 +283,30 @@ export class ExamListeningComponent implements OnInit, OnDestroy {
     const submitData = {
       exerciseId: this.examId,
       answers: answersDict,
-      timeSpentSeconds: totalTime
+      timeSpentSeconds: totalTime,
+      sessionId: this.sessionId
     };
 
     console.log('📤 Submitting Listening:', submitData);
+    console.log('📌 Session ID:', this.sessionId);
 
     this.isSubmitting = true;
     this.examService.submitListening(submitData).subscribe({
       next: (result) => {
         console.log('✅ Submit success:', result);
+        
+        // ✅ LƯU SUBMISSION ID VÀO SESSION
+        if (this.sessionId && result.submissionId) {
+          this.examService.savePartResult(this.sessionId, 'listening', result.submissionId).subscribe({
+            next: () => console.log('✅ Saved listening result to session'),
+            error: (err) => console.error('❌ Failed to save part result:', err)
+          });
+        }
+        
         const storageKey = 'listening_result_' + this.examId + '_' + this.userId;
         localStorage.setItem(storageKey, JSON.stringify(result));
+        
+        // ✅ QUAY LẠI FULL TEST
         const returnUrl = this.fullTestId || this.examId;
         this.router.navigate(['/exam', returnUrl]);
       },
