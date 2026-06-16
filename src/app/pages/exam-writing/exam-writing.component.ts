@@ -243,13 +243,7 @@ export class ExamWritingComponent implements OnInit, OnDestroy {
       next: (result) => {
         console.log('✅ Submit success:', result);
         
-        // ✅ LƯU SUBMISSION ID VÀO SESSION
-        if (this.sessionId && result.submissionId) {
-          this.examService.savePartResult(this.sessionId, 'writing', result.submissionId).subscribe({
-            next: () => console.log('✅ Saved writing result to session'),
-            error: (err) => console.error('❌ Failed to save part result:', err)
-          });
-        }
+  
         
         const storageKey = 'writing_result_' + this.examId + '_' + this.userId;
         localStorage.setItem(storageKey, JSON.stringify(result));

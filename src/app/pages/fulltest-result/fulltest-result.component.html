@@ -6,14 +6,14 @@
   </div>
 
   <!-- Error -->
-  <div class="error-container" *ngIf="errorMessage">
+  <div class="error-container" *ngIf="!isLoading && errorMessage">
     <div class="error-icon">❌</div>
     <p>{{ errorMessage }}</p>
     <button class="btn-back" (click)="goBack()">← Quay lại</button>
   </div>
 
   <!-- Result -->
-  <div class="result-content" *ngIf="result && !isLoading">
+  <div class="result-content" *ngIf="result && !isLoading && !errorMessage">
     <!-- Header -->
     <div class="result-header">
       <button class="btn-back" (click)="goBack()">← Quay lại</button>
@@ -24,7 +24,32 @@
     <!-- Title -->
     <div class="result-title">
       <h2>{{ result.fullTestTitle }}</h2>
-      <p>Hoàn thành lúc: {{ formatDate(result.completedAt) }}</p>
+      <p>Hoàn thành lúc: {{ getCompletionDate() }}</p>
+    </div>
+
+    <!-- Summary Stats -->
+    <div class="summary-stats">
+      <div class="stat-card">
+        <div class="stat-icon">📝</div>
+        <div class="stat-content">
+          <div class="stat-value">{{ getCompletedSkills() }}/4</div>
+          <div class="stat-label">Kỹ năng đã làm</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">✅</div>
+        <div class="stat-content">
+          <div class="stat-value">{{ getTotalCorrect() }}/{{ getTotalQuestions() }}</div>
+          <div class="stat-label">Câu đúng</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">⏱️</div>
+        <div class="stat-content">
+          <div class="stat-value">{{ formatTime(result.totalTimeSpentSeconds) }}</div>
+          <div class="stat-label">Tổng thời gian</div>
+        </div>
+      </div>
     </div>
 
     <!-- Total Score Card -->
@@ -35,13 +60,14 @@
       </div>
       <div class="total-score-info">
         <div class="vstep-band">🎖️ {{ result.vstepBand }}</div>
-        <div class="total-time">⏱️ Tổng thời gian: {{ formatTime(result.totalTimeSpentSeconds) }}</div>
+        <div class="vstep-level">📊 Cấp độ: Bậc {{ result.vstepLevel }}</div>
+        <div class="score-text">📈 {{ getScoreText(result.totalScore) }}</div>
       </div>
     </div>
 
     <!-- Skills Grid -->
     <div class="skills-grid">
-      <div class="skill-card" *ngFor="let skill of result.skills">
+      <div class="skill-card" *ngFor="let skill of result.skills" [class]="getSkillColorClass(skill.score)">
         <div class="skill-header">
           <span class="skill-icon">{{ getSkillIcon(skill.skillName) }}</span>
           <h3>{{ skill.skillName }}</h3>
@@ -62,7 +88,7 @@
           </div>
           <div class="skill-stats">
             <span>✅ Đúng: {{ skill.correctCount }}/{{ skill.totalQuestions }}</span>
-            <span>📅 {{ formatDate(skill.submittedAt) }}</span>
+            <span>⏱️ {{ formatTime(skill.timeSpentSeconds) }}</span>
           </div>
         </div>
 

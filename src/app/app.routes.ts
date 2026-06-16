@@ -28,6 +28,14 @@ export const routes: Routes = [
   { path: 'exam/:id/listening', component: ExamListeningComponent, canActivate: [authGuard] },
   { path: 'exam/:id/writing', component: ExamWritingComponent, canActivate: [authGuard] },
   { path: 'exam/:id/speaking', component: ExamSpeakingComponent, canActivate: [authGuard] },
+  
+  // ✅ THÊM ROUTE NÀY - Đặt TRƯỚC route admin
+  { 
+    path: 'fulltest/:id/result', 
+    component: FulltestResultComponent, 
+    canActivate: [authGuard] 
+  },
+  
   {
     path: 'admin',
     component: AdminDashboardLayoutComponent,

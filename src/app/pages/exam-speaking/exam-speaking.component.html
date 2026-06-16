@@ -1,62 +1,116 @@
 <div class="speaking-container">
-  <!-- Header -->
   <div class="speaking-header">
-    <button class="back-btn" (click)="goBack()">
-      ← Quay lại
-    </button>
-    <h1>🎙️ Speaking Skill</h1>
-    <div class="placeholder"></div>
+    <div class="header-content">
+      <h2>🎙️ Speaking Test</h2>
+      <p>{{ questions.length }} câu hỏi</p>
+    </div>
+    <div class="progress-section">
+      <div class="progress-bar">
+        <div class="progress-fill" [style.width.%]="getProgressPercent()"></div>
+      </div>
+      <span class="progress-text">{{ getProgressPercent() }}% hoàn thành</span>
+    </div>
   </div>
 
-  <!-- Main Content -->
-  <div class="speaking-main">
-    <div class="development-card">
-      <div class="dev-icon">🚧</div>
-      <h2>Tính năng đang phát triển</h2>
-      <p>Chức năng luyện tập Speaking đang được đội ngũ phát triển hoàn thiện.</p>
-      <p>Vui lòng quay lại sau!</p>
+  <div class="question-section" *ngIf="questions.length > 0">
+    <div class="question-nav">
+      <button class="nav-btn" (click)="prevQuestion()" [disabled]="currentQuestionIndex === 0">◀</button>
+      <span class="question-counter">Câu {{ currentQuestionIndex + 1 }}/{{ questions.length }}</span>
+      <button class="nav-btn" (click)="nextQuestion()" [disabled]="currentQuestionIndex === questions.length - 1">▶</button>
+    </div>
+
+    <div class="question-card">
+      <div class="question-number">Part {{ getPartNumber(questions[currentQuestionIndex]) }}</div>
+      <h3 class="question-text">{{ questions[currentQuestionIndex]?.questionText }}</h3>
       
-      <div class="progress-bar-container">
-        <div class="progress-label">Tiến độ phát triển</div>
-        <div class="progress-bar">
-          <div class="progress-fill" style="width: 45%"></div>
+      <div class="time-info">
+        <span class="time-badge">⏱️ Chuẩn bị: {{ questions[currentQuestionIndex]?.preparationTime || 30 }}s</span>
+        <span class="time-badge">🎤 Nói: {{ questions[currentQuestionIndex]?.speakingTime || 60 }}s</span>
+      </div>
+
+      <!-- Timer -->
+      <div class="timer-display" *ngIf="isRecording || isPreparing">
+        <div class="timer-circle" [class.warning]="getTimeRemaining() <= 10">
+          <span class="timer-value">{{ getTimerDisplay() }}</span>
+          <span class="timer-label">{{ isPreparing ? 'Chuẩn bị' : 'Đang nói' }}</span>
         </div>
-        <div class="progress-percent">45%</div>
       </div>
 
-      <div class="features-list">
-        <h3>📋 Các tính năng sẽ có trong tương lai:</h3>
-        <ul>
-          <li>🎤 Ghi âm câu trả lời trực tiếp</li>
-          <li>🤖 AI chấm điểm phát âm và ngữ điệu</li>
-          <li>📝 Transcript câu trả lời</li>
-          <li>📊 Đánh giá chi tiết theo tiêu chí VSTEP</li>
-          <li>💡 Gợi ý cải thiện từ vựng và ngữ pháp</li>
-          <li>🎯 Luyện tập theo chủ đề thường gặp</li>
-        </ul>
+      <!-- Transcript Input -->
+      <div class="transcript-section">
+        <label for="transcript">📝 Nội dung bài nói (Transcript):</label>
+        <textarea 
+          id="transcript"
+          class="transcript-input"
+          [value]="getCurrentTranscript()"
+          (input)="updateTranscript($event)"
+          placeholder="Nhập nội dung bạn đã nói (transcript)..."
+          rows="4"
+          [disabled]="isSubmitting">
+        </textarea>
+        <div class="transcript-hint">
+          <span>💡 Bạn có thể nhập transcript thủ công hoặc để trống (sẽ được xử lý tự động)</span>
+        </div>
       </div>
 
-      <div class="coming-soon">
-        <span class="blink">✨</span> Dự kiến hoàn thành: Quý 3/2026 <span class="blink">✨</span>
-      </div>
-
-      <div class="demo-buttons">
-        <button class="btn-notify" (click)="showNotification()">
-          🔔 Nhận thông báo khi có
+      <div class="recording-controls">
+        <!-- Chưa ghi âm -->
+        <button 
+          *ngIf="!isRecording && !audioBlobs[questions[currentQuestionIndex]?.id]"
+          class="btn-record" 
+          (click)="startRecording()"
+          [disabled]="isPreparing">
+          🎙️ Bắt đầu ghi âm
         </button>
-        <button class="btn-submit-demo" (click)="submitDefaultScore()" [disabled]="isSubmitting">
-          {{ isSubmitting ? 'Đang nộp...' : '📤 Nộp bài (Demo - 5 điểm)' }}
-        </button>
-      </div>
 
-      <div class="demo-note">
-        ⚠️ *Hiện tại chức năng đang phát triển, nhấn "Nộp bài" sẽ được 5 điểm tạm thời
+        <!-- Đang ghi âm -->
+        <button 
+          *ngIf="isRecording"
+          class="btn-stop" 
+          (click)="stopRecording()">
+          ⏹️ Dừng ghi âm
+        </button>
+
+        <!-- Đã ghi âm -->
+        <div *ngIf="audioBlobs[questions[currentQuestionIndex]?.id]" class="audio-controls">
+          <div class="audio-status">
+            <span class="status-icon">✅</span>
+            <span class="status-text">Đã ghi âm</span>
+          </div>
+          <button class="btn-play" (click)="playRecording()" [disabled]="isPlaying">
+            {{ isPlaying ? '⏳ Đang phát...' : '▶️ Nghe lại' }}
+          </button>
+          <audio #audioPlayer (ended)="onAudioEnded()"></audio>
+        </div>
+
+        <!-- Trạng thái câu hỏi -->
+        <div class="question-status">
+          <span class="status-badge" [class.completed]="getQuestionStatusText(currentQuestionIndex) === '✅ Đã ghi âm'">
+            {{ getQuestionStatusText(currentQuestionIndex) }}
+          </span>
+        </div>
       </div>
     </div>
 
-    <!-- Decorative circles -->
-    <div class="decoration circle-1"></div>
-    <div class="decoration circle-2"></div>
-    <div class="decoration circle-3"></div>
+    <!-- Danh sách câu hỏi -->
+    <div class="question-list">
+      <div *ngFor="let q of questions; let i = index" 
+           class="question-dot" 
+           [class.active]="i === currentQuestionIndex"
+           [class.completed]="audioBlobs[q.id]"
+           (click)="currentQuestionIndex = i">
+        {{ i + 1 }}
+      </div>
+    </div>
+  </div>
+
+  <div class="actions">
+    <button class="btn-back" (click)="goBack()">← Quay lại</button>
+    <button 
+      class="btn-submit" 
+      (click)="submitSpeaking()" 
+      [disabled]="isSubmitting">
+      {{ isProcessing ? '⏳ Đang xử lý...' : '📤 Nộp bài' }}
+    </button>
   </div>
 </div>

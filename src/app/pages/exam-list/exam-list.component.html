@@ -1,28 +1,91 @@
-﻿<div class="exam-list-container">
-  <div class="page-header">
-    <h1>📚 Danh sách đề thi VSTEP</h1>
-    <p>Chọn đề thi phù hợp với trình độ của bạn</p>
-  </div>
+﻿<div class="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+  <!-- Header -->
+  <app-header></app-header>
 
-  <div class="loading" *ngIf="isLoading">
-    <div class="spinner"></div>
-    <p>Đang tải đề thi...</p>
-  </div>
-
-  <div class="exam-grid" *ngIf="!isLoading && filteredExams.length > 0">
-    <div class="exam-card" *ngFor="let exam of filteredExams" (click)="onExamClick(exam)">
-      <div class="exam-card-content">
-        <h3>{{ exam.title }}</h3>
-        <p>{{ exam.description || 'Đề thi đầy đủ 4 kỹ năng Reading, Listening, Writing, Speaking' }}</p>
-        <div class="exam-meta">
-          <span class="price">{{ (exam.price || 15000).toLocaleString() }}đ</span>
-        </div>
-        <button class="btn-start">Bắt đầu</button>
-      </div>
+  <!-- Page Header -->
+  <div class="bg-gradient-to-r from-indigo-600 to-purple-600 text-white py-12">
+    <div class="container mx-auto px-4 text-center">
+      <h1 class="text-3xl md:text-4xl font-bold mb-2">
+        📚 Danh sách đề thi <span class="text-yellow-300">VSTEP</span>
+      </h1>
+      <p class="text-indigo-100">
+        Chọn đề thi phù hợp với trình độ của bạn để bắt đầu luyện tập
+      </p>
     </div>
   </div>
 
-  <div class="empty-state" *ngIf="!isLoading && filteredExams.length === 0">
-    <p>Không tìm thấy đề thi phù hợp</p>
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="flex flex-col items-center justify-center py-16">
+    <div class="w-12 h-12 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin mb-3"></div>
+    <p class="text-gray-500">Đang tải đề thi...</p>
   </div>
+
+  <!-- Exam Grid -->
+  <div class="container mx-auto px-4 py-10">
+    <div *ngIf="!isLoading && filteredExams.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div *ngFor="let exam of filteredExams" 
+           class="bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 cursor-pointer overflow-hidden group"
+           (click)="onExamClick(exam)">
+        
+        <!-- Colored top bar -->
+        <div class="h-1.5 bg-gradient-to-r from-indigo-500 to-purple-500"></div>
+        
+        <div class="p-5">
+          <!-- Badge và icon -->
+          <div class="flex justify-between items-start mb-3">
+            <span class="px-2.5 py-0.5 bg-indigo-100 text-indigo-700 text-xs font-medium rounded-full">
+              Full Test
+            </span>
+            <span class="text-xl opacity-50 group-hover:opacity-100 transition-opacity">
+              📖
+            </span>
+          </div>
+          
+          <!-- Title -->
+          <h3 class="text-lg font-bold text-gray-800 mb-1.5 group-hover:text-indigo-600 transition-colors">
+            {{ exam.title }}
+          </h3>
+          
+          <!-- Description -->
+          <p class="text-gray-500 text-sm mb-3 line-clamp-2">
+            {{ exam.description || 'Đề thi đầy đủ 4 kỹ năng Reading, Listening, Writing, Speaking theo chuẩn VSTEP' }}
+          </p>
+          
+          <!-- Meta Info -->
+          <div class="flex items-center gap-3 text-gray-400 text-xs mb-3">
+            <span>⏱️ 120 phút</span>
+            <span>•</span>
+            <span>📝 100 câu</span>
+          </div>
+          
+          <!-- Price & Button -->
+          <div class="flex items-center justify-between">
+            <div>
+              <span class="text-xl font-bold text-indigo-600">
+                {{ (exam.price || 0).toLocaleString() }}đ
+              </span>
+              <span *ngIf="exam.price && exam.price > 0" class="text-xs text-gray-400 line-through ml-1">
+                {{ (exam.price * 1.2).toLocaleString() }}đ
+              </span>
+            </div>
+            <button class="px-4 py-1.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-sm font-medium rounded-full hover:shadow-md transition-all duration-300">
+              Bắt đầu
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Empty State -->
+    <div *ngIf="!isLoading && filteredExams.length === 0" class="text-center py-16">
+      <div class="text-5xl mb-3">📭</div>
+      <p class="text-gray-500">Không tìm thấy đề thi phù hợp</p>
+      <button class="mt-4 px-5 py-2 bg-indigo-600 text-white text-sm rounded-full hover:bg-indigo-700 transition" (click)="loadExams()">
+        🔄 Làm mới
+      </button>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <app-footer></app-footer>
 </div>

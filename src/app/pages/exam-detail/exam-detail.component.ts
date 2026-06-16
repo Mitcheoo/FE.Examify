@@ -103,7 +103,7 @@ export class ExamDetailComponent implements OnInit {
         
         this.skills = statusData.skills.map((skill: any) => ({
           skillType: this.getSkillTypeFromNumber(skill.skill),
-          skillName: this.getSkillIcon(this.getSkillTypeFromNumber(skill.skill)) + ' ' + skill.skillName,
+          skillName: skill.skillName,
           duration: this.getSkillDuration(skill.skill),
           status: skill.isUnlocked ? (skill.isCompleted ? 'completed' : 'available') : 'locked',
           score: skill.bestScore,
@@ -112,6 +112,7 @@ export class ExamDetailComponent implements OnInit {
           attempts: skill.attempts
         }));
         
+        // Cập nhật trạng thái Speaking từ localStorage
         const speakingKey = 'speaking_result_' + this.skillExamIds.speaking + '_' + this.userId;
         const speakingResult = localStorage.getItem(speakingKey);
         
@@ -140,10 +141,10 @@ export class ExamDetailComponent implements OnInit {
     console.log('🔄 Using legacy progress loading...');
     
     this.skills = [
-      { skillType: 'reading', skillName: '📖 Reading', duration: 60, status: 'available', score: undefined, examId: this.skillExamIds.reading },
-      { skillType: 'listening', skillName: '🎧 Listening', duration: 35, status: 'locked', score: undefined, examId: this.skillExamIds.listening },
-      { skillType: 'writing', skillName: '✍️ Writing', duration: 60, status: 'locked', score: undefined, examId: this.skillExamIds.writing },
-      { skillType: 'speaking', skillName: '🎙️ Speaking', duration: 17, status: 'locked', score: undefined, examId: this.skillExamIds.speaking }
+      { skillType: 'reading', skillName: 'Reading', duration: 60, status: 'available', score: undefined, examId: this.skillExamIds.reading },
+      { skillType: 'listening', skillName: 'Listening', duration: 35, status: 'locked', score: undefined, examId: this.skillExamIds.listening },
+      { skillType: 'writing', skillName: 'Writing', duration: 60, status: 'locked', score: undefined, examId: this.skillExamIds.writing },
+      { skillType: 'speaking', skillName: 'Speaking', duration: 17, status: 'locked', score: undefined, examId: this.skillExamIds.speaking }
     ];
     
     this.skills.forEach(skill => {
@@ -168,7 +169,6 @@ export class ExamDetailComponent implements OnInit {
     this.cdr.detectChanges();
   }
 
-  // ✅ SỬA: DÙNG QUERY PARAMS THAY VÌ STATE
   startSkill(skillType: string) {
     console.log('🚀 Starting skill:', skillType);
     const skill = this.skills.find(s => s.skillType === skillType);
@@ -180,7 +180,6 @@ export class ExamDetailComponent implements OnInit {
       this.sessionId = savedSession;
       console.log('📌 Using existing session:', this.sessionId);
       
-      // ✅ DÙNG QUERY PARAMS
       this.router.navigate(['/exam', targetExamId, skillType], {
         queryParams: { 
           fullTestId: this.examId,
@@ -195,7 +194,6 @@ export class ExamDetailComponent implements OnInit {
           localStorage.setItem('fulltest_session_' + this.examId + '_' + this.userId, this.sessionId || '');
           console.log('✅ Session created:', this.sessionId);
           
-          // ✅ DÙNG QUERY PARAMS
           this.router.navigate(['/exam', targetExamId, skillType], {
             queryParams: { 
               fullTestId: this.examId,
@@ -232,13 +230,46 @@ export class ExamDetailComponent implements OnInit {
   }
 
   getSkillIcon(skillType: string): string {
-    const icons: any = { reading: '📖', listening: '🎧', writing: '✍️', speaking: '🎙️' };
+    const icons: any = { 
+      reading: '📖', 
+      listening: '🎧', 
+      writing: '✍️', 
+      speaking: '🎙️' 
+    };
     return icons[skillType] || '📚';
   }
 
   getStatusText(status: string): string {
-    const texts: any = { locked: '🔒 Chưa mở khóa', available: '✅ Có thể làm', completed: '✅ Đã hoàn thành' };
+    const texts: any = { 
+      locked: '🔒 Đã khóa', 
+      available: '📝 Có thể làm', 
+      completed: '✅ Đã hoàn thành' 
+    };
     return texts[status] || status;
+  }
+
+  // ✅ HÀM MỚI CHO HTML - Lấy số kỹ năng đã hoàn thành
+  getCompletedSkillsCount(): number {
+    return this.skills.filter(s => s.status === 'completed').length;
+  }
+
+  // ✅ HÀM MỚI CHO HTML - Lấy phần trăm tiến độ
+  getProgressPercentage(): number {
+    if (this.skills.length === 0) return 0;
+    const completed = this.getCompletedSkillsCount();
+    return Math.round((completed / this.skills.length) * 100);
+  }
+
+  // ✅ HÀM MỚI CHO HTML - Lấy màu gradient theo tiến độ
+  getProgressGradient(): string {
+    const percent = this.getProgressPercentage();
+    if (percent === 100) {
+      return 'linear-gradient(90deg, #27ae60, #2ecc71)';
+    } else if (percent >= 50) {
+      return 'linear-gradient(90deg, #f39c12, #e67e22)';
+    } else {
+      return 'linear-gradient(90deg, #667eea, #764ba2)';
+    }
   }
 
   checkFullTestCompletion(): boolean {

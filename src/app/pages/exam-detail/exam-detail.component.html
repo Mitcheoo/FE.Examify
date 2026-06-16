@@ -17,29 +17,71 @@
     <div class="exam-header">
       <h1>{{ exam.title }}</h1>
       <p>{{ exam.description || 'Luyện thi VSTEP 4 kỹ năng' }}</p>
+      <div class="exam-meta">
+        <span class="meta-item">📚 {{ exam.totalQuestions || 0 }} câu hỏi</span>
+        <span class="meta-item">⏱️ {{ exam.duration || 120 }} phút</span>
+        <span class="meta-item">🎯 Bậc {{ exam.vstepLevel || 4 }}</span>
+      </div>
+    </div>
+
+    <!-- Progress Overview -->
+    <div class="progress-overview">
+      <div class="progress-label">
+        <span>Tiến độ hoàn thành</span>
+        <span>{{ getCompletedSkillsCount() }}/{{ skills.length }} kỹ năng</span>
+      </div>
+      <div class="progress-bar-container">
+        <div class="progress-bar">
+          <div class="progress-fill" 
+               [style.width]="getProgressPercentage() + '%'"
+               [style.background]="getProgressGradient()">
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- Skills Grid -->
     <div class="skills-container">
-      <div *ngFor="let skill of skills" class="skill-card" [class.completed]="skill.status === 'completed'">
-        <div class="skill-icon">{{ getSkillIcon(skill.skillType) }}</div>
+      <div *ngFor="let skill of skills" 
+           class="skill-card" 
+           [class.completed]="skill.status === 'completed'"
+           [class.locked]="skill.status === 'locked'"
+           [class.available]="skill.status === 'available'">
+        
+        <div class="skill-card-header">
+          <div class="skill-icon">{{ getSkillIcon(skill.skillType) }}</div>
+          <div class="skill-status-badge" [class]="skill.status">
+            {{ skill.status === 'completed' ? '✅ Đã hoàn thành' : 
+               skill.status === 'locked' ? '🔒 Đã khóa' : 
+               '📝 Có thể làm' }}
+          </div>
+        </div>
+        
         <div class="skill-info">
           <h3>{{ skill.skillName }}</h3>
           <p>⏱️ {{ skill.duration }} phút</p>
+          <div class="skill-attempts" *ngIf="skill.attempts !== undefined">
+            <span>📊 Đã làm: {{ skill.attempts }} lần</span>
+          </div>
           <div class="skill-status">
-            <span class="status-badge" [class]="skill.status">{{ getStatusText(skill.status) }}</span>
             <span *ngIf="skill.score !== undefined && skill.score !== null" class="skill-score">
-              Điểm: {{ skill.score }}/10
+              🏆 Điểm cao nhất: {{ skill.score }}/10
             </span>
+            <span *ngIf="skill.message" class="skill-message">{{ skill.message }}</span>
           </div>
         </div>
-        <button class="btn-start-skill" [disabled]="skill.status === 'locked'" (click)="startSkill(skill.skillType)">
-          {{ skill.status === 'completed' ? 'Xem lại' : (skill.status === 'in-progress' ? 'Tiếp tục' : 'Làm bài') }}
+        
+        <button class="btn-start-skill" 
+                [disabled]="skill.status === 'locked'" 
+                (click)="startSkill(skill.skillType)">
+          {{ skill.status === 'completed' ? '🔄 Làm lại' : 
+             skill.status === 'locked' ? '🔒 Chưa mở khóa' : 
+             '▶️ Bắt đầu' }}
         </button>
       </div>
     </div>
 
-    <!-- Full Test Result Button (chỉ hiện khi hoàn thành 4 kỹ năng) -->
+    <!-- Full Test Result Button -->
     <div class="fulltest-result-btn" *ngIf="checkFullTestCompletion()">
       <button class="btn-view-result" (click)="viewFullTestResult()">
         📊 Xem kết quả Full Test
