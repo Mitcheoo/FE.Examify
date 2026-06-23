@@ -26,35 +26,38 @@ export class ExamListComponent implements OnInit {
     this.loadExams();
   }
 
-  loadExams() {
+ // exam-list.component.ts
+
+loadExams() {
     console.log('🔄 Loading exams...');
     this.isLoading = true;
     
-    this.examService.getExercisesList().subscribe({
-      next: (response: any) => {
-        console.log('📦 Response received:', response);
-        
-        let allExams = response.items || [];
-        
-        // Chỉ lấy Full Test
-        let fullTests = allExams.filter((exam: any) => exam.isFullTest === true);
-        
-        console.log('📦 Full Tests found:', fullTests.length);
-        
-        this.exams = [...fullTests];
-        this.filteredExams = [...this.exams];
-        this.isLoading = false;
-        
-        console.log('✅ Assigned:', this.exams.length, 'exams');
-        this.cdr.detectChanges();
-      },
-      error: (err) => {
-        console.error('❌ Error loading exams:', err);
-        this.isLoading = false;
-        this.cdr.detectChanges();
-      }
+    // ✅ Gọi API với pageSize = 50 để lấy tất cả
+    this.examService.getExercisesList(1, 100).subscribe({
+        next: (response: any) => {
+            console.log('📦 Response received:', response);
+            
+            let allExams = response.items || [];
+            
+            // Chỉ lấy Full Test
+            let fullTests = allExams.filter((exam: any) => exam.isFullTest === true);
+            
+            console.log('📦 Full Tests found:', fullTests.length);
+            
+            this.exams = [...fullTests];
+            this.filteredExams = [...this.exams];
+            this.isLoading = false;
+            
+            console.log('✅ Assigned:', this.exams.length, 'exams');
+            this.cdr.detectChanges();
+        },
+        error: (err) => {
+            console.error('❌ Error loading exams:', err);
+            this.isLoading = false;
+            this.cdr.detectChanges();
+        }
     });
-  }
+}
 
   onExamClick(exam: Exercise) {
     console.log('📌 Clicked exam:', exam.title);

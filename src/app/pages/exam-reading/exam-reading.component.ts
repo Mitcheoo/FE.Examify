@@ -4,6 +4,16 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ExamService } from '../../services/exam.service';
 import { AuthService } from '../../services/auth.service';
+interface SubmitReadingCommand {
+  exerciseId: string;
+  answers: { [key: string]: string };
+  timeSpentSeconds: number;
+  sessionId?: string;
+  
+}
+
+
+
 
 @Component({
   selector: 'app-exam-reading',
@@ -30,6 +40,11 @@ export class ExamReadingComponent implements OnInit, OnDestroy {
   private fullTestId: string = '';
   private userId: string = '';
   private sessionId: string = '';
+  
+  // ✅ HYBRID: Dùng để debounce sync lên server
+  private syncTimeout: any = null;
+  private isSyncing: boolean = false;
+  private hasUnsavedChanges: boolean = false;
 
   ngOnInit() {
     this.userId = this.authService.getCurrentUser()?.id || 'anonymous';
@@ -39,24 +54,20 @@ export class ExamReadingComponent implements OnInit, OnDestroy {
       this.showNavigator = savedNavState === 'true';
     }
     
-    // ✅ LẤY SESSION ID TỪ QUERY PARAMS
     this.route.queryParams.subscribe(params => {
       if (params['sessionId']) {
         this.sessionId = params['sessionId'];
-        console.log('📌 Reading received sessionId from queryParams:', this.sessionId);
+        console.log('📌 Reading sessionId:', this.sessionId);
       }
       if (params['fullTestId']) {
         this.fullTestId = params['fullTestId'];
-        console.log('📌 Reading received fullTestId from queryParams:', this.fullTestId);
       }
     });
     
-    // ✅ FALLBACK: Lấy từ navigation state (nếu có)
     const navigation = this.router.getCurrentNavigation();
     const state = navigation?.extras?.state as { fullTestId?: string; sessionId?: string };
     if (state?.sessionId && !this.sessionId) {
       this.sessionId = state.sessionId;
-      console.log('📌 Reading received sessionId from state:', this.sessionId);
     }
     if (state?.fullTestId && !this.fullTestId) {
       this.fullTestId = state.fullTestId;
@@ -69,30 +80,172 @@ export class ExamReadingComponent implements OnInit, OnDestroy {
     this.route.params.subscribe(params => {
       this.examId = params['id'];
       console.log('📌 Reading Exam ID:', this.examId);
-      console.log('📌 Full Test ID:', this.fullTestId);
-      console.log('📌 Session ID:', this.sessionId);
       this.loadExam();
       this.loadSavedAnswers();
     });
+
+    // ✅ LƯU TRƯỚC KHI THOÁT
+    window.addEventListener('beforeunload', () => {
+      this.syncToServer();
+    });
   }
 
-  toggleNavigator() {
-    this.showNavigator = !this.showNavigator;
-    localStorage.setItem('reading_show_navigator', String(this.showNavigator));
-  }
-
+  // ========== LOAD SAVED ANSWERS (ƯU TIÊN SERVER) ==========
   loadSavedAnswers() {
-    const saved = localStorage.getItem('reading_answers_' + this.examId + '_' + this.userId);
-    if (saved) {
+    // 1. Load từ localStorage (nhanh)
+    const localKey = 'reading_answers_' + this.examId + '_' + this.userId;
+    const localData = localStorage.getItem(localKey);
+    if (localData) {
       try {
-        this.answers = JSON.parse(saved);
-        console.log('📦 Loaded saved answers:', Object.keys(this.answers).length);
+        this.answers = JSON.parse(localData);
+        console.log('📦 Loaded from localStorage:', Object.keys(this.answers).length);
       } catch(e) {
-        console.error('Error loading saved answers:', e);
+        console.error('Error loading local answers:', e);
       }
+    }
+
+    // 2. Load từ server (nếu có sessionId)
+    if (this.sessionId) {
+      this.examService.getDraftAnswers(this.sessionId).subscribe({
+        next: (data: any) => {
+          if (data && data.length > 0) {
+            // Merge: ưu tiên server (mới hơn)
+            const serverAnswers: Record<string, string> = {};
+            data.forEach((item: any) => {
+              serverAnswers[item.questionId] = item.userAnswer;
+            });
+            
+            // So sánh thời gian và lấy dữ liệu mới nhất
+            // Ở đây ta merge: server có thì lấy server, không thì giữ local
+            let mergedCount = 0;
+            Object.keys(serverAnswers).forEach(key => {
+              if (!this.answers[key] || serverAnswers[key] !== this.answers[key]) {
+                this.answers[key] = serverAnswers[key];
+                mergedCount++;
+              }
+            });
+            
+            console.log('📦 Merged from server:', mergedCount, 'answers');
+            console.log('📦 Total answers:', Object.keys(this.answers).length);
+            this.cdr.detectChanges();
+          }
+        },
+        error: (err) => {
+          console.error('Error loading server answers:', err);
+        }
+      });
     }
   }
 
+  // ========== AUTO-SAVE TO LOCAL ==========
+  saveToLocal() {
+    const key = 'reading_answers_' + this.examId + '_' + this.userId;
+    localStorage.setItem(key, JSON.stringify(this.answers));
+    this.hasUnsavedChanges = true;
+  }
+
+  // ========== SYNC TO SERVER (DEBOUNCE 3s) ==========
+  syncToServer() {
+    if (this.isSyncing || !this.sessionId) return;
+    
+    // Clear timeout cũ
+    if (this.syncTimeout) {
+      clearTimeout(this.syncTimeout);
+    }
+
+    // Debounce: chỉ sync sau 3s không có thay đổi
+    this.syncTimeout = setTimeout(() => {
+      if (Object.keys(this.answers).length === 0) return;
+      
+      this.isSyncing = true;
+      
+      // Chuyển answers sang format array
+      const answerList = Object.entries(this.answers).map(([questionId, userAnswer]) => ({
+        questionId: questionId,
+        skillType: 0, // Reading
+        userAnswer: userAnswer || ''
+      }));
+
+      if (answerList.length === 0) {
+        this.isSyncing = false;
+        return;
+      }
+
+      const payload = {
+        sessionId: this.sessionId,
+        answers: answerList
+      };
+
+      console.log('📤 Syncing to server:', answerList.length, 'answers');
+      
+      this.examService.saveDraftAnswers(payload).subscribe({
+        next: () => {
+          console.log('✅ Synced to server successfully');
+          this.hasUnsavedChanges = false;
+          this.isSyncing = false;
+        },
+        error: (err) => {
+          console.error('❌ Sync failed:', err);
+          this.isSyncing = false;
+        }
+      });
+    }, 3000); // 3 giây
+  }
+
+  // ========== FORCE SYNC (khi chuyển kỹ năng hoặc submit) ==========
+  forceSyncToServer(): Promise<void> {
+    return new Promise((resolve) => {
+      if (this.syncTimeout) {
+        clearTimeout(this.syncTimeout);
+      }
+      
+      if (!this.sessionId || Object.keys(this.answers).length === 0) {
+        resolve();
+        return;
+      }
+
+      const answerList = Object.entries(this.answers).map(([questionId, userAnswer]) => ({
+        questionId: questionId,
+        skillType: 0,
+        userAnswer: userAnswer || ''
+      }));
+
+      if (answerList.length === 0) {
+        resolve();
+        return;
+      }
+
+      this.isSyncing = true;
+      const payload = { sessionId: this.sessionId, answers: answerList };
+      
+      this.examService.saveDraftAnswers(payload).subscribe({
+        next: () => {
+          console.log('✅ Force sync completed');
+          this.hasUnsavedChanges = false;
+          this.isSyncing = false;
+          resolve();
+        },
+        error: (err) => {
+          console.error('❌ Force sync failed:', err);
+          this.isSyncing = false;
+          resolve();
+        }
+      });
+    });
+  }
+
+  // ========== ON ANSWER CHANGE ==========
+  onAnswerChange() {
+    // 1. Lưu vào localStorage (ngay lập tức)
+    this.saveToLocal();
+    
+    // 2. Schedule sync lên server (debounce)
+    this.syncToServer();
+    
+    this.cdr.detectChanges();
+  }
+
+  // ========== LOAD EXAM ==========
   loadExam() {
     console.log('🔄 Loading Reading exam...');
     this.examService.getReadingExam(this.examId).subscribe({
@@ -158,11 +311,6 @@ export class ExamReadingComponent implements OnInit, OnDestroy {
     return Object.keys(this.answers).filter(key => this.answers[key]?.trim()).length;
   }
 
-  onAnswerChange() {
-    localStorage.setItem('reading_answers_' + this.examId + '_' + this.userId, JSON.stringify(this.answers));
-    this.cdr.detectChanges();
-  }
-
   scrollToQuestion(index: number) {
     this.currentQuestionIndex = index;
     const element = document.getElementById('question-' + index);
@@ -171,56 +319,212 @@ export class ExamReadingComponent implements OnInit, OnDestroy {
     }
   }
 
-  submitExam() {
-    if (this.timerInterval) {
-      clearInterval(this.timerInterval);
-      this.timerInterval = null;
+  // ========== SUBMIT ==========
+ // src/app/pages/exam-reading/exam-reading.component.ts
+async submitExam() {
+  if (this.timerInterval) {
+    clearInterval(this.timerInterval);
+    this.timerInterval = null;
+  }
+
+  await this.forceSyncToServer();
+
+  const totalTime = (this.exam?.timeLimitSeconds || 3600) - this.timeRemaining;
+  
+  // ✅ CHUYỂN ANSWERS THÀNH DICTIONARY
+  const answersDict: { [key: string]: string } = {};
+  Object.entries(this.answers).forEach(([questionId, answer]) => {
+    if (answer && answer.trim() !== '') {
+      answersDict[questionId] = answer;
     }
+  });
 
-    const totalTime = (this.exam?.timeLimitSeconds || 3600) - this.timeRemaining;
+  if (Object.keys(answersDict).length === 0) {
+    const confirmSubmit = confirm('⚠️ Bạn chưa chọn đáp án nào. Bạn có chắc muốn nộp bài không?');
+    if (!confirmSubmit) {
+      this.isSubmitting = false;
+      return;
+    }
+  }
+
+  // ✅ TẠO PAYLOAD TRỰC TIẾP (KHÔNG BỌC COMMAND)
+  const payload: SubmitReadingCommand = {
+    exerciseId: this.examId,
+    answers: answersDict,
+    timeSpentSeconds: totalTime
+  };
+
+  // ✅ THÊM SESSION ID NẾU CÓ
+  if (this.sessionId) {
+    payload.sessionId = this.sessionId;
+  }
+
+  console.log('📤 SUBMITTING READING:');
+  console.log('   Payload:', JSON.stringify(payload, null, 2));
+  console.log('   Total time spent:', totalTime, 'seconds');
+
+  this.isSubmitting = true;
+  
+  // ✅ GỬI TRỰC TIẾP PAYLOAD
+this.examService.submitReading(payload).subscribe({
+  next: (result) => {
+    console.log('✅ Submit success:', result);
     
-    const answersDict: Record<string, string> = {};
-    Object.entries(this.answers).forEach(([id, answer]) => {
-      if (answer) answersDict[id] = answer;
-    });
-
-    const submitData = {
-      exerciseId: this.examId,
-      answers: answersDict,
+    const resultWithSource = {
+      ...result,
       timeSpentSeconds: totalTime,
-      sessionId: this.sessionId
+      source: this.fullTestId ? 'fulltest' : 'standalone',
+      fullTestId: this.fullTestId || null,
+      submittedAt: new Date().toISOString()
     };
+    
+    const storageKey = 'reading_result_' + this.examId + '_' + this.userId;
+    localStorage.setItem(storageKey, JSON.stringify(resultWithSource));
+    
+    console.log('💾 Saved to localStorage with timeSpentSeconds:', totalTime);
+    
+    const draftKey = 'reading_answers_' + this.examId + '_' + this.userId;
+    localStorage.removeItem(draftKey);
+    
+    this.isSubmitting = false;
+    
+    // ✅ SỬA: QUAY LẠI FULL TEST, KHÔNG PHẢI TRANG KẾT QUẢ
+    if (this.fullTestId) {
+      alert('🎉 Nộp bài Reading thành công!');
+      // ✅ QUAY LẠI FULL TEST DETAIL
+      this.router.navigate(['/exam', this.fullTestId]);
+    } else {
+      // Standalone: Chuyển đến trang kết quả Reading
+      alert('🎉 Nộp bài thành công!');
+      this.router.navigate(['/result/reading', result.id]);
+    }
+  },
+  error: (err) => {
+    console.error('❌ Submit error:', err);
+    this.isSubmitting = false;
+    
+    if (err.error?.errors) {
+      const errorMsg = Object.values(err.error.errors).flat().join('\n');
+      alert(`❌ Lỗi:\n${errorMsg}`);
+    } else if (err.error?.title) {
+      alert(`❌ ${err.error.title}`);
+    } else {
+      alert('❌ Nộp bài thất bại. Vui lòng thử lại!');
+    }
+  }
+});
+}
+// src/app/pages/exam-reading/exam-reading.component.ts
+// async submitExam() {
+//     if (this.timerInterval) {
+//       clearInterval(this.timerInterval);
+//       this.timerInterval = null;
+//     }
 
-    console.log('📤 Submitting Reading:', submitData);
-    console.log('📌 Session ID:', this.sessionId);
+//     await this.forceSyncToServer();
 
-    this.isSubmitting = true;
-    this.examService.submitReading(submitData).subscribe({
-      next: (result) => {
-        console.log('✅ Submit success:', result);
+//     const totalTime = (this.exam?.timeLimitSeconds || 3600) - this.timeRemaining;
+    
+//     // ✅ CHUYỂN ANSWERS THÀNH DICTIONARY
+//     const answersDict: { [key: string]: string } = {};
+//     Object.entries(this.answers).forEach(([questionId, answer]) => {
+//       if (answer && answer.trim() !== '') {
+//         answersDict[questionId] = answer;
+//       }
+//     });
+
+//     // ✅ KIỂM TRA NẾU KHÔNG CÓ CÂU NÀO ĐƯỢC CHỌN
+//     if (Object.keys(answersDict).length === 0) {
+//       const confirmSubmit = confirm('⚠️ Bạn chưa chọn đáp án nào. Bạn có chắc muốn nộp bài không?');
+//       if (!confirmSubmit) {
+//         this.isSubmitting = false;
+//         return;
+//       }
+//     }
+
+//     // ✅ TẠO COMMAND VỚI INTERFACE
+//     const command: SubmitReadingCommand = {
+//       exerciseId: this.examId,
+//       answers: answersDict,
+//       timeSpentSeconds: totalTime
+//     };
+
+//     // ✅ THÊM SESSION ID NẾU CÓ
+//     if (this.sessionId) {
+//       command.sessionId = this.sessionId;
+//     }
+
+//     // ✅ BỌC COMMAND VÀO PAYLOAD
+//     const payload = {
+//       command: command
+//     };
+
+//     console.log('📤 SUBMITTING READING:');
+//     console.log('   Payload:', JSON.stringify(payload, null, 2));
+//     console.log('   Total time spent:', totalTime, 'seconds');
+
+//     this.isSubmitting = true;
+    
+//     this.examService.submitReading(payload).subscribe({
+//       next: (result) => {
+//         console.log('✅ Submit success:', result);
         
-        // ✅ LƯU SUBMISSION ID VÀO SESSION
-     
+//         const resultWithSource = {
+//           ...result,
+//           timeSpentSeconds: totalTime,
+//           source: this.fullTestId ? 'fulltest' : 'standalone',
+//           fullTestId: this.fullTestId || null,
+//           submittedAt: new Date().toISOString()
+//         };
         
-        const storageKey = 'reading_result_' + this.examId + '_' + this.userId;
-        localStorage.setItem(storageKey, JSON.stringify(result));
-        localStorage.removeItem('reading_answers_' + this.examId + '_' + this.userId);
+//         const storageKey = 'reading_result_' + this.examId + '_' + this.userId;
+//         localStorage.setItem(storageKey, JSON.stringify(resultWithSource));
         
-        // ✅ QUAY LẠI FULL TEST VỚI QUERY PARAMS
-        const returnUrl = this.fullTestId || this.examId;
-        this.router.navigate(['/exam', returnUrl]);
-      },
-      error: (err) => {
-        console.error('❌ Submit error:', err);
-        alert('Có lỗi xảy ra khi nộp bài. Vui lòng thử lại!');
-        this.isSubmitting = false;
-      }
-    });
+//         console.log('💾 Saved to localStorage with timeSpentSeconds:', totalTime);
+        
+//         const draftKey = 'reading_answers_' + this.examId + '_' + this.userId;
+//         localStorage.removeItem(draftKey);
+        
+//         this.isSubmitting = false;
+        
+//         if (this.fullTestId) {
+//           alert('🎉 Nộp bài Reading thành công!');
+//           this.router.navigate(['/exam', this.fullTestId]);
+//         } else {
+//           alert('🎉 Nộp bài thành công!');
+//           this.router.navigate(['/reading']);
+//         }
+//       },
+//       error: (err) => {
+//         console.error('❌ Submit error:', err);
+//         this.isSubmitting = false;
+        
+//         if (err.error?.errors) {
+//           const errorMsg = Object.values(err.error.errors).flat().join('\n');
+//           alert(`❌ Lỗi:\n${errorMsg}`);
+//         } else if (err.error?.title) {
+//           alert(`❌ ${err.error.title}`);
+//         } else {
+//           alert('❌ Nộp bài thất bại. Vui lòng thử lại!');
+//         }
+//       }
+//     });
+//   }
+  // ========== NAVIGATION HELPERS ==========
+  toggleNavigator() {
+    this.showNavigator = !this.showNavigator;
+    localStorage.setItem('reading_show_navigator', String(this.showNavigator));
   }
 
   ngOnDestroy() {
     if (this.timerInterval) {
       clearInterval(this.timerInterval);
     }
+    if (this.syncTimeout) {
+      clearTimeout(this.syncTimeout);
+    }
+    // ✅ FORCE SYNC TRƯỚC KHI THOÁT
+    this.forceSyncToServer();
+    window.removeEventListener('beforeunload', () => {});
   }
 }

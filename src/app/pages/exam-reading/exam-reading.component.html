@@ -22,6 +22,7 @@
     <div class="questions-column">
       <div class="questions-header">
         <h3>Câu hỏi</h3>
+        <span class="questions-count">{{ answeredCount }}/{{ exam?.totalQuestions || 0 }}</span>
       </div>
       <div class="questions-list">
         <div *ngFor="let question of exam.questions; let i = index" class="question-item" [class.answered]="answers[question.id]" [id]="'question-' + i">
@@ -31,7 +32,11 @@
           <div class="question-text">{{ question.questionText }}</div>
           <div class="options-list">
             <label *ngFor="let opt of question.options" class="option-item" [class.selected]="answers[question.id] === opt.key">
-              <input type="radio" [name]="'q' + question.id" [value]="opt.key" [(ngModel)]="answers[question.id]" (change)="onAnswerChange()">
+              <input type="radio" 
+                     [name]="'q' + question.id" 
+                     [value]="opt.key" 
+                     [(ngModel)]="answers[question.id]" 
+                     (change)="onAnswerChange()">
               <span class="option-letter">{{ opt.key }}.</span>
               <span class="option-text">{{ opt.value }}</span>
             </label>

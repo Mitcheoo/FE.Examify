@@ -77,7 +77,6 @@ export class ExamDetailComponent implements OnInit {
               skillName: this.getSkillName(data.skill), 
               duration: Math.floor(data.timeLimitSeconds / 60), 
               status: 'available', 
-              score: undefined,
               examId: this.examId
             }
           ];
@@ -94,57 +93,81 @@ export class ExamDetailComponent implements OnInit {
     });
   }
 
-  loadFullTestStatus() {
-    console.log('🔄 Loading full test status...');
-    
-    this.examService.getFullTestStatus(this.examId).subscribe({
-      next: (statusData) => {
-        console.log('✅ Full test status loaded:', statusData);
-        
-        this.skills = statusData.skills.map((skill: any) => ({
-          skillType: this.getSkillTypeFromNumber(skill.skill),
-          skillName: skill.skillName,
-          duration: this.getSkillDuration(skill.skill),
-          status: skill.isUnlocked ? (skill.isCompleted ? 'completed' : 'available') : 'locked',
-          score: skill.bestScore,
-          examId: skill.exerciseId,
-          message: skill.message,
-          attempts: skill.attempts
-        }));
-        
-        // Cập nhật trạng thái Speaking từ localStorage
-        const speakingKey = 'speaking_result_' + this.skillExamIds.speaking + '_' + this.userId;
-        const speakingResult = localStorage.getItem(speakingKey);
-        
-        if (speakingResult) {
-          const speakingData = JSON.parse(speakingResult);
-          const speakingSkill = this.skills.find(s => s.skillType === 'speaking');
-          if (speakingSkill) {
-            speakingSkill.status = 'completed';
-            speakingSkill.score = speakingData.totalScore;
-            console.log('✅ Updated speaking status from localStorage:', speakingSkill);
-          }
+loadFullTestStatus() {
+  console.log('🔄 Loading full test status...');
+  
+  const sessionKey = `fulltest_session_${this.examId}_${this.userId}`;
+  let sessionId = localStorage.getItem(sessionKey);
+  
+  if (!sessionId || sessionId === 'null' || sessionId === '') {
+    this.examService.startFullTestSession(this.examId).subscribe({
+      next: (data: any) => {
+        sessionId = data.sessionId;
+        if (sessionId) {
+          localStorage.setItem(sessionKey, sessionId);
+          console.log('✅ Full Test session created:', sessionId);
+        } else {
+          console.error('❌ Session ID is null or empty');
         }
-        
-        this.isLoading = false;
-        this.cdr.detectChanges();
-        console.log('🔴 Final skills:', this.skills);
+        this.sessionId = sessionId;
+        this.continueLoadFullTestStatus(sessionId);
       },
       error: (err) => {
-        console.error('❌ Error loading full test status:', err);
-        this.loadLegacyProgress();
+        console.error('❌ Failed to create session:', err);
+        this.continueLoadFullTestStatus(null);
       }
     });
+  } else {
+    console.log('📌 Found existing session:', sessionId);
+    this.sessionId = sessionId;
+    this.continueLoadFullTestStatus(sessionId);
   }
+  // ❌ KHÔNG CẦN detectChanges ở đây
+}
 
+continueLoadFullTestStatus(sessionId: string | null = null) {
+  this.examService.getFullTestStatus(this.examId).subscribe({
+    next: (statusData) => {
+      console.log('✅ Full test status loaded:', statusData);
+      
+      if (sessionId) {
+        this.sessionId = sessionId;
+      }
+      
+      this.skills = statusData.skills.map((skill: any) => ({
+        skillType: this.getSkillTypeFromNumber(skill.skill),
+        skillName: skill.skillName,
+        duration: this.getSkillDuration(skill.skill),
+        status: skill.isUnlocked ? (skill.isCompleted ? 'completed' : 'available') : 'locked',
+        score: skill.bestScore,
+        examId: skill.exerciseId,
+        message: skill.message,
+        attempts: skill.attempts
+      }));
+      
+      this.isLoading = false;
+      
+      // ✅ DÙNG detectChanges Ở ĐÂY - SAU KHI CÓ DỮ LIỆU
+      this.cdr.detectChanges();
+      
+      console.log('🔴 Final skills:', this.skills);
+    },
+    error: (err) => {
+      console.error('❌ Error loading full test status:', err);
+      this.isLoading = false;
+      this.cdr.detectChanges();  // ✅ CẢ Ở ĐÂY
+      this.loadLegacyProgress();
+    }
+  });
+}
   loadLegacyProgress() {
     console.log('🔄 Using legacy progress loading...');
     
     this.skills = [
-      { skillType: 'reading', skillName: 'Reading', duration: 60, status: 'available', score: undefined, examId: this.skillExamIds.reading },
-      { skillType: 'listening', skillName: 'Listening', duration: 35, status: 'locked', score: undefined, examId: this.skillExamIds.listening },
-      { skillType: 'writing', skillName: 'Writing', duration: 60, status: 'locked', score: undefined, examId: this.skillExamIds.writing },
-      { skillType: 'speaking', skillName: 'Speaking', duration: 17, status: 'locked', score: undefined, examId: this.skillExamIds.speaking }
+      { skillType: 'reading', skillName: 'Reading', duration: 60, status: 'available', examId: this.skillExamIds.reading },
+      { skillType: 'listening', skillName: 'Listening', duration: 35, status: 'locked', examId: this.skillExamIds.listening },
+      { skillType: 'writing', skillName: 'Writing', duration: 60, status: 'locked', examId: this.skillExamIds.writing },
+      { skillType: 'speaking', skillName: 'Speaking', duration: 17, status: 'locked', examId: this.skillExamIds.speaking }
     ];
     
     this.skills.forEach(skill => {
@@ -168,47 +191,91 @@ export class ExamDetailComponent implements OnInit {
     this.isLoading = false;
     this.cdr.detectChanges();
   }
-
-  startSkill(skillType: string) {
-    console.log('🚀 Starting skill:', skillType);
-    const skill = this.skills.find(s => s.skillType === skillType);
-    const targetExamId = skill?.examId || this.examId;
-    
-    const savedSession = localStorage.getItem('fulltest_session_' + this.examId + '_' + this.userId);
-    
-    if (savedSession && savedSession !== 'null' && savedSession !== '') {
-      this.sessionId = savedSession;
-      console.log('📌 Using existing session:', this.sessionId);
-      
-      this.router.navigate(['/exam', targetExamId, skillType], {
-        queryParams: { 
-          fullTestId: this.examId,
-          sessionId: this.sessionId
-        }
-      });
-    } else {
-      console.log('⚠️ No session found, creating one first...');
-      this.examService.startFullTestSession(this.examId).subscribe({
-        next: (data: any) => {
-          this.sessionId = data.sessionId;
-          localStorage.setItem('fulltest_session_' + this.examId + '_' + this.userId, this.sessionId || '');
-          console.log('✅ Session created:', this.sessionId);
-          
-          this.router.navigate(['/exam', targetExamId, skillType], {
-            queryParams: { 
-              fullTestId: this.examId,
-              sessionId: this.sessionId
-            }
-          });
-        },
-        error: (err) => {
-          console.error('❌ Failed to create session:', err);
-          alert('Không thể tạo phiên làm bài. Vui lòng thử lại!');
-        }
-      });
+startSkill(skillType: string) {
+  console.log('🚀 Starting skill:', skillType);
+  const skill = this.skills.find(s => s.skillType === skillType);
+  const targetExamId = skill?.examId || this.examId;
+  
+  // ✅ GIỮ SESSION KEY RIÊNG CHO TỪNG KỸ NĂNG (GIỮ NGUYÊN)
+  const skillSessionKey = `fulltest_session_${this.examId}_${skillType}_${this.userId}`;
+  let skillSessionId = localStorage.getItem(skillSessionKey);
+  
+  // ✅ KIỂM TRA SESSION CHUNG (THÊM MỚI)
+  const fullTestSessionKey = `fulltest_session_${this.examId}_${this.userId}`;
+  const fullTestSessionId = localStorage.getItem(fullTestSessionKey);
+  
+  // Nếu chưa có session riêng cho skill này, dùng session chung
+  if (!skillSessionId || skillSessionId === 'null' || skillSessionId === '') {
+    if (fullTestSessionId && fullTestSessionId !== 'null' && fullTestSessionId !== '') {
+      // ✅ DÙNG SESSION CHUNG CHO SKILL NÀY
+      skillSessionId = fullTestSessionId;
+      localStorage.setItem(skillSessionKey, skillSessionId);
+      console.log(`📌 Using common session for ${skillType}:`, skillSessionId);
     }
   }
-
+  
+  if (skillSessionId && skillSessionId !== 'null' && skillSessionId !== '') {
+    // ✅ KIỂM TRA SESSION CÓ HOÀN THÀNH KHÔNG (GIỮ NGUYÊN)
+    this.examService.getFullTestStatus(this.examId).subscribe({
+      next: (status: any) => {
+        console.log('📊 Full test status:', status);
+        
+        const allCompleted = status.skills?.every((s: any) => s.isCompleted === true);
+        
+        if (allCompleted) {
+          console.log('⚠️ Session already completed, redirecting to result...');
+          alert('Bạn đã hoàn thành bài thi này. Chuyển đến trang kết quả!');
+          this.router.navigate(['/fulltest', this.examId, 'result']);
+          return;
+        }
+        
+        console.log(`📌 Session still in progress for ${skillType}, continuing...`);
+        this.router.navigate(['/exam', targetExamId, skillType], {
+          queryParams: { 
+            fullTestId: this.examId,
+            sessionId: skillSessionId
+          }
+        });
+      },
+      error: (err: any) => {
+        console.error('❌ Failed to check session status:', err);
+        this.router.navigate(['/exam', targetExamId, skillType], {
+          queryParams: { 
+            fullTestId: this.examId,
+            sessionId: skillSessionId
+          }
+        });
+      }
+    });
+  } else {
+    // ✅ TẠO SESSION MỚI (FALLBACK - GIỮ NGUYÊN)
+    console.log(`⚠️ No session found for ${skillType}, creating one first...`);
+    this.examService.startFullTestSession(this.examId).subscribe({
+      next: (data: any) => {
+        const newSessionId = data.sessionId;
+        
+        // Lưu session chung
+        localStorage.setItem(`fulltest_session_${this.examId}_${this.userId}`, newSessionId);
+        
+        // Lưu session riêng cho skill
+        localStorage.setItem(skillSessionKey, newSessionId);
+        
+        console.log(`✅ Session created for ${skillType}:`, newSessionId);
+        
+        this.router.navigate(['/exam', targetExamId, skillType], {
+          queryParams: { 
+            fullTestId: this.examId,
+            sessionId: newSessionId
+          }
+        });
+      },
+      error: (err: any) => {
+        console.error('❌ Failed to create session:', err);
+        alert('Không thể tạo phiên làm bài. Vui lòng thử lại!');
+      }
+    });
+  }
+}
   getSkillName(skill: number): string {
     const names: any = { 0: 'Reading', 1: 'Listening', 2: 'Writing', 3: 'Speaking', 4: 'Full Test' };
     return names[skill] || 'Unknown';
@@ -248,19 +315,19 @@ export class ExamDetailComponent implements OnInit {
     return texts[status] || status;
   }
 
-  // ✅ HÀM MỚI CHO HTML - Lấy số kỹ năng đã hoàn thành
+  // ✅ HÀM LẤY SỐ KỸ NĂNG ĐÃ HOÀN THÀNH
   getCompletedSkillsCount(): number {
     return this.skills.filter(s => s.status === 'completed').length;
   }
 
-  // ✅ HÀM MỚI CHO HTML - Lấy phần trăm tiến độ
+  // ✅ HÀM LẤY PHẦN TRĂM TIẾN ĐỘ
   getProgressPercentage(): number {
     if (this.skills.length === 0) return 0;
     const completed = this.getCompletedSkillsCount();
     return Math.round((completed / this.skills.length) * 100);
   }
 
-  // ✅ HÀM MỚI CHO HTML - Lấy màu gradient theo tiến độ
+  // ✅ HÀM LẤY MÀU GRADIENT THEO TIẾN ĐỘ
   getProgressGradient(): string {
     const percent = this.getProgressPercentage();
     if (percent === 100) {
@@ -272,26 +339,47 @@ export class ExamDetailComponent implements OnInit {
     }
   }
 
-  checkFullTestCompletion(): boolean {
-    const readingKey = 'reading_result_' + this.skillExamIds.reading + '_' + this.userId;
-    const listeningKey = 'listening_result_' + this.skillExamIds.listening + '_' + this.userId;
-    const writingKey = 'writing_result_' + this.skillExamIds.writing + '_' + this.userId;
-    const speakingKey = 'speaking_result_' + this.skillExamIds.speaking + '_' + this.userId;
-    
-    const hasReading = localStorage.getItem(readingKey) !== null;
-    const hasListening = localStorage.getItem(listeningKey) !== null;
-    const hasWriting = localStorage.getItem(writingKey) !== null;
-    const hasSpeaking = localStorage.getItem(speakingKey) !== null;
-    
-    const allCompleted = hasReading && hasListening && hasWriting && hasSpeaking;
-    
-    if (allCompleted) {
-      console.log('✅ All 4 skills completed in localStorage');
-    }
-    
-    return allCompleted;
-  }
+  // ✅ KIỂM TRA ĐÃ HOÀN THÀNH FULL TEST CHƯA (GIỮ NGUYÊN)
+// exam-detail.component.ts
 
+checkFullTestCompletion(): boolean {
+  // ✅ LẤY ID ĐỘNG TỪ SKILLS ARRAY (KHÔNG DÙNG skillExamIds CỐ ĐỊNH)
+  const readingSkill = this.skills.find(s => s.skillType === 'reading');
+  const listeningSkill = this.skills.find(s => s.skillType === 'listening');
+  const writingSkill = this.skills.find(s => s.skillType === 'writing');
+  const speakingSkill = this.skills.find(s => s.skillType === 'speaking');
+  
+  // Nếu chưa có skills → chưa hoàn thành
+  if (!readingSkill || !listeningSkill || !writingSkill || !speakingSkill) {
+    console.log('⚠️ Missing skills in array');
+    return false;
+  }
+  
+  // ✅ KIỂM TRA TỪ localStorage VỚI ID ĐÚNG
+  const readingKey = `reading_result_${readingSkill.examId}_${this.userId}`;
+  const listeningKey = `listening_result_${listeningSkill.examId}_${this.userId}`;
+  const writingKey = `writing_result_${writingSkill.examId}_${this.userId}`;
+  const speakingKey = `speaking_result_${speakingSkill.examId}_${this.userId}`;
+  
+  const hasReading = localStorage.getItem(readingKey) !== null;
+  const hasListening = localStorage.getItem(listeningKey) !== null;
+  const hasWriting = localStorage.getItem(writingKey) !== null;
+  const hasSpeaking = localStorage.getItem(speakingKey) !== null;
+  
+  const allCompleted = hasReading && hasListening && hasWriting && hasSpeaking;
+  
+  console.log('📊 checkFullTestCompletion:', {
+    reading: { examId: readingSkill.examId, hasResult: hasReading },
+    listening: { examId: listeningSkill.examId, hasResult: hasListening },
+    writing: { examId: writingSkill.examId, hasResult: hasWriting },
+    speaking: { examId: speakingSkill.examId, hasResult: hasSpeaking },
+    allCompleted
+  });
+  
+  return allCompleted;
+}
+
+  // ✅ XEM KẾT QUẢ FULL TEST (GIỮ NGUYÊN)
   viewFullTestResult() {
     console.log('🚀 Navigating to full test result...');
     this.router.navigate(['/fulltest', this.examId, 'result']);

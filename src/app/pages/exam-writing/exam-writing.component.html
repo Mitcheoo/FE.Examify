@@ -1,5 +1,4 @@
 ﻿<div class="writing-container">
-  <!-- Header -->
   <div class="writing-header">
     <div class="exam-info">
       <h1>✍️ {{ exam?.title || 'Writing Test' }}</h1>
@@ -48,7 +47,7 @@
         <textarea 
           [id]="'task-' + question.id"
           [(ngModel)]="answers[question.id]" 
-          (input)="updateWordCount(question.id)"
+          (input)="onTextChange(question.id)"
           [placeholder]="'Nhập bài viết Task ' + (i+1) + ' của bạn tại đây...'"
           rows="12">
         </textarea>

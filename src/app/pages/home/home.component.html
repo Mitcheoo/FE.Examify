@@ -1,270 +1,256 @@
 <app-header></app-header>
 
 <!-- Hero Section -->
-<section class="relative bg-gradient-to-br from-indigo-900 via-purple-800 to-pink-700 text-white overflow-hidden">
-  <!-- Background decoration -->
-  <div class="absolute inset-0 opacity-30">
+<section class="relative bg-white overflow-hidden">
+  <div class="absolute inset-0 opacity-5">
     <div class="w-full h-full bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
   </div>
   
   <div class="container mx-auto px-4 py-20 md:py-28 relative z-10">
     <div class="text-center max-w-4xl mx-auto">
-      <h1 class="text-4xl md:text-6xl lg:text-7xl font-bold mb-6 leading-tight">
-        Luyện thi <span class="bg-gradient-to-r from-yellow-300 via-orange-400 to-pink-400 bg-clip-text text-transparent">VSTEP</span><br>
-        Đạt Bậc 3-5 dễ dàng
+      <!-- Badge -->
+      <div class="inline-block px-4 py-2 bg-vstep-lighter text-vstep-dark rounded-full mb-6 text-sm font-medium">
+        🏆 Nền tảng luyện VSTEP hàng đầu Việt Nam
+      </div>
+      
+      <h1 class="text-4xl md:text-6xl lg:text-7xl font-bold mb-6 leading-tight text-text-dark">
+        Luyện <span class="text-vstep">VSTEP</span> hiệu quả<br>
+        <span class="text-text-dark opacity-70">Đạt mục tiêu nhanh hơn</span>
       </h1>
-      <p class="text-lg md:text-xl text-purple-100 mb-8 max-w-2xl mx-auto">
-        Nền tảng luyện thi VSTEP trực tuyến số 1 Việt Nam với 
-        <strong class="text-yellow-300">1000+ đề thi chuẩn</strong>, AI chấm điểm thông minh,
-        giúp bạn tự tin chinh phục chứng chỉ tiếng Anh theo khung năng lực 6 bậc.
+      
+      <p class="text-lg md:text-xl text-text-dark opacity-70 mb-8 max-w-2xl mx-auto">
+        Luyện 4 kỹ năng Reading, Listening, Writing, Speaking, luyện đề full test, học từ vựng, ngữ pháp — tất cả trong một nền tảng.
       </p>
+      
       <div class="flex flex-col sm:flex-row gap-4 justify-center mb-12">
-        <button class="px-8 py-3 bg-gradient-to-r from-yellow-400 to-orange-500 text-gray-900 font-semibold rounded-full hover:shadow-lg transform hover:-translate-y-1 transition-all duration-300" routerLink="/exam-list">
-          📚 Làm bài thi
+        <!-- Button chính - Nền VSTEP -->
+        <button class="px-8 py-3 bg-vstep text-white font-semibold rounded-full hover:bg-vstep-dark transform hover:-translate-y-1 transition-all duration-300 shadow-lg hover:shadow-xl" routerLink="/register">
+          🚀 Bắt đầu luyện tập
         </button>
-        <button class="px-8 py-3 bg-white/10 backdrop-blur-sm border border-white/20 text-white font-semibold rounded-full hover:bg-white/20 transition-all duration-300">
-          🎯 Xem lộ trình
+        
+        <!-- Button phụ - Nền VSTEP -->
+        <button class="px-8 py-3 bg-vstep text-white font-semibold rounded-full hover:bg-vstep-dark transform hover:-translate-y-1 transition-all duration-300 shadow-lg hover:shadow-xl" routerLink="/exam-list">
+          📝 Làm bài test thử
         </button>
-        <button class="px-8 py-3 bg-white/10 backdrop-blur-sm border border-white/20 text-white font-semibold rounded-full hover:bg-white/20 transition-all duration-300">
-          💬 Tư vấn ngay
+      </div>
+      
+      <!-- Feature list -->
+      <div class="flex flex-wrap justify-center gap-6 text-left max-w-2xl mx-auto">
+        <div class="flex items-center gap-2 bg-vstep-lighter px-4 py-2 rounded-full">
+          <span class="text-vstep">✓</span>
+          <span class="text-text-dark text-sm font-medium">Đăng ký miễn phí, bắt đầu ngay</span>
+        </div>
+        <div class="flex items-center gap-2 bg-vstep-lighter px-4 py-2 rounded-full">
+          <span class="text-vstep">✓</span>
+          <span class="text-text-dark text-sm font-medium">Theo dõi tiến độ học tập</span>
+        </div>
+        <div class="flex items-center gap-2 bg-vstep-lighter px-4 py-2 rounded-full">
+          <span class="text-vstep">✓</span>
+          <span class="text-text-dark text-sm font-medium">Giải thích chi tiết từng câu</span>
+        </div>
+      </div>
+      
+      <!-- Stats -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-3xl mx-auto mt-12">
+        <div class="text-center bg-background-light rounded-xl p-4">
+          <div class="text-2xl md:text-3xl font-bold text-primary-DEFAULT">34,683+</div>
+          <div class="text-sm text-text-dark opacity-60">Học viên</div>
+        </div>
+        <div class="text-center bg-background-light rounded-xl p-4">
+          <div class="text-2xl md:text-3xl font-bold text-primary-DEFAULT">7,773+</div>
+          <div class="text-sm text-text-dark opacity-60">Câu luyện tập</div>
+        </div>
+        <div class="text-center bg-background-light rounded-xl p-4">
+          <div class="text-2xl md:text-3xl font-bold text-primary-DEFAULT">997+</div>
+          <div class="text-sm text-text-dark opacity-60">Câu ngữ pháp</div>
+        </div>
+        <div class="text-center bg-background-light rounded-xl p-4">
+          <div class="text-2xl md:text-3xl font-bold text-primary-DEFAULT">75+</div>
+          <div class="text-sm text-text-dark opacity-60">Đề thi VSTEP</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- What you can practice -->
+<section class="py-16 bg-background-light">
+  <div class="container mx-auto px-4">
+    <div class="text-center mb-12">
+      <h2 class="text-3xl md:text-4xl font-bold text-text-dark mb-4">
+        🎯 Trên Examify bạn luyện được gì?
+      </h2>
+      <p class="text-text-dark opacity-70 text-lg">Hệ thống luyện tập toàn diện, từ ngữ pháp đến luyện nghe, từ vựng đến luyện đề</p>
+    </div>
+    
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <!-- Listening -->
+      <div class="bg-white rounded-2xl p-6 shadow-card hover:shadow-card-hover transition-all duration-300 hover:-translate-y-2 border border-gray-100">
+        <div class="text-4xl mb-4">🎧</div>
+        <h3 class="text-xl font-bold text-text-dark mb-2">Listening</h3>
+        <p class="text-text-dark opacity-70 text-sm mb-4">Luyện nghe với các bài nghe và câu hỏi trắc nghiệm theo cấu trúc VSTEP</p>
+        <button class="w-full px-4 py-2 bg-primary-DEFAULT text-white rounded-lg hover:bg-primary-dark transition-colors" routerLink="/exam-list?skill=listening">
+          Bắt đầu →
         </button>
       </div>
-      <div class="flex flex-wrap justify-center gap-8">
-        <div class="text-center">
-          <div class="text-3xl font-bold text-yellow-300">50K+</div>
-          <div class="text-sm text-purple-200">Học viên</div>
-        </div>
-        <div class="text-center">
-          <div class="text-3xl font-bold text-yellow-300">95%</div>
-          <div class="text-sm text-purple-200">Đỗ VSTEP</div>
-        </div>
-        <div class="text-center">
-          <div class="text-3xl font-bold text-yellow-300">1000+</div>
-          <div class="text-sm text-purple-200">Đề thi</div>
-        </div>
+      
+      <!-- Reading -->
+      <div class="bg-white rounded-2xl p-6 shadow-card hover:shadow-card-hover transition-all duration-300 hover:-translate-y-2 border border-gray-100">
+        <div class="text-4xl mb-4">📖</div>
+        <h3 class="text-xl font-bold text-text-dark mb-2">Reading</h3>
+        <p class="text-text-dark opacity-70 text-sm mb-4">Luyện đọc hiểu với các bài đọc và câu hỏi trắc nghiệm theo cấu trúc VSTEP</p>
+        <button class="w-full px-4 py-2 bg-primary-DEFAULT text-white rounded-lg hover:bg-primary-dark transition-colors" routerLink="/exam-list?skill=reading">
+          Bắt đầu →
+        </button>
+      </div>
+      
+      <!-- Writing -->
+      <div class="bg-white rounded-2xl p-6 shadow-card hover:shadow-card-hover transition-all duration-300 hover:-translate-y-2 border border-gray-100">
+        <div class="text-4xl mb-4">✍️</div>
+        <h3 class="text-xl font-bold text-text-dark mb-2">Writing</h3>
+        <p class="text-text-dark opacity-70 text-sm mb-4">Luyện viết với các đề bài và hướng dẫn chi tiết theo cấu trúc VSTEP</p>
+        <button class="w-full px-4 py-2 bg-primary-DEFAULT text-white rounded-lg hover:bg-primary-dark transition-colors" routerLink="/exam-list?skill=writing">
+          Bắt đầu →
+        </button>
+      </div>
+      
+      <!-- Vocabulary -->
+      <div class="bg-white rounded-2xl p-6 shadow-card hover:shadow-card-hover transition-all duration-300 hover:-translate-y-2 border border-gray-100">
+        <div class="text-4xl mb-4">📚</div>
+        <h3 class="text-xl font-bold text-text-dark mb-2">Từ vựng</h3>
+        <p class="text-text-dark opacity-70 text-sm mb-4">Học từ vựng VSTEP theo chủ đề với flashcard và spaced repetition</p>
+        <button class="w-full px-4 py-2 bg-primary-DEFAULT text-white rounded-lg hover:bg-primary-dark transition-colors" routerLink="/vocabulary">
+          Bắt đầu →
+        </button>
+      </div>
+      
+      <!-- Full Test -->
+      <div class="bg-gradient-to-br from-vstep-lighter to-white rounded-2xl p-6 shadow-card hover:shadow-card-hover transition-all duration-300 hover:-translate-y-2 border-2 border-vstep">
+        <div class="text-4xl mb-4">📝</div>
+        <h3 class="text-xl font-bold text-text-dark mb-2">Full Test</h3>
+        <p class="text-text-dark opacity-70 text-sm mb-4">Làm đề thi VSTEP đầy đủ 4 kỹ năng với chấm điểm và phân tích chi tiết</p>
+        <button class="w-full px-4 py-2 bg-warning-light text-white rounded-lg hover:bg-warning-DEFAULT transition-colors" routerLink="/exam-list?skill=fulltest">
+          Bắt đầu →
+        </button>
+      </div>
+      
+      <!-- Speaking -->
+      <div class="bg-white rounded-2xl p-6 shadow-card hover:shadow-card-hover transition-all duration-300 hover:-translate-y-2 border border-gray-100">
+        <div class="text-4xl mb-4">🎙️</div>
+        <h3 class="text-xl font-bold text-text-dark mb-2">Speaking</h3>
+        <p class="text-text-dark opacity-70 text-sm mb-4">Luyện nói với các chủ đề và ghi âm câu trả lời</p>
+        <button class="w-full px-4 py-2 bg-primary-DEFAULT text-white rounded-lg hover:bg-primary-dark transition-colors" routerLink="/exam-list?skill=speaking">
+          Bắt đầu →
+        </button>
       </div>
     </div>
   </div>
 </section>
 
-<!-- Cấu trúc đề thi VSTEP -->
-<section class="py-16 bg-gray-50">
+<!-- Blog Section -->
+<section class="py-16 bg-white">
   <div class="container mx-auto px-4">
-    <div class="text-center mb-12">
-      <h2 class="text-3xl md:text-4xl font-bold text-gray-800 mb-4">Cấu trúc đề thi <span class="bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">VSTEP</span></h2>
-      <p class="text-gray-600">Đề thi chuẩn theo quy định của Bộ Giáo dục và Đào tạo</p>
-    </div>
-    
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-      <div class="bg-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 cursor-pointer group" routerLink="/exam-list?skill=listening">
-        <div class="text-5xl mb-4 group-hover:scale-110 transition-transform">🎧</div>
-        <h3 class="text-xl font-bold text-gray-800 mb-2">Listening</h3>
-        <div class="flex gap-3 text-sm text-gray-500 mb-3">
-          <span>⏱️ 35 phút</span>
-          <span>📝 35 câu</span>
-        </div>
-        <p class="text-gray-600 text-sm mb-4">Nghe hiểu các đoạn hội thoại và bài nói chuyện</p>
-        <span class="inline-block px-3 py-1 bg-indigo-100 text-indigo-700 text-xs font-semibold rounded-full">Bậc 3-5</span>
+    <div class="flex justify-between items-center mb-12">
+      <div>
+        <h2 class="text-3xl md:text-4xl font-bold text-text-dark mb-2">📖 Blog</h2>
+        <p class="text-text-dark opacity-70">Mẹo làm bài, chiến lược, lộ trình và kinh nghiệm thi VSTEP</p>
       </div>
-      
-      <div class="bg-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 cursor-pointer group" routerLink="/exam-list?skill=reading">
-        <div class="text-5xl mb-4 group-hover:scale-110 transition-transform">📖</div>
-        <h3 class="text-xl font-bold text-gray-800 mb-2">Reading</h3>
-        <div class="flex gap-3 text-sm text-gray-500 mb-3">
-          <span>⏱️ 60 phút</span>
-          <span>📝 40 câu</span>
-        </div>
-        <p class="text-gray-600 text-sm mb-4">Đọc hiểu 4 đoạn văn với các dạng câu hỏi đa dạng</p>
-        <span class="inline-block px-3 py-1 bg-indigo-100 text-indigo-700 text-xs font-semibold rounded-full">Bậc 3-5</span>
-      </div>
-      
-      <div class="bg-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 cursor-pointer group" routerLink="/exam-list?skill=writing">
-        <div class="text-5xl mb-4 group-hover:scale-110 transition-transform">✍️</div>
-        <h3 class="text-xl font-bold text-gray-800 mb-2">Writing</h3>
-        <div class="flex gap-3 text-sm text-gray-500 mb-3">
-          <span>⏱️ 60 phút</span>
-          <span>📝 2 tasks</span>
-        </div>
-        <p class="text-gray-600 text-sm mb-4">Viết thư/email và luận xã hội</p>
-        <span class="inline-block px-3 py-1 bg-indigo-100 text-indigo-700 text-xs font-semibold rounded-full">Bậc 3-5</span>
-      </div>
-      
-      <div class="bg-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 cursor-pointer group" routerLink="/exam-list?skill=speaking">
-        <div class="text-5xl mb-4 group-hover:scale-110 transition-transform">🎙️</div>
-        <h3 class="text-xl font-bold text-gray-800 mb-2">Speaking</h3>
-        <div class="flex gap-3 text-sm text-gray-500 mb-3">
-          <span>⏱️ 12 phút</span>
-          <span>📝 3 parts</span>
-        </div>
-        <p class="text-gray-600 text-sm mb-4">Phỏng vấn trực tiếp với giám khảo</p>
-        <span class="inline-block px-3 py-1 bg-indigo-100 text-indigo-700 text-xs font-semibold rounded-full">Bậc 3-5</span>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- Tại sao chọn chúng tôi -->
-<section class="py-16 bg-gradient-to-br from-indigo-50 to-purple-50">
-  <div class="container mx-auto px-4">
-    <div class="text-center mb-12">
-      <h2 class="text-3xl md:text-4xl font-bold text-gray-800 mb-4">Tại sao nên chọn <span class="bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">VSTEP Master</span>?</h2>
-      <p class="text-gray-600">Học thông minh, thi đỗ cao</p>
-    </div>
-    
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-      <div class="bg-white rounded-2xl p-6 text-center shadow-md hover:shadow-xl transition-all duration-300">
-        <div class="text-5xl mb-4">📋</div>
-        <h3 class="text-lg font-bold text-gray-800 mb-2">Đề thi chuẩn Bộ GD&ĐT</h3>
-        <p class="text-gray-600 text-sm">Ngân hàng 1000+ đề thi theo đúng cấu trúc và ma trận đề VSTEP</p>
-      </div>
-      
-      <div class="bg-white rounded-2xl p-6 text-center shadow-md hover:shadow-xl transition-all duration-300">
-        <div class="text-5xl mb-4">🤖</div>
-        <h3 class="text-lg font-bold text-gray-800 mb-2">AI chấm Writing/Speaking</h3>
-        <p class="text-gray-600 text-sm">Công nghệ AI tiên tiến chấm điểm bài viết và nói theo tiêu chí VSTEP</p>
-      </div>
-      
-      <div class="bg-white rounded-2xl p-6 text-center shadow-md hover:shadow-xl transition-all duration-300">
-        <div class="text-5xl mb-4">📊</div>
-        <h3 class="text-lg font-bold text-gray-800 mb-2">Phân tích năng lực</h3>
-        <p class="text-gray-600 text-sm">Đánh giá chi tiết từng kỹ năng, so sánh với khung năng lực bậc 3-5</p>
-      </div>
-      
-      <div class="bg-white rounded-2xl p-6 text-center shadow-md hover:shadow-xl transition-all duration-300">
-        <div class="text-5xl mb-4">🎯</div>
-        <h3 class="text-lg font-bold text-gray-800 mb-2">Lộ trình cá nhân hóa</h3>
-        <p class="text-gray-600 text-sm">Lộ trình học tập được thiết kế riêng theo trình độ hiện tại</p>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- Khung năng lực VSTEP -->
-<section class="py-16 bg-gray-900 text-white">
-  <div class="container mx-auto px-4">
-    <div class="text-center mb-12">
-      <h2 class="text-3xl md:text-4xl font-bold mb-4">Khung năng lực <span class="text-yellow-400">VSTEP</span></h2>
-      <p class="text-gray-400">Hiểu rõ trình độ và mục tiêu của bạn</p>
-    </div>
-    
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-      <div class="bg-gray-800 rounded-2xl p-6 text-center hover:bg-gray-700 transition-all duration-300">
-        <div class="inline-block px-4 py-1 bg-blue-600 text-white text-sm font-semibold rounded-full mb-4">Bậc 3</div>
-        <div class="text-3xl font-bold text-blue-400 mb-2">VSTEP A2</div>
-        <p class="text-gray-400 text-sm mb-4">Sơ cấp - Có thể giao tiếp trong các tình huống đơn giản</p>
-        <div class="text-sm text-gray-500 mb-6">📝 Tốt nghiệp THPT</div>
-        <button class="w-full px-4 py-2 bg-gray-700 text-white rounded-full hover:bg-blue-600 transition-all">Luyện ngay</button>
-      </div>
-      
-      <div class="bg-gradient-to-br from-indigo-600 to-purple-600 rounded-2xl p-6 text-center transform scale-105 shadow-2xl relative">
-        <div class="absolute -top-3 left-1/2 transform -translate-x-1/2 px-4 py-1 bg-yellow-500 text-gray-900 text-xs font-bold rounded-full">Phổ biến nhất</div>
-        <div class="inline-block px-4 py-1 bg-white/20 text-white text-sm font-semibold rounded-full mb-4 mt-4">Bậc 4</div>
-        <div class="text-3xl font-bold text-yellow-300 mb-2">VSTEP B1</div>
-        <p class="text-purple-100 text-sm mb-4">Trung cấp - Giao tiếp độc lập, hiểu ý chính</p>
-        <div class="text-sm text-purple-200 mb-6">🎓 Tốt nghiệp Đại học không chuyên ngữ</div>
-        <button class="w-full px-4 py-2 bg-yellow-500 text-gray-900 font-semibold rounded-full hover:bg-yellow-400 transition-all">Luyện ngay</button>
-      </div>
-      
-      <div class="bg-gray-800 rounded-2xl p-6 text-center hover:bg-gray-700 transition-all duration-300">
-        <div class="inline-block px-4 py-1 bg-purple-600 text-white text-sm font-semibold rounded-full mb-4">Bậc 5</div>
-        <div class="text-3xl font-bold text-purple-400 mb-2">VSTEP B2/C1</div>
-        <p class="text-gray-400 text-sm mb-4">Cao cấp - Sử dụng ngôn ngữ linh hoạt, hiệu quả</p>
-        <div class="text-sm text-gray-500 mb-6">🏆 Giảng viên, nghiên cứu sinh</div>
-        <button class="w-full px-4 py-2 bg-gray-700 text-white rounded-full hover:bg-purple-600 transition-all">Luyện ngay</button>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- Lộ trình học -->
-<section class="py-16 bg-gray-50">
-  <div class="container mx-auto px-4">
-    <div class="text-center mb-12">
-      <h2 class="text-3xl md:text-4xl font-bold text-gray-800 mb-4">Lộ trình <span class="bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">chinh phục VSTEP</span></h2>
-      <p class="text-gray-600">Từ mất gốc đến thành thạo</p>
-    </div>
-    
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
-      <div class="text-center">
-        <div class="w-16 h-16 bg-indigo-600 text-white text-2xl font-bold rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">1</div>
-        <h3 class="text-lg font-bold text-gray-800 mb-2">Kiểm tra đầu vào</h3>
-        <p class="text-gray-600 text-sm">Đánh giá trình độ hiện tại, xác định mục tiêu bậc 3/4/5</p>
-      </div>
-      
-      <div class="text-center">
-        <div class="w-16 h-16 bg-indigo-600 text-white text-2xl font-bold rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">2</div>
-        <h3 class="text-lg font-bold text-gray-800 mb-2">Học theo lộ trình</h3>
-        <p class="text-gray-600 text-sm">Luyện từng kỹ năng với giáo trình chuẩn VSTEP</p>
-      </div>
-      
-      <div class="text-center">
-        <div class="w-16 h-16 bg-indigo-600 text-white text-2xl font-bold rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">3</div>
-        <h3 class="text-lg font-bold text-gray-800 mb-2">Làm đề thi thử</h3>
-        <p class="text-gray-600 text-sm">Thực hành với đề thi có cấu trúc như thi thật</p>
-      </div>
-      
-      <div class="text-center">
-        <div class="w-16 h-16 bg-indigo-600 text-white text-2xl font-bold rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">4</div>
-        <h3 class="text-lg font-bold text-gray-800 mb-2">Đánh giá & cải thiện</h3>
-        <p class="text-gray-600 text-sm">Phân tích điểm mạnh/yếu, tập trung cải thiện</p>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- Học viên thành công -->
-<section class="py-16 bg-gradient-to-br from-indigo-900 to-purple-900 text-white">
-  <div class="container mx-auto px-4">
-    <div class="text-center mb-12">
-      <h2 class="text-3xl md:text-4xl font-bold mb-4">Học viên <span class="text-yellow-400">đã đỗ VSTEP</span></h2>
-      <p class="text-purple-200">Hơn 50.000 học viên đã thành công</p>
-    </div>
-    
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-      <div class="bg-white/10 backdrop-blur-sm rounded-2xl p-6 hover:bg-white/20 transition-all">
-        <div class="w-12 h-12 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full flex items-center justify-center text-gray-900 font-bold mb-4">MT</div>
-        <p class="text-purple-100 text-sm mb-4">"Mình đã đạt Bậc 4 VSTEP sau 3 tháng luyện tập trên VSTEP Master. AI chấm Speaking siêu chuẩn!"</p>
-        <div class="border-t border-white/20 pt-3">
-          <div class="font-semibold">Minh Trang</div>
-          <div class="text-sm text-purple-300">Bậc 3 → Bậc 4 (VSTEP B1)</div>
-          <div class="inline-block mt-2 px-2 py-1 bg-yellow-500 text-gray-900 text-xs font-semibold rounded-full">Đạt 8.0/10</div>
-        </div>
-      </div>
-      
-      <div class="bg-white/10 backdrop-blur-sm rounded-2xl p-6 hover:bg-white/20 transition-all">
-        <div class="w-12 h-12 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full flex items-center justify-center text-gray-900 font-bold mb-4">ĐT</div>
-        <p class="text-purple-100 text-sm mb-4">"Nhờ có kho đề thi phong phú, mình đã quen format đề thi thật và đạt Bậc 5 ngay lần đầu thi."</p>
-        <div class="border-t border-white/20 pt-3">
-          <div class="font-semibold">Đức Trung</div>
-          <div class="text-sm text-purple-300">Bậc 4 → Bậc 5 (VSTEP C1)</div>
-          <div class="inline-block mt-2 px-2 py-1 bg-yellow-500 text-gray-900 text-xs font-semibold rounded-full">Đạt 9.2/10</div>
-        </div>
-      </div>
-      
-      <div class="bg-white/10 backdrop-blur-sm rounded-2xl p-6 hover:bg-white/20 transition-all">
-        <div class="w-12 h-12 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full flex items-center justify-center text-gray-900 font-bold mb-4">HL</div>
-        <p class="text-purple-100 text-sm mb-4">"Giao diện thân thiện, lộ trình học rõ ràng. Mình đã giới thiệu cho rất nhiều bạn cùng sử dụng."</p>
-        <div class="border-t border-white/20 pt-3">
-          <div class="font-semibold">Hồng Lan</div>
-          <div class="text-sm text-purple-300">Mất gốc → Bậc 3</div>
-          <div class="inline-block mt-2 px-2 py-1 bg-yellow-500 text-gray-900 text-xs font-semibold rounded-full">Đạt 7.5/10</div>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- Call to Action -->
-<section class="py-16 bg-gradient-to-r from-yellow-500 to-orange-600">
-  <div class="container mx-auto px-4 text-center">
-    <h2 class="text-2xl md:text-4xl font-bold text-white mb-4">Sẵn sàng chinh phục chứng chỉ VSTEP?</h2>
-    <p class="text-orange-100 mb-8 max-w-2xl mx-auto">Đăng ký ngay để được làm bài thi thử miễn phí và nhận lộ trình học cá nhân hóa</p>
-    <div class="flex flex-col sm:flex-row gap-4 justify-center">
-      <button class="px-8 py-3 bg-white text-orange-600 font-semibold rounded-full hover:shadow-lg transform hover:-translate-y-1 transition-all" routerLink="/register">
-        📝 Đăng ký miễn phí
+      <button class="text-primary-DEFAULT font-semibold hover:text-primary-dark transition-colors">
+        Xem tất cả →
       </button>
-      <button class="px-8 py-3 bg-white/20 backdrop-blur-sm border border-white/30 text-white font-semibold rounded-full hover:bg-white/30 transition-all">
-        💬 Tư vấn lộ trình
+    </div>
+    
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div class="bg-background-light rounded-2xl p-6 hover:shadow-card-hover transition-all duration-300 cursor-pointer">
+        <div class="text-2xl mb-3">💡</div>
+        <h3 class="text-lg font-bold text-text-dark mb-2">10 mẹo làm bài Listening VSTEP hiệu quả</h3>
+        <p class="text-text-dark opacity-70 text-sm mb-4">Chiến lược nghe và phân bổ thời gian hợp lý</p>
+        <span class="inline-block px-3 py-1 bg-vstep-lighter text-vstep-dark text-xs font-semibold rounded-full">Đọc ngay</span>
+      </div>
+      
+      <div class="bg-background-light rounded-2xl p-6 hover:shadow-card-hover transition-all duration-300 cursor-pointer">
+        <div class="text-2xl mb-3">🗓️</div>
+        <h3 class="text-lg font-bold text-text-dark mb-2">Lộ trình 3 tháng chinh phục VSTEP B1</h3>
+        <p class="text-text-dark opacity-70 text-sm mb-4">Kế hoạch học tập chi tiết từng tuần cho người mất gốc</p>
+        <span class="inline-block px-3 py-1 bg-vstep-lighter text-vstep-dark text-xs font-semibold rounded-full">Đọc ngay</span>
+      </div>
+      
+      <div class="bg-background-light rounded-2xl p-6 hover:shadow-card-hover transition-all duration-300 cursor-pointer">
+        <div class="text-2xl mb-3">🎯</div>
+        <h3 class="text-lg font-bold text-text-dark mb-2">Kinh nghiệm đạt VSTEP B2 lần đầu thi</h3>
+        <p class="text-text-dark opacity-70 text-sm mb-4">Chia sẻ từ học viên đạt 9.0/10 Writing</p>
+        <span class="inline-block px-3 py-1 bg-vstep-lighter text-vstep-dark text-xs font-semibold rounded-full">Đọc ngay</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Install App -->
+<section class="py-16 bg-vstep-lighter">
+  <div class="container mx-auto px-4">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-12 items-center max-w-5xl mx-auto">
+      <div>
+        <h2 class="text-3xl md:text-4xl font-bold text-text-dark mb-4">📱 Cài đặt ứng dụng</h2>
+        <p class="text-text-dark opacity-70 text-lg mb-6">
+          Cài đặt ứng dụng <strong class="text-vstep">Examify</strong><br>
+          Học mọi lúc mọi nơi — cài miễn phí từ trình duyệt
+        </p>
+        
+        <div class="flex gap-4 mb-6">
+          <span class="px-4 py-2 bg-white text-vstep-dark rounded-full text-sm font-semibold border border-vstep">🔹 Android / Chrome</span>
+          <span class="px-4 py-2 bg-white text-vstep-dark rounded-full text-sm font-semibold border border-vstep">🔹 iPhone / iPad</span>
+        </div>
+        
+        <ol class="space-y-4 mb-8">
+          <li class="flex items-start gap-3 bg-white p-3 rounded-xl shadow-sm">
+            <span class="w-6 h-6 bg-primary-DEFAULT text-white rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0">1</span>
+            <span class="text-text-dark">Mở trang web Examify trên trình duyệt Chrome</span>
+          </li>
+          <li class="flex items-start gap-3 bg-white p-3 rounded-xl shadow-sm">
+            <span class="w-6 h-6 bg-primary-DEFAULT text-white rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0">2</span>
+            <span class="text-text-dark">Nhấn vào biểu tượng "Cài đặt" trên thanh địa chỉ hoặc menu ⋮</span>
+          </li>
+          <li class="flex items-start gap-3 bg-white p-3 rounded-xl shadow-sm">
+            <span class="w-6 h-6 bg-primary-DEFAULT text-white rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0">3</span>
+            <span class="text-text-dark">Xác nhận "Cài đặt" — ứng dụng sẽ xuất hiện trên màn hình chính</span>
+          </li>
+        </ol>
+        
+        <button class="px-8 py-3 bg-primary-DEFAULT text-white font-semibold rounded-full hover:bg-primary-dark transition-all duration-300 shadow-lg hover:shadow-xl">
+          Cài đặt ngay
+        </button>
+      </div>
+      
+      <div class="flex justify-center">
+        <div class="w-64 h-96 bg-white rounded-3xl shadow-2xl p-4 flex items-center justify-center border border-gray-200">
+          <div class="text-center">
+            <div class="mb-4">
+              <img src="assets/favicons/LogoE.jpg" alt="Examify Logo" class="w-20 h-20 mx-auto object-contain">
+            </div>
+            <div class="text-text-dark font-bold text-xl">Examify</div>
+            <div class="text-text-dark opacity-70 text-sm">VSTEP Master</div>
+            <div class="mt-4 w-16 h-16 mx-auto bg-primary-DEFAULT rounded-full flex items-center justify-center text-white text-2xl">✓</div>
+            <div class="mt-4 text-xs text-text-dark opacity-50">Sẵn sàng cài đặt</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="py-16 bg-gradient-to-r from-warning-light to-warning-DEFAULT">
+  <div class="container mx-auto px-4 text-center">
+    <h2 class="text-3xl md:text-4xl font-bold text-white mb-4">🚀 Sẵn sàng chinh phục VSTEP?</h2>
+    <p class="text-white opacity-90 text-lg mb-8 max-w-2xl mx-auto">
+      Tham gia cùng <strong class="text-white">34,683+</strong> học viên đang luyện thi VSTEP mỗi ngày
+    </p>
+    <div class="flex flex-col sm:flex-row gap-4 justify-center">
+      <button class="px-8 py-3 bg-white text-warning-DEFAULT font-semibold rounded-full hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300" routerLink="/register">
+        Bắt đầu miễn phí →
+      </button>
+      <button class="px-8 py-3 bg-white/20 backdrop-blur-sm border border-white/30 text-white font-semibold rounded-full hover:bg-white/30 transition-all duration-300">
+        Tư vấn lộ trình
       </button>
     </div>
   </div>

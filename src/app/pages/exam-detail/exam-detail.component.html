@@ -60,28 +60,22 @@
         <div class="skill-info">
           <h3>{{ skill.skillName }}</h3>
           <p>⏱️ {{ skill.duration }} phút</p>
-          <div class="skill-attempts" *ngIf="skill.attempts !== undefined">
-            <span>📊 Đã làm: {{ skill.attempts }} lần</span>
-          </div>
-          <div class="skill-status">
-            <span *ngIf="skill.score !== undefined && skill.score !== null" class="skill-score">
-              🏆 Điểm cao nhất: {{ skill.score }}/10
-            </span>
-            <span *ngIf="skill.message" class="skill-message">{{ skill.message }}</span>
-          </div>
+          <!-- ❌ ĐÃ XÓA: skill-attempts (Đã làm: X lần) -->
+          <!-- ❌ ĐÃ XÓA: skill-score (Điểm cao nhất) -->
+          <!-- ❌ ĐÃ XÓA: skill-message -->
         </div>
         
         <button class="btn-start-skill" 
                 [disabled]="skill.status === 'locked'" 
                 (click)="startSkill(skill.skillType)">
-          {{ skill.status === 'completed' ? '🔄 Làm lại' : 
+          {{ skill.status === 'completed' ? '📊 Xem kết quả' : 
              skill.status === 'locked' ? '🔒 Chưa mở khóa' : 
              '▶️ Bắt đầu' }}
         </button>
       </div>
     </div>
 
-    <!-- Full Test Result Button -->
+    <!-- Full Test Result Button - GIỮ NGUYÊN CHỨC NĂNG -->
     <div class="fulltest-result-btn" *ngIf="checkFullTestCompletion()">
       <button class="btn-view-result" (click)="viewFullTestResult()">
         📊 Xem kết quả Full Test

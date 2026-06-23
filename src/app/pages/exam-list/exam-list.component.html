@@ -1,14 +1,14 @@
-﻿<div class="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+﻿<div class="min-h-screen bg-background-light">
   <!-- Header -->
   <app-header></app-header>
 
   <!-- Page Header -->
-  <div class="bg-gradient-to-r from-indigo-600 to-purple-600 text-white py-12">
+  <div class="bg-gradient-to-r from-toeic to-toeic-dark text-white py-12 mt-20">
     <div class="container mx-auto px-4 text-center">
       <h1 class="text-3xl md:text-4xl font-bold mb-2">
-        📚 Danh sách đề thi <span class="text-yellow-300">VSTEP</span>
+        📚 Danh sách đề thi <span class="text-warning-light">VSTEP</span>
       </h1>
-      <p class="text-indigo-100">
+      <p class="text-toeic-lighter opacity-90">
         Chọn đề thi phù hợp với trình độ của bạn để bắt đầu luyện tập
       </p>
     </div>
@@ -16,24 +16,24 @@
 
   <!-- Loading State -->
   <div *ngIf="isLoading" class="flex flex-col items-center justify-center py-16">
-    <div class="w-12 h-12 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin mb-3"></div>
-    <p class="text-gray-500">Đang tải đề thi...</p>
+    <div class="w-12 h-12 border-4 border-toeic-lighter border-t-toeic rounded-full animate-spin mb-3"></div>
+    <p class="text-text-dark opacity-60">Đang tải đề thi...</p>
   </div>
 
   <!-- Exam Grid -->
   <div class="container mx-auto px-4 py-10">
     <div *ngIf="!isLoading && filteredExams.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       <div *ngFor="let exam of filteredExams" 
-           class="bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 cursor-pointer overflow-hidden group"
+           class="bg-white rounded-xl shadow-card hover:shadow-card-hover transition-all duration-300 cursor-pointer overflow-hidden group"
            (click)="onExamClick(exam)">
         
         <!-- Colored top bar -->
-        <div class="h-1.5 bg-gradient-to-r from-indigo-500 to-purple-500"></div>
+        <div class="h-1.5 bg-gradient-to-r from-toeic to-toeic-dark"></div>
         
         <div class="p-5">
           <!-- Badge và icon -->
           <div class="flex justify-between items-start mb-3">
-            <span class="px-2.5 py-0.5 bg-indigo-100 text-indigo-700 text-xs font-medium rounded-full">
+            <span class="px-2.5 py-0.5 bg-toeic-lighter text-toeic-dark text-xs font-medium rounded-full">
               Full Test
             </span>
             <span class="text-xl opacity-50 group-hover:opacity-100 transition-opacity">
@@ -42,17 +42,17 @@
           </div>
           
           <!-- Title -->
-          <h3 class="text-lg font-bold text-gray-800 mb-1.5 group-hover:text-indigo-600 transition-colors">
+          <h3 class="text-lg font-bold text-text-dark mb-1.5 group-hover:text-toeic transition-colors">
             {{ exam.title }}
           </h3>
           
           <!-- Description -->
-          <p class="text-gray-500 text-sm mb-3 line-clamp-2">
+          <p class="text-text-dark opacity-60 text-sm mb-3 line-clamp-2">
             {{ exam.description || 'Đề thi đầy đủ 4 kỹ năng Reading, Listening, Writing, Speaking theo chuẩn VSTEP' }}
           </p>
           
           <!-- Meta Info -->
-          <div class="flex items-center gap-3 text-gray-400 text-xs mb-3">
+          <div class="flex items-center gap-3 text-text-dark opacity-40 text-xs mb-3">
             <span>⏱️ 120 phút</span>
             <span>•</span>
             <span>📝 100 câu</span>
@@ -61,14 +61,14 @@
           <!-- Price & Button -->
           <div class="flex items-center justify-between">
             <div>
-              <span class="text-xl font-bold text-indigo-600">
+              <span class="text-xl font-bold text-toeic">
                 {{ (exam.price || 0).toLocaleString() }}đ
               </span>
-              <span *ngIf="exam.price && exam.price > 0" class="text-xs text-gray-400 line-through ml-1">
+              <span *ngIf="exam.price && exam.price > 0" class="text-xs text-text-dark opacity-40 line-through ml-1">
                 {{ (exam.price * 1.2).toLocaleString() }}đ
               </span>
             </div>
-            <button class="px-4 py-1.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-sm font-medium rounded-full hover:shadow-md transition-all duration-300">
+            <button class="px-4 py-1.5 bg-toeic text-white text-sm font-medium rounded-full hover:bg-toeic-dark hover:shadow-md transition-all duration-300">
               Bắt đầu
             </button>
           </div>
@@ -79,8 +79,8 @@
     <!-- Empty State -->
     <div *ngIf="!isLoading && filteredExams.length === 0" class="text-center py-16">
       <div class="text-5xl mb-3">📭</div>
-      <p class="text-gray-500">Không tìm thấy đề thi phù hợp</p>
-      <button class="mt-4 px-5 py-2 bg-indigo-600 text-white text-sm rounded-full hover:bg-indigo-700 transition" (click)="loadExams()">
+      <p class="text-text-dark opacity-60">Không tìm thấy đề thi phù hợp</p>
+      <button class="mt-4 px-5 py-2 bg-toeic text-white text-sm rounded-full hover:bg-toeic-dark transition" (click)="loadExams()">
         🔄 Làm mới
       </button>
     </div>

@@ -22,18 +22,34 @@ export class AdminDashboardLayoutComponent implements OnInit {
   userFullName = '';
   sidebarOpen = true;
 
-readonly menuItems: MenuItem[] = [
-  {
-    label: 'Dashboard',
-    route: '/admin',
-    exact: true
-  },
-  {
-    label: 'Manage Exams',
-    route: '/admin/manage-exams',
-    exact: false
-  }
-];
+  // ✅ CẬP NHẬT MENU ITEMS
+  readonly menuItems: MenuItem[] = [
+    {
+      label: '📊 Dashboard',
+      route: '/admin',
+      exact: true
+    },
+    {
+      label: '📚 Manage Exams',
+      route: '/admin/manage-exams',
+      exact: false
+    },
+    {
+      label: '📝 Submissions',
+      route: '/admin/submissions',
+      exact: false
+    },
+    {
+      label: '👤 Users',
+      route: '/admin/users',
+      exact: false
+    },
+    {
+      label: '💳 Payments',
+      route: '/admin/payments',
+      exact: false
+    }
+  ];
 
   ngOnInit(): void {
     this.userFullName = this.authService.getCurrentUser()?.fullName || 'Admin';

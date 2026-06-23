@@ -2,108 +2,79 @@
   <div class="speaking-header">
     <div class="header-content">
       <h2>🎙️ Speaking Test</h2>
-      <p>{{ questions.length }} câu hỏi</p>
+      <p>{{ questions.length }} câu hỏi - Ghi âm câu trả lời của bạn</p>
     </div>
     <div class="progress-section">
       <div class="progress-bar">
         <div class="progress-fill" [style.width.%]="getProgressPercent()"></div>
       </div>
-      <span class="progress-text">{{ getProgressPercent() }}% hoàn thành</span>
+      <span>{{ getProgressPercent() }}% hoàn thành</span>
     </div>
   </div>
 
-  <div class="question-section" *ngIf="questions.length > 0">
-    <div class="question-nav">
-      <button class="nav-btn" (click)="prevQuestion()" [disabled]="currentQuestionIndex === 0">◀</button>
-      <span class="question-counter">Câu {{ currentQuestionIndex + 1 }}/{{ questions.length }}</span>
-      <button class="nav-btn" (click)="nextQuestion()" [disabled]="currentQuestionIndex === questions.length - 1">▶</button>
-    </div>
+  <!-- 3 Questions -->
+  <div class="questions-container">
+    <div *ngFor="let q of questions; let i = index" class="question-card">
+      <div class="question-header">
+        <span class="q-number">Câu {{ i + 1 }}</span>
+        <span class="q-status" [class.completed]="audioBlobs[i]">
+          {{ audioBlobs[i] ? '✅ Đã ghi âm' : '⏳ Chưa ghi âm' }}
+        </span>
+      </div>
 
-    <div class="question-card">
-      <div class="question-number">Part {{ getPartNumber(questions[currentQuestionIndex]) }}</div>
-      <h3 class="question-text">{{ questions[currentQuestionIndex]?.questionText }}</h3>
-      
+      <div class="question-text">{{ q.questionText }}</div>
+
       <div class="time-info">
-        <span class="time-badge">⏱️ Chuẩn bị: {{ questions[currentQuestionIndex]?.preparationTime || 30 }}s</span>
-        <span class="time-badge">🎤 Nói: {{ questions[currentQuestionIndex]?.speakingTime || 60 }}s</span>
+        <span>⏱️ Chuẩn bị: {{ q.preparationTime || 30 }}s</span>
+        <span>🎤 Nói: {{ q.speakingTime || 60 }}s</span>
       </div>
 
-      <!-- Timer -->
-      <div class="timer-display" *ngIf="isRecording || isPreparing">
-        <div class="timer-circle" [class.warning]="getTimeRemaining() <= 10">
-          <span class="timer-value">{{ getTimerDisplay() }}</span>
-          <span class="timer-label">{{ isPreparing ? 'Chuẩn bị' : 'Đang nói' }}</span>
-        </div>
-      </div>
-
-      <!-- Transcript Input -->
+      <!-- Transcript -->
       <div class="transcript-section">
-        <label for="transcript">📝 Nội dung bài nói (Transcript):</label>
+        <label>📝 Nội dung bài nói (Transcript):</label>
         <textarea 
-          id="transcript"
-          class="transcript-input"
-          [value]="getCurrentTranscript()"
-          (input)="updateTranscript($event)"
-          placeholder="Nhập nội dung bạn đã nói (transcript)..."
-          rows="4"
+          [(ngModel)]="transcripts[i]"
+          (input)="updateTranscript(i, $event)"
+          placeholder="Nhập nội dung bạn đã nói..."
+          rows="3"
           [disabled]="isSubmitting">
         </textarea>
-        <div class="transcript-hint">
-          <span>💡 Bạn có thể nhập transcript thủ công hoặc để trống (sẽ được xử lý tự động)</span>
-        </div>
       </div>
 
+      <!-- Recording Controls -->
       <div class="recording-controls">
-        <!-- Chưa ghi âm -->
+        <!-- Chưa ghi âm và không đang ghi âm câu nào -->
         <button 
-          *ngIf="!isRecording && !audioBlobs[questions[currentQuestionIndex]?.id]"
+          *ngIf="!audioBlobs[i] && !(isRecording && currentRecordingIndex === i)"
           class="btn-record" 
-          (click)="startRecording()"
-          [disabled]="isPreparing">
+          (click)="startRecording(i)"
+          [disabled]="isPreparing || isRecording">
           🎙️ Bắt đầu ghi âm
         </button>
 
-        <!-- Đang ghi âm -->
+        <!-- Đang ghi âm câu này -->
         <button 
-          *ngIf="isRecording"
+          *ngIf="isRecording && currentRecordingIndex === i"
           class="btn-stop" 
           (click)="stopRecording()">
           ⏹️ Dừng ghi âm
         </button>
 
         <!-- Đã ghi âm -->
-        <div *ngIf="audioBlobs[questions[currentQuestionIndex]?.id]" class="audio-controls">
-          <div class="audio-status">
-            <span class="status-icon">✅</span>
-            <span class="status-text">Đã ghi âm</span>
-          </div>
-          <button class="btn-play" (click)="playRecording()" [disabled]="isPlaying">
-            {{ isPlaying ? '⏳ Đang phát...' : '▶️ Nghe lại' }}
+        <div *ngIf="audioBlobs[i]" class="audio-controls">
+          <span class="status-icon">✅ Đã ghi âm</span>
+          <button class="btn-play" (click)="playRecording(i)" [disabled]="isPlaying[i]">
+            {{ isPlaying[i] ? '⏳ Đang phát...' : '▶️ Nghe lại' }}
           </button>
-          <audio #audioPlayer (ended)="onAudioEnded()"></audio>
+          <button class="btn-rerecord" (click)="startRecording(i)">
+            🔄 Ghi âm lại
+          </button>
         </div>
-
-        <!-- Trạng thái câu hỏi -->
-        <div class="question-status">
-          <span class="status-badge" [class.completed]="getQuestionStatusText(currentQuestionIndex) === '✅ Đã ghi âm'">
-            {{ getQuestionStatusText(currentQuestionIndex) }}
-          </span>
-        </div>
-      </div>
-    </div>
-
-    <!-- Danh sách câu hỏi -->
-    <div class="question-list">
-      <div *ngFor="let q of questions; let i = index" 
-           class="question-dot" 
-           [class.active]="i === currentQuestionIndex"
-           [class.completed]="audioBlobs[q.id]"
-           (click)="currentQuestionIndex = i">
-        {{ i + 1 }}
       </div>
     </div>
   </div>
 
+  <!-- Actions -->
   <div class="actions">
     <button class="btn-back" (click)="goBack()">← Quay lại</button>
     <button 

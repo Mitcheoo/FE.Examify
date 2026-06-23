@@ -1,0 +1,139 @@
+<!-- src/app/pages/admin/pages/user-detail/user-detail.component.html -->
+
+<div class="min-h-screen bg-gray-50 p-4 md:p-6">
+  <div class="max-w-4xl mx-auto">
+    
+    <!-- Loading -->
+    <div *ngIf="isLoading" class="flex justify-center items-center py-20">
+      <div class="text-center">
+        <div class="w-14 h-14 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
+        <p class="mt-4 text-gray-500 font-medium">Đang tải thông tin người dùng...</p>
+      </div>
+    </div>
+
+    <!-- Error -->
+    <div *ngIf="!isLoading && errorMessage" class="bg-red-50 border border-red-200 rounded-2xl p-6 text-center">
+      <div class="text-5xl mb-3">😕</div>
+      <h3 class="text-lg font-semibold text-red-700">Có lỗi xảy ra</h3>
+      <p class="text-red-600 mt-1">{{ errorMessage }}</p>
+      <button (click)="goBack()" class="mt-4 px-6 py-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition">
+        ← Quay lại danh sách
+      </button>
+    </div>
+
+    <!-- User Detail -->
+    <div *ngIf="!isLoading && !errorMessage && user" class="bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden">
+      
+      <!-- Header với gradient -->
+      <div class="bg-gradient-to-r from-blue-600 via-blue-700 to-purple-600 px-6 py-8 md:px-8 md:py-10">
+        <div class="flex flex-col md:flex-row md:items-center gap-6">
+          
+          <!-- Avatar -->
+          <div class="flex-shrink-0">
+            <div class="w-24 h-24 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center text-white text-4xl font-bold border-4 border-white/50 shadow-lg mx-auto md:mx-0">
+              {{ getInitials(user.fullName) }}
+            </div>
+          </div>
+          
+          <!-- Thông tin cơ bản -->
+          <div class="flex-1 text-center md:text-left text-white">
+            <h1 class="text-2xl md:text-3xl font-bold">{{ user.fullName }}</h1>
+            <p class="text-blue-100 text-sm md:text-base">@{{ user.userName }}</p>
+            <div class="flex flex-wrap gap-2 mt-2 justify-center md:justify-start">
+              <span *ngFor="let role of user.roles" 
+                    class="px-3 py-1 text-xs font-semibold rounded-full bg-white/20 text-white backdrop-blur-sm border border-white/10">
+                {{ role }}
+              </span>
+              <span *ngIf="user.roles.length === 0" class="text-white/60 text-sm">
+                Chưa có vai trò
+              </span>
+            </div>
+          </div>
+          
+          <!-- Nút quay lại -->
+          <div class="flex-shrink-0">
+            <button (click)="goBack()" 
+                    class="w-full md:w-auto text-white/80 hover:text-white bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg transition flex items-center justify-center gap-2 border border-white/10">
+              ← Quay lại
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Body -->
+      <div class="p-6 md:p-8">
+        
+        <!-- Thông tin chi tiết -->
+        <h2 class="text-lg font-semibold text-gray-800 mb-4">📋 Thông tin chi tiết</h2>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          
+          <!-- Email -->
+          <div class="p-4 bg-gray-50 rounded-xl border border-gray-100 hover:shadow-md transition">
+            <div class="flex items-center gap-2 text-gray-500 text-sm mb-1">
+              <span>📧</span> Email
+            </div>
+            <p class="font-medium text-gray-900 break-all">{{ user.email }}</p>
+          </div>
+          
+          <!-- Roles -->
+          <div class="p-4 bg-gray-50 rounded-xl border border-gray-100 hover:shadow-md transition">
+            <div class="flex items-center gap-2 text-gray-500 text-sm mb-1">
+              <span>🎭</span> Vai trò
+            </div>
+            <div class="flex gap-2 flex-wrap mt-1">
+              <span *ngFor="let role of user.roles" 
+                    class="px-3 py-1 text-xs font-semibold rounded-full"
+                    [class]="getRoleBadgeClass(role)">
+                {{ role }}
+              </span>
+              <span *ngIf="user.roles.length === 0" class="text-gray-400 text-sm">Chưa có vai trò</span>
+            </div>
+          </div>
+          
+          <!-- Status -->
+          <div class="p-4 bg-gray-50 rounded-xl border border-gray-100 hover:shadow-md transition">
+            <div class="flex items-center gap-2 text-gray-500 text-sm mb-1">
+              <span>🔵</span> Trạng thái
+            </div>
+            <span class="inline-flex items-center gap-2 px-3 py-1.5 text-sm font-semibold rounded-full"
+                  [class]="getStatusBadgeClass(user.isActive)">
+              <span class="w-2.5 h-2.5 rounded-full"
+                    [class]="getStatusDotClass(user.isActive)"></span>
+              {{ getStatusText(user.isActive) }}
+            </span>
+          </div>
+          
+          <!-- Joined -->
+          <div class="p-4 bg-gray-50 rounded-xl border border-gray-100 hover:shadow-md transition">
+            <div class="flex items-center gap-2 text-gray-500 text-sm mb-1">
+              <span>📅</span> Ngày tham gia
+            </div>
+            <p class="font-medium text-gray-900">{{ formatDate(user.createdAt) }}</p>
+          </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="mt-6 pt-6 border-t border-gray-200 flex flex-wrap gap-3">
+          <button (click)="editUser()" 
+                  class="px-5 py-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition flex items-center gap-2 shadow-sm hover:shadow-md">
+            ✏️ Chỉnh sửa
+          </button>
+          <button (click)="toggleStatus()" 
+                  class="px-5 py-2.5 text-white rounded-xl transition flex items-center gap-2 shadow-sm hover:shadow-md"
+                  [class]="user.isActive ? 'bg-yellow-600 hover:bg-yellow-700' : 'bg-emerald-600 hover:bg-emerald-700'">
+            {{ user.isActive ? '🔒 Khóa tài khoản' : '🔓 Mở khóa' }}
+          </button>
+          <button (click)="deleteUser()" 
+                  class="px-5 py-2.5 bg-red-600 text-white rounded-xl hover:bg-red-700 transition flex items-center gap-2 shadow-sm hover:shadow-md">
+            🗑️ Xóa
+          </button>
+          <button (click)="goBack()" 
+                  class="px-5 py-2.5 bg-gray-200 text-gray-700 rounded-xl hover:bg-gray-300 transition flex items-center gap-2">
+            ← Quay lại danh sách
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

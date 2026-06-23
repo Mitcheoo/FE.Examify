@@ -1,0 +1,69 @@
+<!-- src/app/pages/reading/reading.component.html -->
+
+<div class="container mx-auto px-4 py-8">
+  <!-- Header -->
+  <div class="mb-8">
+    <h1 class="text-3xl font-bold text-gray-800 flex items-center gap-2">
+      <span class="text-4xl">📖</span> Reading
+    </h1>
+    <p class="text-gray-500 mt-1">Luyện tập kỹ năng đọc hiểu với các đề thi VSTEP</p>
+  </div>
+
+  <!-- Loading -->
+  <div *ngIf="isLoading" class="flex justify-center items-center py-16">
+    <div class="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+  </div>
+
+  <!-- Error -->
+  <div *ngIf="!isLoading && error" class="text-center py-16">
+    <p class="text-red-500">{{ error }}</p>
+    <button class="mt-4 px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600" 
+            (click)="retry()">🔄 Thử lại</button>
+  </div>
+
+  <!-- Content -->
+  <div *ngIf="!isLoading && !error">
+    <!-- Source Group -->
+    <div *ngFor="let source of sourceKeys" class="mb-8">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-xl font-semibold text-gray-700 flex items-center gap-2">
+          <span>📚</span> {{ source }}
+        </h2>
+        <span class="text-sm text-gray-400">{{ groupedExercises[source].length }} bài</span>
+      </div>
+
+      <!-- Grid Cards -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div *ngFor="let exercise of groupedExercises[source]" 
+             class="bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200 p-5 border border-gray-100">
+          
+          <!-- Title -->
+          <h3 class="text-lg font-semibold text-gray-800 line-clamp-1">{{ exercise.title }}</h3>
+          
+          <!-- Description -->
+          <p class="text-sm text-gray-500 mt-1 line-clamp-2">{{ exercise.description || 'Bài đọc hiểu VSTEP' }}</p>
+          
+          <!-- Meta -->
+          <div class="flex flex-wrap gap-3 mt-3 text-sm text-gray-500">
+            <span class="flex items-center gap-1">📝 {{ exercise.totalQuestions || 0 }}</span>
+            <span class="flex items-center gap-1">⏱️ {{ exercise.timeLimitSeconds / 60 || 60 }}p</span>
+            <span class="flex items-center gap-1" *ngIf="exercise.attemptCount">📊 {{ exercise.attemptCount }} lần</span>
+            <span class="flex items-center gap-1 text-yellow-500" *ngIf="exercise.bestScore !== null">⭐ {{ exercise.bestScore }}</span>
+          </div>
+          
+          <!-- Button -->
+          <button class="mt-4 w-full py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors text-sm font-medium"
+                  (click)="startExercise(exercise.id)">
+            ▶️ Làm bài
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Empty -->
+    <div *ngIf="exercises.length === 0" class="text-center py-16 text-gray-400">
+      <p class="text-4xl mb-2">📭</p>
+      <p>Chưa có bài đọc nào. Vui lòng quay lại sau!</p>
+    </div>
+  </div>
+</div>

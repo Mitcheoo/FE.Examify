@@ -33,6 +33,12 @@ export interface SkillProgress {
   attempts?: number;      // ✅ THÊM
   message?: string;       // ✅ THÊM
 }
+interface SubmitReadingCommand {
+  exerciseId: string;
+  answers: { [key: string]: string };
+  timeSpentSeconds: number;
+  sessionId?: string;  // ✅ OPTIONAL
+}
 
 @Injectable({
   providedIn: 'root'
@@ -49,10 +55,10 @@ export class ExamService {
     });
   }
 
-  getExercisesList(): Observable<any> {
+getExercisesList(page: number = 1, pageSize: number = 50): Observable<any> {
     const headers = this.getAuthHeaders();
-    return this.http.get(this.apiUrl + '/exercises/list', { headers });
-  }
+    return this.http.get(`${this.apiUrl}/exercises/list?page=${page}&pageSize=${pageSize}`, { headers });
+}
 
   getExerciseById(id: string): Observable<any> {
     const headers = this.getAuthHeaders();
@@ -70,6 +76,8 @@ export class ExamService {
   }
 
   submitReading(data: any): Observable<any> {
+     console.log('📡 API CALL: POST /reading/submit');
+  console.log('📤 Data being sent:', data);  // ✅ THÊM LOG
     const headers = this.getAuthHeaders();
     return this.http.post(this.apiUrl + '/reading/submit', data, { headers });
   }
@@ -140,4 +148,52 @@ export class ExamService {
     const headers = this.getAuthHeaders();
     return this.http.post(this.apiUrl + '/fulltest/submit', { sessionId }, { headers });
   }
+  // Thêm vào class ExamService
+
+/**
+ * Lưu câu trả lời tạm (draft) - Gửi nhiều câu 1 lần
+ */
+saveDraftAnswers(data: any): Observable<any> {
+  console.log('📡 API CALL: POST /session/answer');
+  const headers = this.getAuthHeaders();
+  return this.http.post(this.apiUrl + '/session/answer', data, { headers });
+}
+
+/**
+ * Lấy tất cả câu trả lời tạm của session
+ */
+getDraftAnswers(sessionId: string): Observable<any> {
+  console.log('📡 API CALL: GET /session/' + sessionId + '/answers');
+  const headers = this.getAuthHeaders();
+  return this.http.get(this.apiUrl + '/session/' + sessionId + '/answers', { headers });
+}
+
+/**
+ * Nộp bài và chấm điểm
+ */
+submitSession(sessionId: string): Observable<any> {
+  console.log('📡 API CALL: POST /session/submit');
+  const headers = this.getAuthHeaders();
+  return this.http.post(this.apiUrl + '/session/submit', { sessionId }, { headers });
+}
+// src/app/services/exam.service.ts
+
+// ✅ THÊM PHƯƠNG THỨC getExerciseStats (nếu chưa có)
+ getExerciseStats(skill?: number): Observable<any[]> {
+    const headers = this.getAuthHeaders();
+    const url = skill !== undefined 
+      ? `${this.apiUrl}/exercises/stats?skill=${skill}`
+      : `${this.apiUrl}/exercises/stats`;
+    return this.http.get<any[]>(url, { headers });
+  }
+  getSubmissionResult(submissionId: string): Observable<any> {
+  console.log('📡 API CALL: GET /submissions/' + submissionId);
+  const headers = this.getAuthHeaders();
+  return this.http.get(this.apiUrl + '/submissions/' + submissionId, { headers });
+}
+clearDraftAnswers(sessionId: string): Observable<any> {
+  console.log('📡 API CALL: DELETE /session/' + sessionId + '/answers');
+  const headers = this.getAuthHeaders();
+  return this.http.delete(this.apiUrl + '/session/' + sessionId + '/answers', { headers });
+}
 }

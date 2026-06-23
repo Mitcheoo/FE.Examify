@@ -1,7 +1,11 @@
-/* Tailwind CSS directives */
+/* src/styles.css */
+
+/* ✅ THÊM 3 DÒNG NÀY VÀO ĐẦU FILE */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-@import 'bootstrap-icons/font/bootstrap-icons.css';
-/* You can add global styles to this file, and also import other style files */
 
+/* Phần còn lại giữ nguyên */
+@import 'bootstrap-icons/font/bootstrap-icons.css';
+
+/* You can add global styles to this file, and also import other style files */

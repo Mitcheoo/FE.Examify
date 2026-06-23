@@ -1,48 +1,145 @@
-<div class="space-y-8">
+<!-- src/app/pages/admin/pages/manage-exams/manage-exams.component.html -->
+<div class="space-y-6">
+  <!-- Header -->
   <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
     <div>
-      <h1 class="text-3xl font-bold text-gray-900">Manage Exam</h1>
-      <p class="mt-2 text-gray-600">Create, edit, and publish exam content from the admin dashboard.</p>
+      <h1 class="text-3xl font-bold text-gray-900">Manage Exams</h1>
+      <p class="mt-1 text-gray-600">Create, edit, and publish exam content from the admin dashboard.</p>
     </div>
-    <a routerLink="/exam-list" class="inline-flex items-center justify-center rounded-3xl bg-blue-600 px-5 py-3 text-white shadow-sm hover:bg-blue-700 transition">
-      View Exam Library
-    </a>
+    <div class="flex flex-wrap gap-3">
+      <button 
+        (click)="refresh()" 
+        class="inline-flex items-center justify-center rounded-3xl bg-gray-600 px-5 py-3 text-white shadow-sm hover:bg-gray-700 transition">
+        🔄 Refresh
+      </button>
+      <a routerLink="/exam-list" class="inline-flex items-center justify-center rounded-3xl bg-gray-600 px-5 py-3 text-white shadow-sm hover:bg-gray-700 transition">
+        View Exam Library
+      </a>
+      <a routerLink="/admin/manage-exams/create" class="inline-flex items-center justify-center rounded-3xl bg-emerald-600 px-5 py-3 text-white shadow-sm hover:bg-emerald-700 transition">
+        + New Exam
+      </a>
+    </div>
   </div>
 
-  <div class="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-    <div class="flex items-center justify-between mb-4">
+  <!-- Debug: Hiển thị trạng thái -->
+  <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-3 text-sm text-yellow-800">
+    <strong>🔍 Debug:</strong> 
+    isLoading = {{ isLoading }}, 
+    exams = {{ exams.length }}, 
+    error = {{ errorMessage || 'null' }}
+  </div>
+
+  <!-- Loading -->
+  <div *ngIf="isLoading" class="flex flex-col items-center justify-center py-12">
+    <div class="w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
+    <p class="mt-4 text-gray-500">Đang tải danh sách bài thi...</p>
+  </div>
+
+  <!-- Error -->
+  <div *ngIf="!isLoading && errorMessage" class="rounded-3xl bg-red-50 p-6 border border-red-200">
+    <div class="flex items-start gap-3">
+      <span class="text-2xl">❌</span>
       <div>
-        <p class="text-sm text-gray-500">Total exams</p>
-        <p class="mt-2 text-3xl font-semibold text-blue-600">{{ exams.length }}</p>
+        <p class="font-semibold text-red-800">Lỗi tải dữ liệu</p>
+        <p class="text-red-600">{{ errorMessage }}</p>
+        <button (click)="refresh()" class="mt-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition">
+          Thử lại
+        </button>
       </div>
-      <button class="rounded-3xl bg-emerald-600 px-4 py-2 text-white hover:bg-emerald-700 transition">New exam</button>
+    </div>
+  </div>
+
+  <!-- Table -->
+  <div *ngIf="!isLoading && !errorMessage" class="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+    <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
+      <div>
+        <p class="text-sm text-gray-500">Tổng số bài thi</p>
+        <p class="text-3xl font-semibold text-blue-600">{{ exams.length }}</p>
+      </div>
+      <div class="flex flex-wrap gap-4 text-sm text-gray-500">
+        <span class="flex items-center gap-1">
+          <span class="w-3 h-3 rounded-full bg-purple-500"></span>
+          Full Test: {{ exams.filter(e => e.isFullTest).length }}
+        </span>
+        <span class="flex items-center gap-1">
+          <span class="w-3 h-3 rounded-full bg-emerald-500"></span>
+          Published: {{ exams.filter(e => e.status === 'Published').length }}
+        </span>
+        <span class="flex items-center gap-1">
+          <span class="w-3 h-3 rounded-full bg-slate-400"></span>
+          Draft: {{ exams.filter(e => e.status === 'Draft').length }}
+        </span>
+      </div>
     </div>
 
     <div class="overflow-x-auto">
       <table class="min-w-full text-left text-sm text-gray-700">
-        <thead class="border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+        <thead class="border-b border-slate-200 bg-slate-50">
           <tr>
-            <th class="px-4 py-3">Exam title</th>
-            <th class="px-4 py-3">Status</th>
-            <th class="px-4 py-3">Created</th>
-            <th class="px-4 py-3">Actions</th>
+            <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-slate-500">Loại</th>
+            <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-slate-500">Bài thi</th>
+            <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-slate-500">Kỹ năng</th>
+            <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-slate-500">Status</th>
+            <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-slate-500 text-center">Câu hỏi</th>
+            <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-slate-500 text-center">Thời gian</th>
+            <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-slate-500">Ngày tạo</th>
+            <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-slate-500 text-center">Actions</th>
           </tr>
         </thead>
         <tbody class="divide-y divide-slate-200">
-          <tr *ngFor="let exam of exams">
-            <td class="px-4 py-4">{{ exam.title }}</td>
+          <tr *ngFor="let exam of exams" class="hover:bg-slate-50 transition">
             <td class="px-4 py-4">
-              <span class="rounded-full px-3 py-1 text-xs font-semibold" [ngClass]="exam.status === 'Published' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-700'">
+              <span class="text-sm">{{ getExamType(exam) }}</span>
+            </td>
+            <td class="px-4 py-4 font-medium text-gray-900">
+              {{ exam.title }}
+              <span *ngIf="exam.isFullTest" class="ml-2 text-xs text-purple-600 font-normal">(Full Test)</span>
+            </td>
+            <td class="px-4 py-4">
+              <span *ngIf="!exam.isFullTest" 
+                    class="inline-block px-2 py-1 text-xs font-semibold rounded-full"
+                    [class]="getSkillBadge(exam.skill)">
+                {{ getSkillName(exam.skill) }}
+              </span>
+              <span *ngIf="exam.isFullTest" class="text-gray-400 text-xs">-</span>
+            </td>
+            <td class="px-4 py-4">
+              <span class="inline-block px-3 py-1 text-xs font-semibold rounded-full" [class]="getStatusClass(exam.status)">
                 {{ exam.status }}
               </span>
             </td>
-            <td class="px-4 py-4">{{ exam.created }}</td>
+            <td class="px-4 py-4 text-center">
+              <span class="font-semibold text-blue-600">{{ exam.totalQuestions }}</span>
+            </td>
+            <td class="px-4 py-4 text-center text-gray-500 text-sm">
+              {{ formatTime(exam.timeLimitSeconds) }}
+            </td>
+            <td class="px-4 py-4 text-gray-500 text-sm">
+              {{ exam.created }}
+            </td>
             <td class="px-4 py-4">
-              <button class="rounded-full border border-slate-300 px-3 py-1 text-sm text-slate-700 hover:bg-slate-50 transition">Edit</button>
+              <div class="flex items-center justify-center gap-2">
+                <a [routerLink]="['/exam', exam.id]" 
+                   class="inline-flex items-center px-3 py-1.5 text-sm text-blue-600 hover:bg-blue-50 rounded-lg transition">
+                  👁️ View
+                </a>
+                <button 
+                  class="inline-flex items-center px-3 py-1.5 text-sm text-red-600 hover:bg-red-50 rounded-lg transition"
+                  (click)="deleteExam(exam.id)">
+                  🗑️ Delete
+                </button>
+              </div>
             </td>
           </tr>
         </tbody>
       </table>
+    </div>
+
+    <!-- Empty State -->
+    <div *ngIf="exams.length === 0" class="text-center py-12">
+      <div class="text-6xl mb-4">📭</div>
+      <p class="text-gray-500 text-lg">Chưa có bài thi nào</p>
+      <p class="text-gray-400 text-sm mt-1">Nhấn "New Exam" để tạo bài thi đầu tiên</p>
     </div>
   </div>
 </div>
