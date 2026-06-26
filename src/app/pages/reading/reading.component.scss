@@ -1,5 +1,5 @@
-﻿// ============================================
-// EXAM LIST - PHONG CÁCH VSTEP
+// ============================================
+// READING - PHONG CÁCH VSTEP
 // ============================================
 
 // ========== CONTAINER ==========
@@ -17,21 +17,6 @@
   }
 }
 
-// ========== BUTTON FILTER ==========
-.filter-btn {
-  transition: all 0.3s ease;
-  
-  &:hover {
-    transform: translateY(-1px);
-  }
-  
-  &.active {
-    background: #0EACD8;
-    color: white;
-    border-color: #0EACD8;
-  }
-}
-
 // ========== LINE CLAMP ==========
 .line-clamp-1 {
   display: -webkit-box;
@@ -45,4 +30,12 @@
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+}
+
+// ========== RESPONSIVE ==========
+@media (max-width: 768px) {
+  .container {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
 }
