@@ -9,7 +9,7 @@ import { UserProfileDto } from '../../models/auth/auth.model';
 @Component({
   selector: 'app-header',
   standalone: true,
-  imports: [CommonModule, RouterLink, ClickOutsideDirective], // ✅ Đã thêm ClickOutsideDirective
+  imports: [CommonModule, RouterLink], // ✅ Đã thêm ClickOutsideDirective
   template: `
     <header class="header">
       <div class="header-container">

@@ -29,7 +29,9 @@ export interface SkillProgress {
   duration: number;
   status: string;
   score?: number;
-   examId?: string; 
+  examId?: string;
+  attempts?: number;      // ✅ THÊM
+  message?: string;       // ✅ THÊM
 }
 
 @Injectable({
@@ -61,7 +63,6 @@ export class ExamService {
     const headers = this.getAuthHeaders();
     return this.http.get(this.apiUrl + '/exercises/' + exerciseId + '/progress', { headers });
   }
-  //reading và listening sẽ có endpoint riêng vì dữ liệu trả về khác nhau
 
   getReadingExam(id: string): Observable<any> {
     const headers = this.getAuthHeaders();
@@ -73,45 +74,70 @@ export class ExamService {
     return this.http.post(this.apiUrl + '/reading/submit', data, { headers });
   }
 
-getListeningExam(id: string): Observable<any> {
-  console.log('📡 API CALL: GET /listening/exam/' + id);
-  const headers = this.getAuthHeaders();
-  return this.http.get(this.apiUrl + '/listening/exam/' + id, { headers });
-}
+  getListeningExam(id: string): Observable<any> {
+    console.log('📡 API CALL: GET /listening/exam/' + id);
+    const headers = this.getAuthHeaders();
+    return this.http.get(this.apiUrl + '/listening/exam/' + id, { headers });
+  }
 
-submitListening(data: any): Observable<any> {
-  console.log('📡 API CALL: POST /listening/submit');
-  const headers = this.getAuthHeaders();
-  return this.http.post(this.apiUrl + '/listening/submit', data, { headers });
-}
-// Thêm vào ExamService class
+  submitListening(data: any): Observable<any> {
+    console.log('📡 API CALL: POST /listening/submit');
+    const headers = this.getAuthHeaders();
+    return this.http.post(this.apiUrl + '/listening/submit', data, { headers });
+  }
 
-getWritingExam(id: string): Observable<any> {
-  console.log('📡 API CALL: GET /writing/exam/' + id);
-  const headers = this.getAuthHeaders();
-  return this.http.get(this.apiUrl + '/writing/exam/' + id, { headers });
-}
+  getWritingExam(id: string): Observable<any> {
+    console.log('📡 API CALL: GET /writing/exam/' + id);
+    const headers = this.getAuthHeaders();
+    return this.http.get(this.apiUrl + '/writing/exam/' + id, { headers });
+  }
 
-submitWriting(data: any): Observable<any> {
-  console.log('📡 API CALL: POST /writing/submit');
-  const headers = this.getAuthHeaders();
-  return this.http.post(this.apiUrl + '/writing/submit', data, { headers });
-}
+  submitWriting(data: any): Observable<any> {
+    console.log('📡 API CALL: POST /writing/submit');
+    const headers = this.getAuthHeaders();
+    return this.http.post(this.apiUrl + '/writing/submit', data, { headers });
+  }
 
-getSpeakingExam(id: string): Observable<any> {
-  console.log('📡 API CALL: GET /speaking/exam/' + id);
-  const headers = this.getAuthHeaders();
-  return this.http.get(this.apiUrl + '/speaking/exam/' + id, { headers });
-}
+  getSpeakingExam(id: string): Observable<any> {
+    console.log('📡 API CALL: GET /speaking/exam/' + id);
+    const headers = this.getAuthHeaders();
+    return this.http.get(this.apiUrl + '/speaking/exam/' + id, { headers });
+  }
 
-submitSpeaking(data: FormData): Observable<any> {
-  console.log('📡 API CALL: POST /speaking/submit');
-  const headers = this.getAuthHeaders();
-  return this.http.post(this.apiUrl + '/speaking/submit', data, { headers });
-}
-getFullTestStatus(fullTestId: string): Observable<any> {
-  console.log('📡 API CALL: GET /fulltest/' + fullTestId + '/status');
-  const headers = this.getAuthHeaders();
-  return this.http.get(this.apiUrl + '/fulltest/' + fullTestId + '/status', { headers });
-}
+  submitSpeaking(data: FormData): Observable<any> {
+    console.log('📡 API CALL: POST /speaking/submit');
+    const headers = this.getAuthHeaders();
+    // KHÔNG set Content-Type cho FormData
+    return this.http.post(this.apiUrl + '/speaking/submit', data, { headers });
+  }
+
+  getFullTestStatus(fullTestId: string): Observable<any> {
+    console.log('📡 API CALL: GET /fulltest/' + fullTestId + '/status');
+    const headers = this.getAuthHeaders();
+    return this.http.get(this.apiUrl + '/fulltest/' + fullTestId + '/status', { headers });
+  }
+
+  getFullTestResult(fullTestId: string): Observable<any> {
+    console.log('📡 API CALL: GET /fulltest/' + fullTestId + '/result');
+    const headers = this.getAuthHeaders();
+    return this.http.get(this.apiUrl + '/fulltest/' + fullTestId + '/result', { headers });
+  }
+
+  startFullTestSession(fullTestId: string): Observable<any> {
+    console.log('📡 API CALL: POST /fulltest/start');
+    const headers = this.getAuthHeaders();
+    return this.http.post(this.apiUrl + '/fulltest/start', { fullTestId }, { headers });
+  }
+
+  savePartResult(sessionId: string, skillType: string, submissionId: string): Observable<any> {
+    console.log('📡 API CALL: POST /fulltest/save-part');
+    const headers = this.getAuthHeaders();
+    return this.http.post(this.apiUrl + '/fulltest/save-part', { sessionId, skillType, submissionId }, { headers });
+  }
+
+  submitFullTest(sessionId: string): Observable<any> {
+    console.log('📡 API CALL: POST /fulltest/submit');
+    const headers = this.getAuthHeaders();
+    return this.http.post(this.apiUrl + '/fulltest/submit', { sessionId }, { headers });
+  }
 }
