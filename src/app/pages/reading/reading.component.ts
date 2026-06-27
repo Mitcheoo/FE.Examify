@@ -4,11 +4,17 @@ import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { ExamService } from '../../services/exam.service';
+import { HeaderComponent } from '../../shared/header/header.component';
+import { FooterComponent } from '../../shared/footer/footer.component';
 
 @Component({
   selector: 'app-reading',
   standalone: true,
-  imports: [CommonModule],
+  imports: [
+    CommonModule,
+    HeaderComponent,   // ✅ THÊM
+    FooterComponent    // ✅ THÊM
+  ],
   templateUrl: './reading.component.html',
 })
 export class ReadingComponent implements OnInit {
@@ -16,7 +22,6 @@ export class ReadingComponent implements OnInit {
   private statsCache: any[] | null = null;
   private exercisesData: any[] | null = null;
   
-  // ✅ THÊM ChangeDetectorRef
   private cdr = inject(ChangeDetectorRef);
   
   exercises: any[] = [];
@@ -46,14 +51,12 @@ export class ReadingComponent implements OnInit {
         this.exercises = readingList;
         this.exercisesData = readingList;
         
-        // ✅ GỌI LOAD STATS
         this.loadStats();
       },
       error: (err: any) => {
         console.error('❌ getExercisesList ERROR:', err);
         this.error = 'Không thể tải danh sách bài Reading';
         this.isLoading = false;
-        // ✅ FORCE UPDATE UI
         this.cdr.detectChanges();
       }
     });
@@ -66,7 +69,6 @@ export class ReadingComponent implements OnInit {
       console.log('🔍 Using cached stats');
       this.mergeStats();
       this.isLoading = false;
-      // ✅ FORCE UPDATE UI
       this.cdr.detectChanges();
       return;
     }
@@ -77,13 +79,11 @@ export class ReadingComponent implements OnInit {
         this.statsCache = stats;
         this.mergeStats();
         this.isLoading = false;
-        // ✅ FORCE UPDATE UI - QUAN TRỌNG!
         this.cdr.detectChanges();
       },
       error: (err: any) => {
         console.error('❌ getExerciseStats ERROR:', err);
         this.isLoading = false;
-        // ✅ VẪN FORCE UPDATE UI DÙ CÓ LỖI
         this.cdr.detectChanges();
       }
     });
@@ -108,9 +108,7 @@ export class ReadingComponent implements OnInit {
     
     console.log('🔍 Merged exercises:', this.exercises.length);
   }
-  
 
-  // ✅ NHÓM THEO SOURCE
   get groupedExercises(): { [key: string]: any[] } {
     const grouped: { [key: string]: any[] } = {};
     this.exercises.forEach((ex: any) => {

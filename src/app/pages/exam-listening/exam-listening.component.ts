@@ -52,6 +52,9 @@ export class ExamListeningComponent implements OnInit, OnDestroy {
 
   showProgressPanel: boolean = true;
   flatQuestions: ListeningQuestion[] = [];
+  
+  // ✅ THÊM BIẾN currentQuestionIndex Ở ĐÂY
+  currentQuestionIndex: number = 0;
 
   private syncTimeout: any = null;
   private isSyncing: boolean = false;
@@ -242,56 +245,56 @@ export class ExamListeningComponent implements OnInit, OnDestroy {
 
   // ✅ TẠO CÂU HỎI FALLBACK KHI API KHÔNG CÓ DỮ LIỆU
   generateFallbackQuestions(): any[] {
-  const questions = [];
-  const part1Questions = [
-    'What time does the meeting start?',
-    'Where is the conference held?',
-    'Who is the keynote speaker?',
-    'What is the main topic?',
-    'How long is the lunch break?',
-    'What day is the workshop?',
-    'How many participants are expected?',
-    'What is the registration fee?'
-  ];
-  const part2Questions = [
-    'Where did the woman go on vacation?',
-    'How did she travel to the destination?',
-    'What was the weather like?',
-    'What did she do on the first day?',
-    'What did she eat for dinner?',
-    'How much did the trip cost?',
-    'Who did she go with?',
-    'What was her favorite activity?'
-  ];
-  const part3Questions = [
-    'What is the lecture mainly about?',
-    'How many types of pollution are mentioned?',
-    'What is the main cause of air pollution?',
-    'How does water pollution affect humans?',
-    'What solution is proposed for plastic waste?',
-    'Why is recycling important?',
-    'What is the speaker\'s opinion about climate change?',
-    'What should governments do to protect the environment?'
-  ];
-  
-  const allQuestions = [...part1Questions, ...part2Questions, ...part3Questions];
-  
-  for (let i = 0; i < 35 && i < allQuestions.length; i++) {
-    questions.push({
-      id: crypto.randomUUID(),  // ✅ TẠO GUID THẬT
-      orderNumber: i + 1,
-      questionText: allQuestions[i] || `Listening question ${i + 1}: What did the speaker say?`,
-      options: [
-        { key: 'A', value: 'Option A' },
-        { key: 'B', value: 'Option B' },
-        { key: 'C', value: 'Option C' },
-        { key: 'D', value: 'Option D' }
-      ],
-      correctAnswer: 'A'
-    });
+    const questions = [];
+    const part1Questions = [
+      'What time does the meeting start?',
+      'Where is the conference held?',
+      'Who is the keynote speaker?',
+      'What is the main topic?',
+      'How long is the lunch break?',
+      'What day is the workshop?',
+      'How many participants are expected?',
+      'What is the registration fee?'
+    ];
+    const part2Questions = [
+      'Where did the woman go on vacation?',
+      'How did she travel to the destination?',
+      'What was the weather like?',
+      'What did she do on the first day?',
+      'What did she eat for dinner?',
+      'How much did the trip cost?',
+      'Who did she go with?',
+      'What was her favorite activity?'
+    ];
+    const part3Questions = [
+      'What is the lecture mainly about?',
+      'How many types of pollution are mentioned?',
+      'What is the main cause of air pollution?',
+      'How does water pollution affect humans?',
+      'What solution is proposed for plastic waste?',
+      'Why is recycling important?',
+      'What is the speaker\'s opinion about climate change?',
+      'What should governments do to protect the environment?'
+    ];
+    
+    const allQuestions = [...part1Questions, ...part2Questions, ...part3Questions];
+    
+    for (let i = 0; i < 35 && i < allQuestions.length; i++) {
+      questions.push({
+        id: crypto.randomUUID(),
+        orderNumber: i + 1,
+        questionText: allQuestions[i] || `Listening question ${i + 1}: What did the speaker say?`,
+        options: [
+          { key: 'A', value: 'Option A' },
+          { key: 'B', value: 'Option B' },
+          { key: 'C', value: 'Option C' },
+          { key: 'D', value: 'Option D' }
+        ],
+        correctAnswer: 'A'
+      });
+    }
+    return questions;
   }
-  return questions;
-}
 
   loadExam() {
     this.examService.getListeningExam(this.examId).subscribe({
@@ -300,7 +303,6 @@ export class ExamListeningComponent implements OnInit, OnDestroy {
         
         let questions = data.questions || [];
         
-        // ✅ NẾU KHÔNG CÓ CÂU HỎI, TẠO FALLBACK
         if (questions.length === 0) {
           console.warn('⚠️ Không có câu hỏi từ API, tạo câu hỏi mẫu...');
           questions = this.generateFallbackQuestions();
@@ -309,7 +311,6 @@ export class ExamListeningComponent implements OnInit, OnDestroy {
         const baseAudioUrl = 'https://localhost:7241/uploads/audio';
         const audioItemsList: AudioItem[] = [];
         
-        // Part 1: Câu 1-8 (8 audio, mỗi audio 1 câu)
         for (let i = 0; i < 8 && i < questions.length; i++) {
           audioItemsList.push({
             id: i + 1,
@@ -320,7 +321,6 @@ export class ExamListeningComponent implements OnInit, OnDestroy {
           });
         }
         
-        // Part 2: Câu 9-20 (3 audio, mỗi audio 4 câu)
         for (let i = 0; i < 3; i++) {
           const startIdx = 8 + i * 4;
           const partQuestions = questions.slice(startIdx, startIdx + 4).map((q: any) => this.parseQuestion(q));
@@ -333,7 +333,6 @@ export class ExamListeningComponent implements OnInit, OnDestroy {
           });
         }
         
-        // Part 3: Câu 21-35 (3 audio, mỗi audio 5 câu)
         for (let i = 0; i < 3; i++) {
           const startIdx = 20 + i * 5;
           const partQuestions = questions.slice(startIdx, startIdx + 5).map((q: any) => this.parseQuestion(q));
@@ -367,7 +366,6 @@ export class ExamListeningComponent implements OnInit, OnDestroy {
       error: (err) => {
         console.error('❌ Error loading Listening exam:', err);
         
-        // ✅ TẠO FALLBACK KHI API LỖI
         const fallbackQuestions = this.generateFallbackQuestions();
         const baseAudioUrl = 'https://localhost:7241/uploads/audio';
         const audioItemsList: AudioItem[] = [];
@@ -426,50 +424,49 @@ export class ExamListeningComponent implements OnInit, OnDestroy {
     });
   }
 
- parseQuestion(q: any): ListeningQuestion {
-  let options: { key: string; value: string }[] = [];
-  try {
-    const optsJson = q.optionsJson;
-    if (optsJson) {
-      const parsed = typeof optsJson === 'string' ? JSON.parse(optsJson) : optsJson;
-      options = Object.entries(parsed).map(([key, value]) => ({ key, value: value as string }));
-    } else if (q.options && Array.isArray(q.options)) {
-      options = q.options;
-    } else {
+  parseQuestion(q: any): ListeningQuestion {
+    let options: { key: string; value: string }[] = [];
+    try {
+      const optsJson = q.optionsJson;
+      if (optsJson) {
+        const parsed = typeof optsJson === 'string' ? JSON.parse(optsJson) : optsJson;
+        options = Object.entries(parsed).map(([key, value]) => ({ key, value: value as string }));
+      } else if (q.options && Array.isArray(q.options)) {
+        options = q.options;
+      } else {
+        options = [
+          { key: 'A', value: q.optionA || 'Option A' },
+          { key: 'B', value: q.optionB || 'Option B' },
+          { key: 'C', value: q.optionC || 'Option C' },
+          { key: 'D', value: q.optionD || 'Option D' }
+        ];
+      }
+    } catch (e) {
+      console.error('Error parsing options:', e);
       options = [
-        { key: 'A', value: q.optionA || 'Option A' },
-        { key: 'B', value: q.optionB || 'Option B' },
-        { key: 'C', value: q.optionC || 'Option C' },
-        { key: 'D', value: q.optionD || 'Option D' }
+        { key: 'A', value: 'Option A' },
+        { key: 'B', value: 'Option B' },
+        { key: 'C', value: 'Option C' },
+        { key: 'D', value: 'Option D' }
       ];
     }
-  } catch (e) {
-    console.error('Error parsing options:', e);
-    options = [
-      { key: 'A', value: 'Option A' },
-      { key: 'B', value: 'Option B' },
-      { key: 'C', value: 'Option C' },
-      { key: 'D', value: 'Option D' }
-    ];
+    
+    let id = q.id;
+    const guidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    
+    if (!id || !guidRegex.test(id)) {
+      id = crypto.randomUUID();
+      console.log('🔄 Generated new GUID for question:', id);
+    }
+    
+    return {
+      id: id,
+      orderNumber: q.orderNumber || 0,
+      questionText: q.questionText || 'What did the speaker say?',
+      options: options,
+      correctAnswer: q.correctAnswer || 'A'
+    };
   }
-  
-  // ✅ KIỂM TRA ID CÓ PHẢI GUID KHÔNG
-  let id = q.id;
-  const guidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-  
-  if (!id || !guidRegex.test(id)) {
-    id = crypto.randomUUID();  // ✅ TẠO GUID MỚI NẾU ID KHÔNG HỢP LỆ
-    console.log('🔄 Generated new GUID for question:', id);
-  }
-  
-  return {
-    id: id,
-    orderNumber: q.orderNumber || 0,
-    questionText: q.questionText || 'What did the speaker say?',
-    options: options,
-    correctAnswer: q.correctAnswer || 'A'
-  };
-}
 
   playAudio(audioId: number) {
     const audioItem = this.audioItems.find(a => a.id === audioId);
@@ -531,15 +528,34 @@ export class ExamListeningComponent implements OnInit, OnDestroy {
   getPart1Audios() { return this.audioItems.filter(a => a.partNumber === 1); }
   getPart2Audios() { return this.audioItems.filter(a => a.partNumber === 2); }
   getPart3Audios() { return this.audioItems.filter(a => a.partNumber === 3); }
+  
+  // ✅ THÊM PHƯƠNG THỨC LẤY CÂU HỎI THEO PART
+  getPart1Questions() {
+    return this.flatQuestions.filter(q => q.orderNumber >= 1 && q.orderNumber <= 8);
+  }
+  
+  getPart2Questions() {
+    return this.flatQuestions.filter(q => q.orderNumber >= 9 && q.orderNumber <= 20);
+  }
+  
+  getPart3Questions() {
+    return this.flatQuestions.filter(q => q.orderNumber >= 21 && q.orderNumber <= 35);
+  }
 
   getFlatQuestions(): ListeningQuestion[] {
     return this.flatQuestions;
   }
 
+  // ✅ SỬA LẠI PHƯƠNG THỨC scrollToQuestion
   scrollToQuestion(questionId: string) {
     const element = document.getElementById('question-' + questionId);
     if (element) {
       element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      // Cập nhật currentQuestionIndex
+      const index = this.flatQuestions.findIndex(q => q.id === questionId);
+      if (index !== -1) {
+        this.currentQuestionIndex = index;
+      }
     }
   }
 

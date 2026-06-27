@@ -1,10 +1,14 @@
 ﻿<div class="reading-container">
-  <div class="reading-header">
-    <div class="exam-info">
-      <h1>📖 {{ exam?.title || 'Reading Comprehension' }}</h1>
-      <p class="instruction">Đọc đoạn văn và trả lời câu hỏi. Chọn đáp án đúng nhất cho mỗi câu hỏi.</p>
-    </div>
+<div class="reading-header">
+  <div class="exam-info">
+    <h1>
+      <span>📖</span> 
+      {{ exam?.title || 'Reading Comprehension' }}
+      <span class="vstep-text">VSTEP</span>
+    </h1>
+ 
   </div>
+</div>
 
   <div class="reading-main" *ngIf="exam">
     <div class="passages-column">
@@ -20,46 +24,206 @@
     </div>
 
     <div class="questions-column">
+      <!-- ❌ ĐÃ XÓA PHẦN NÀY
       <div class="questions-header">
         <h3>Câu hỏi</h3>
         <span class="questions-count">{{ answeredCount }}/{{ exam?.totalQuestions || 0 }}</span>
       </div>
-      <div class="questions-list">
-        <div *ngFor="let question of exam.questions; let i = index" class="question-item" [class.answered]="answers[question.id]" [id]="'question-' + i">
-          <div class="question-header">
-            <span class="question-number">Câu {{ question.orderNumber }}</span>
+      -->
+      
+      <!-- WRAPPER CHO CUỘN TỔNG -->
+      <div class="questions-scroll-wrapper">
+        <!-- Phần 1: Câu 1-10 -->
+        <div class="questions-section">
+          <div class="section-header">
+            <h4 class="section-title">📘 Phần 1: Câu 1 - 10</h4>
+            <span class="section-progress">{{ getAnsweredCount(0, 10) }}/10</span>
           </div>
-          <div class="question-text">{{ question.questionText }}</div>
-          <div class="options-list">
-            <label *ngFor="let opt of question.options" class="option-item" [class.selected]="answers[question.id] === opt.key">
-              <input type="radio" 
-                     [name]="'q' + question.id" 
-                     [value]="opt.key" 
-                     [(ngModel)]="answers[question.id]" 
-                     (change)="onAnswerChange()">
-              <span class="option-letter">{{ opt.key }}.</span>
-              <span class="option-text">{{ opt.value }}</span>
-            </label>
+          <div class="questions-list">
+            <div *ngFor="let question of exam.questions | slice:0:10; let i = index" 
+                 class="question-item" 
+                 [class.answered]="answers[question.id]" 
+                 [id]="'question-' + i">
+              <div class="question-header">
+                <span class="question-number">Câu {{ i + 1 }}</span>
+              </div>
+              <div class="question-text">{{ question.questionText }}</div>
+              <div class="options-list">
+                <label *ngFor="let opt of question.options" class="option-item" [class.selected]="answers[question.id] === opt.key">
+                  <input type="radio" 
+                         [name]="'q' + question.id" 
+                         [value]="opt.key" 
+                         [(ngModel)]="answers[question.id]" 
+                         (change)="onAnswerChange()">
+                  <span class="option-letter">{{ opt.key }}.</span>
+                  <span class="option-text">{{ opt.value }}</span>
+                </label>
+              </div>
+            </div>
           </div>
         </div>
+
+        <!-- Phần 2: Câu 11-20 -->
+        <div class="questions-section">
+          <div class="section-header">
+            <h4 class="section-title">📗 Phần 2: Câu 11 - 20</h4>
+            <span class="section-progress">{{ getAnsweredCount(10, 20) }}/10</span>
+          </div>
+          <div class="questions-list">
+            <div *ngFor="let question of exam.questions | slice:10:20; let i = index" 
+                 class="question-item" 
+                 [class.answered]="answers[question.id]" 
+                 [id]="'question-' + (i + 10)">
+              <div class="question-header">
+                <span class="question-number">Câu {{ i + 11 }}</span>
+              </div>
+              <div class="question-text">{{ question.questionText }}</div>
+              <div class="options-list">
+                <label *ngFor="let opt of question.options" class="option-item" [class.selected]="answers[question.id] === opt.key">
+                  <input type="radio" 
+                         [name]="'q' + question.id" 
+                         [value]="opt.key" 
+                         [(ngModel)]="answers[question.id]" 
+                         (change)="onAnswerChange()">
+                  <span class="option-letter">{{ opt.key }}.</span>
+                  <span class="option-text">{{ opt.value }}</span>
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Phần 3: Câu 21-30 -->
+        <div class="questions-section">
+          <div class="section-header">
+            <h4 class="section-title">📙 Phần 3: Câu 21 - 30</h4>
+            <span class="section-progress">{{ getAnsweredCount(20, 30) }}/10</span>
+          </div>
+          <div class="questions-list">
+            <div *ngFor="let question of exam.questions | slice:20:30; let i = index" 
+                 class="question-item" 
+                 [class.answered]="answers[question.id]" 
+                 [id]="'question-' + (i + 20)">
+              <div class="question-header">
+                <span class="question-number">Câu {{ i + 21 }}</span>
+              </div>
+              <div class="question-text">{{ question.questionText }}</div>
+              <div class="options-list">
+                <label *ngFor="let opt of question.options" class="option-item" [class.selected]="answers[question.id] === opt.key">
+                  <input type="radio" 
+                         [name]="'q' + question.id" 
+                         [value]="opt.key" 
+                         [(ngModel)]="answers[question.id]" 
+                         (change)="onAnswerChange()">
+                  <span class="option-letter">{{ opt.key }}.</span>
+                  <span class="option-text">{{ opt.value }}</span>
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Phần 4: Câu 31-40 -->
+        <div class="questions-section">
+          <div class="section-header">
+            <h4 class="section-title">📕 Phần 4: Câu 31 - 40</h4>
+            <span class="section-progress">{{ getAnsweredCount(30, 40) }}/10</span>
+          </div>
+          <div class="questions-list">
+            <div *ngFor="let question of exam.questions | slice:30:40; let i = index" 
+                 class="question-item" 
+                 [class.answered]="answers[question.id]" 
+                 [id]="'question-' + (i + 30)">
+              <div class="question-header">
+                <span class="question-number">Câu {{ i + 31 }}</span>
+              </div>
+              <div class="question-text">{{ question.questionText }}</div>
+              <div class="options-list">
+                <label *ngFor="let opt of question.options" class="option-item" [class.selected]="answers[question.id] === opt.key">
+                  <input type="radio" 
+                         [name]="'q' + question.id" 
+                         [value]="opt.key" 
+                         [(ngModel)]="answers[question.id]" 
+                         (change)="onAnswerChange()">
+                  <span class="option-letter">{{ opt.key }}.</span>
+                  <span class="option-text">{{ opt.value }}</span>
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- KẾT THÚC WRAPPER -->
+    </div>
+
+ <div class="navigator-column" [class.collapsed]="!showNavigator">
+  <div class="navigator-content" *ngIf="showNavigator">
+    <!-- Phần 1: 1-10 -->
+    <div class="nav-section">
+      <div class="nav-section-title">Phần 1 (1-10)</div>
+      <div class="question-circles">
+        <div *ngFor="let question of exam.questions | slice:0:10; let i = index" 
+             class="circle" 
+             [class.answered]="answers[question.id]" 
+             [class.current]="currentQuestionIndex === i" 
+             (click)="scrollToQuestion(i)">{{ i + 1 }}</div>
+      </div>
+    </div>
+    
+    <!-- Phần 2: 11-20 -->
+    <div class="nav-section">
+      <div class="nav-section-title">Phần 2 (11-20)</div>
+      <div class="question-circles">
+        <div *ngFor="let question of exam.questions | slice:10:20; let i = index" 
+             class="circle" 
+             [class.answered]="answers[question.id]" 
+             [class.current]="currentQuestionIndex === (i + 10)" 
+             (click)="scrollToQuestion(i + 10)">{{ i + 11 }}</div>
+      </div>
+    </div>
+    
+    <!-- Phần 3: 21-30 -->
+    <div class="nav-section">
+      <div class="nav-section-title">Phần 3 (21-30)</div>
+      <div class="question-circles">
+        <div *ngFor="let question of exam.questions | slice:20:30; let i = index" 
+             class="circle" 
+             [class.answered]="answers[question.id]" 
+             [class.current]="currentQuestionIndex === (i + 20)" 
+             (click)="scrollToQuestion(i + 20)">{{ i + 21 }}</div>
+      </div>
+    </div>
+    
+    <!-- Phần 4: 31-40 -->
+    <div class="nav-section">
+      <div class="nav-section-title">Phần 4 (31-40)</div>
+      <div class="question-circles">
+        <div *ngFor="let question of exam.questions | slice:30:40; let i = index" 
+             class="circle" 
+             [class.answered]="answers[question.id]" 
+             [class.current]="currentQuestionIndex === (i + 30)" 
+             (click)="scrollToQuestion(i + 30)">{{ i + 31 }}</div>
       </div>
     </div>
 
-    <div class="navigator-column" [class.collapsed]="!showNavigator">
-      <div class="navigator-header">
-        <span class="nav-title" *ngIf="showNavigator">Điều hướng</span>
-        <button class="toggle-nav-btn" (click)="toggleNavigator()">{{ showNavigator ? '<' : '>' }}</button>
-      </div>
-      <div class="navigator-content" *ngIf="showNavigator">
-        <div class="question-circles">
-          <div *ngFor="let question of exam.questions; let i = index" class="circle" [class.answered]="answers[question.id]" [class.current]="currentQuestionIndex === i" (click)="scrollToQuestion(i)">{{ i + 1 }}</div>
-        </div>
-        <div class="navigator-stats">
-          <div class="stat-item"><span class="stat-label">✅ Đã làm:</span><span class="stat-value">{{ answeredCount }}</span></div>
-          <div class="stat-item"><span class="stat-label">⏳ Chưa làm:</span><span class="stat-value">{{ (exam?.totalQuestions || 0) - answeredCount }}</span></div>
-        </div>
-      </div>
+    <div class="navigator-stats">
+      <div class="stat-item"><span class="stat-label">✅ Đã làm:</span><span class="stat-value">{{ answeredCount }}</span></div>
+      <div class="stat-item"><span class="stat-label">⏳ Chưa làm:</span><span class="stat-value">{{ (exam.totalQuestions || 0) - answeredCount }}</span></div>
     </div>
+
+    <!-- ✅ NÚT ẨN NẰM Ở DƯỚI CÙNG (PHẦN 5) -->
+    <div class="nav-toggle-section">
+      <button class="toggle-nav-btn" (click)="toggleNavigator()">
+        Ẩn Bảng điều hướng câu hỏi
+      </button>
+    </div>
+  </div>
+
+  <!-- ✅ NÚT MỞ KHI NAVIGATOR ĐANG ẨN -->
+  <button class="toggle-nav-btn collapsed-btn" *ngIf="!showNavigator" (click)="toggleNavigator()">
+    Mở
+  </button>
+</div>
   </div>
 
   <div class="reading-footer">
