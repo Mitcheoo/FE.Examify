@@ -12,9 +12,6 @@ interface SubmitReadingCommand {
   
 }
 
-
-
-
 @Component({
   selector: 'app-exam-reading',
   standalone: true,

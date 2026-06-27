@@ -1,0 +1,104 @@
+﻿<main class="payment-result">
+  <!-- Đang xử lý -->
+  <section
+    *ngIf="isProcessing"
+    class="payment-card payment-card--processing"
+    role="status"
+    aria-live="polite"
+  >
+    <div class="payment-card__icon">
+      <span class="spinner" aria-hidden="true"></span>
+    </div>
+
+    <h1 class="payment-card__title">Đang xác nhận thanh toán</h1>
+
+    <p class="payment-card__description">
+      Vui lòng không đóng hoặc tải lại trang trong quá trình xử lý.
+    </p>
+
+    <div class="processing-dots" aria-hidden="true">
+      <span></span>
+      <span></span>
+      <span></span>
+    </div>
+  </section>
+
+  <!-- Thanh toán thành công -->
+  <section
+    *ngIf="!isProcessing && isCompleted"
+    class="payment-card payment-card--success"
+    role="status"
+    aria-live="polite"
+  >
+    <div class="payment-card__icon payment-card__icon--success" aria-hidden="true">
+      <svg viewBox="0 0 24 24">
+        <path d="M5 12.5 9.2 17 19 7" />
+      </svg>
+    </div>
+
+    <span class="payment-card__badge payment-card__badge--success">
+      Hoàn tất
+    </span>
+
+    <h1 class="payment-card__title">Thanh toán thành công</h1>
+
+    <p class="payment-card__description">
+      Đơn hàng
+      <strong class="order-code">{{ orderCode }}</strong>
+      đã được thanh toán thành công.
+    </p>
+
+    <button
+      type="button"
+      class="payment-card__button payment-card__button--success"
+      (click)="goHome()"
+    >
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M3 11.5 12 4l9 7.5" />
+        <path d="M5.5 10.5V20h13v-9.5" />
+        <path d="M9.5 20v-6h5v6" />
+      </svg>
+
+      Về trang chủ
+    </button>
+  </section>
+
+  <!-- Thanh toán thất bại -->
+  <section
+    *ngIf="!isProcessing && !isCompleted && errorMessage"
+    class="payment-card payment-card--error"
+    role="alert"
+    aria-live="assertive"
+  >
+    <div class="payment-card__icon payment-card__icon--error" aria-hidden="true">
+      <svg viewBox="0 0 24 24">
+        <path d="m7 7 10 10" />
+        <path d="M17 7 7 17" />
+      </svg>
+    </div>
+
+    <span class="payment-card__badge payment-card__badge--error">
+      Thất bại
+    </span>
+
+    <h1 class="payment-card__title">Thanh toán không thành công</h1>
+
+    <p class="payment-card__description payment-card__error-message">
+      {{ errorMessage }}
+    </p>
+
+    <button
+      type="button"
+      class="payment-card__button payment-card__button--error"
+      (click)="goHome()"
+    >
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M3 11.5 12 4l9 7.5" />
+        <path d="M5.5 10.5V20h13v-9.5" />
+        <path d="M9.5 20v-6h5v6" />
+      </svg>
+
+      Về trang chủ
+    </button>
+  </section>
+</main>

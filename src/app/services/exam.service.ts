@@ -55,10 +55,10 @@ export class ExamService {
     });
   }
 
-getExercisesList(page: number = 1, pageSize: number = 50): Observable<any> {
-    const headers = this.getAuthHeaders();
-    return this.http.get(`${this.apiUrl}/exercises/list?page=${page}&pageSize=${pageSize}`, { headers });
-}
+  getExercisesList(page: number = 1, pageSize: number = 50): Observable<any> {
+      const headers = this.getAuthHeaders();
+      return this.http.get(`${this.apiUrl}/exercises/list?page=${page}&pageSize=${pageSize}`, { headers });
+  }
 
   getExerciseById(id: string): Observable<any> {
     const headers = this.getAuthHeaders();

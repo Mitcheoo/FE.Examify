@@ -32,6 +32,7 @@ import { ResultReadingComponent } from './pages/result-reading/result-reading.co
 import { authGuard } from './guards/auth.guard';
 import { adminGuard } from './guards/admin.guard';
 import { FulltestResultComponent } from './pages/fulltest-result/fulltest-result.component';
+import { OrderSuccessComponent } from './pages/order-success/order-success.component';
 
 export const routes: Routes = [
   // ============================================================
@@ -75,6 +76,11 @@ export const routes: Routes = [
   // TRANG KẾT QUẢ FULL TEST
   // ============================================================
   { path: 'fulltest/:id/result', component: FulltestResultComponent, canActivate: [authGuard] },
+  
+  // ============================================================
+  // TRANG KẾT QUẢ FULL TEST
+  // ============================================================
+  { path: 'ordersuccess', component: OrderSuccessComponent, canActivate: [authGuard] },
   
   // ============================================================
   // ADMIN ROUTES
