@@ -57,9 +57,8 @@ export class PaymentService {
       encodeURIComponent(data.orderCode);
 
     const body = {
-      paypalOrderId: data.paypalOrderId
+      payPalOrderId: data.paypalOrderId
     };
-
     return this.http.post<CaptureOrderResponse>(
       url,
       body,

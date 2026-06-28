@@ -1,112 +1,81 @@
 ﻿import { CommonModule } from '@angular/common';
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ActivatedRoute, Router } from '@angular/router';
-import { finalize } from 'rxjs';
 
-import {
-  CaptureOrderResponse,
-  PaymentService
-} from '../../services/payment.service';
+import { PaymentService } from '../../services/payment.service';
 
 @Component({
   selector: 'app-order-success',
   standalone: true,
   imports: [CommonModule],
   templateUrl: './order-success.component.html',
-  styleUrl: './order-success.component.scss'
+  styleUrl: './order-success.component.scss',
 })
 export class OrderSuccessComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly paymentService = inject(PaymentService);
 
-  isProcessing = false;
-  isCompleted = false;
-  errorMessage = '';
-  orderCode = '';
+  readonly isProcessing = signal(false);
+  readonly isCompleted = signal(false);
+  readonly errorMessage = signal('');
+  readonly orderCode = signal('');
 
   ngOnInit(): void {
-    const orderCode =
-      this.route.snapshot.queryParamMap.get('orderCode');
+    const orderCode = this.route.snapshot.queryParamMap.get('orderCode');
 
-    const paypalOrderId =
-      this.route.snapshot.queryParamMap.get('token');
+    const paypalOrderId = this.route.snapshot.queryParamMap.get('token');
 
     if (!orderCode || !paypalOrderId) {
-      this.errorMessage =
-        'Không tìm thấy thông tin thanh toán trong URL.';
+      this.errorMessage.set('Không tìm thấy thông tin thanh toán trong URL.');
       return;
     }
 
-    this.orderCode = orderCode;
+    this.orderCode.set(orderCode);
     this.captureOrder(orderCode, paypalOrderId);
   }
 
-  private captureOrder(
-    orderCode: string,
-    paypalOrderId: string
-  ): void {
-    if (this.isProcessing) {
+  private captureOrder(orderCode: string, paypalOrderId: string): void {
+    if (this.isProcessing()) {
       return;
     }
 
-    this.isProcessing = true;
-    this.isCompleted = false;
-    this.errorMessage = '';
+    this.isProcessing.set(true);
+    this.isCompleted.set(false);
+    this.errorMessage.set('');
 
     this.paymentService
       .captureOrder({
         orderCode,
-        paypalOrderId
+        paypalOrderId,
       })
-      .pipe(
-        finalize(() => {
-          this.isProcessing = false;
-        })
-      )
       .subscribe({
-        next: (response: CaptureOrderResponse) => {
-          const orderCompleted =
-            response.status?.toUpperCase() === 'COMPLETED';
+        next: (response) => {
+          console.log('Capture thành công:', response);
 
-          const captureCompleted =
-            response.captureStatus?.toUpperCase() === 'COMPLETED';
-
-          if (!orderCompleted || !captureCompleted) {
-            this.isCompleted = false;
-            this.errorMessage =
-              'Giao dịch chưa được PayPal xác nhận hoàn tất.';
-            return;
-          }
-
-          this.errorMessage = '';
-          this.isCompleted = true;
+          this.isProcessing.set(false);
+          this.isCompleted.set(true);
+          this.errorMessage.set('');
         },
 
         error: (error: HttpErrorResponse) => {
-          this.errorMessage =
-            this.getErrorMessage(error);
-        }
+          console.error('Capture thất bại:', error);
+
+          this.isProcessing.set(false);
+          this.isCompleted.set(false);
+          this.errorMessage.set(this.getErrorMessage(error));
+        },
       });
   }
 
-  private getErrorMessage(
-    error: HttpErrorResponse
-  ): string {
-    if (
-      typeof error.error === 'string' &&
-      error.error.trim()
-    ) {
+  private getErrorMessage(error: HttpErrorResponse): string {
+    if (typeof error.error === 'string' && error.error.trim()) {
       return error.error;
     }
 
-    if (
-      error.error &&
-      typeof error.error === 'object'
-    ) {
-      const message = error.error.message
-        ?? error.error.Message;
+    if (error.error && typeof error.error === 'object') {
+      const message = error.error.message ?? error.error.Message;
 
       if (typeof message === 'string') {
         return message;
@@ -130,7 +99,7 @@ export class OrderSuccessComponent implements OnInit {
 
   goHome(): void {
     void this.router.navigate(['/'], {
-      replaceUrl: true
+      replaceUrl: true,
     });
   }
 }

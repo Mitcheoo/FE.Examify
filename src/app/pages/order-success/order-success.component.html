@@ -1,11 +1,6 @@
 ﻿<main class="payment-result">
   <!-- Đang xử lý -->
-  <section
-    *ngIf="isProcessing"
-    class="payment-card payment-card--processing"
-    role="status"
-    aria-live="polite"
-  >
+  <section *ngIf="isProcessing()">
     <div class="payment-card__icon">
       <span class="spinner" aria-hidden="true"></span>
     </div>
@@ -24,27 +19,20 @@
   </section>
 
   <!-- Thanh toán thành công -->
-  <section
-    *ngIf="!isProcessing && isCompleted"
-    class="payment-card payment-card--success"
-    role="status"
-    aria-live="polite"
-  >
+  <section *ngIf="!isProcessing() && isCompleted()" class="payment-card payment-card--success">
     <div class="payment-card__icon payment-card__icon--success" aria-hidden="true">
       <svg viewBox="0 0 24 24">
         <path d="M5 12.5 9.2 17 19 7" />
       </svg>
     </div>
 
-    <span class="payment-card__badge payment-card__badge--success">
-      Hoàn tất
-    </span>
+    <span class="payment-card__badge payment-card__badge--success"> Hoàn tất </span>
 
     <h1 class="payment-card__title">Thanh toán thành công</h1>
 
     <p class="payment-card__description">
       Đơn hàng
-      <strong class="order-code">{{ orderCode }}</strong>
+      <strong class="order-code">{{ orderCode() }}</strong>
       đã được thanh toán thành công.
     </p>
 
@@ -77,9 +65,7 @@
       </svg>
     </div>
 
-    <span class="payment-card__badge payment-card__badge--error">
-      Thất bại
-    </span>
+    <span class="payment-card__badge payment-card__badge--error"> Thất bại </span>
 
     <h1 class="payment-card__title">Thanh toán không thành công</h1>
 

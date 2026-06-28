@@ -9,17 +9,8 @@
   padding: 24px;
   place-items: center;
   background:
-    radial-gradient(
-      circle at top left,
-      rgba(59, 130, 246, 0.13),
-      transparent 36%
-    ),
-    radial-gradient(
-      circle at bottom right,
-      rgba(16, 185, 129, 0.11),
-      transparent 34%
-    ),
-    #f8fafc;
+    radial-gradient(circle at top left, rgba(59, 130, 246, 0.13), transparent 36%),
+    radial-gradient(circle at bottom right, rgba(16, 185, 129, 0.11), transparent 34%), #f8fafc;
 }
 
 .payment-card {
@@ -44,7 +35,7 @@
     left: 0;
     width: 100%;
     height: 5px;
-    content: "";
+    content: '';
   }
 
   &--processing::before {
