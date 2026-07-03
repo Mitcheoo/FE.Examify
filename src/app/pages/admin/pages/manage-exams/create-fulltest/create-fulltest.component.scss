@@ -1,0 +1,609 @@
+// 📁 src/app/pages/admin/pages/manage-exams/create-fulltest/create-fulltest.component.scss
+
+.fulltest-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px;
+  background: #f8fafc;
+  min-height: 100vh;
+}
+
+// ============================================================
+// HEADER
+// ============================================================
+
+.fulltest-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: white;
+  padding: 16px 24px;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 12px;
+
+  .header-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+}
+
+.btn-back {
+  padding: 8px 16px;
+  background: #e2e8f0;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  color: #334155;
+  transition: all 0.2s;
+
+  &:hover {
+    background: #cbd5e1;
+  }
+}
+
+h1 {
+  font-size: 20px;
+  font-weight: 600;
+  color: #0f172a;
+  margin: 0;
+}
+
+.status-badge {
+  padding: 4px 12px;
+  background: #fef3c7;
+  color: #d97706;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.total-questions {
+  font-size: 14px;
+  color: #64748b;
+  font-weight: 500;
+}
+
+// ============================================================
+// PROGRESS
+// ============================================================
+
+.progress-section {
+  background: white;
+  padding: 12px 20px;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  margin-bottom: 20px;
+}
+
+.progress-bar-container {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+
+  .progress-bar {
+    flex: 1;
+    height: 8px;
+    background: #e5e7eb;
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    transition: width 0.3s ease;
+    border-radius: 4px;
+  }
+
+  .progress-text {
+    font-size: 13px;
+    color: #64748b;
+    font-weight: 500;
+    min-width: 120px;
+    text-align: right;
+  }
+}
+
+// ============================================================
+// TABS
+// ============================================================
+
+.tabs-container {
+  display: flex;
+  gap: 4px;
+  background: white;
+  padding: 8px;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  margin-bottom: 20px;
+  overflow-x: auto;
+}
+
+.tab-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  color: #64748b;
+  background: transparent;
+  transition: all 0.2s;
+  white-space: nowrap;
+
+  &:hover {
+    background: #f1f5f9;
+  }
+
+  &.active {
+    background: #1e293b;
+    color: white;
+
+    .tab-count {
+      background: rgba(255,255,255,0.2);
+      color: white;
+    }
+  }
+
+  .tab-icon {
+    font-size: 16px;
+  }
+
+  .tab-name {
+    font-size: 14px;
+  }
+
+  .tab-count {
+    padding: 1px 8px;
+    background: #e5e7eb;
+    border-radius: 12px;
+    font-size: 12px;
+    color: #475569;
+    font-weight: 600;
+    transition: all 0.2s;
+
+    &.has-questions {
+      background: #dbeafe;
+      color: #2563eb;
+    }
+  }
+}
+
+// ============================================================
+// TAB CONTENT
+// ============================================================
+
+.tab-content {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  padding: 24px;
+  margin-bottom: 20px;
+  min-height: 400px;
+}
+
+.tab-panel {
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+// ============================================================
+// FOOTER ACTIONS
+// ============================================================
+
+.footer-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  background: white;
+  padding: 16px 24px;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.btn-save-draft {
+  padding: 10px 24px;
+  background: #f1f5f9;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  color: #334155;
+  transition: all 0.2s;
+
+  &:hover {
+    background: #e2e8f0;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+.btn-complete {
+  padding: 10px 32px;
+  background: #10b981;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  color: white;
+  transition: all 0.2s;
+
+  &:hover {
+    background: #059669;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+// ============================================================
+// RESPONSIVE
+// ============================================================
+
+@media (max-width: 768px) {
+  .fulltest-container {
+    padding: 12px;
+  }
+
+  .fulltest-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .header-left {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .tabs-container {
+    padding: 4px;
+    gap: 2px;
+  }
+
+  .tab-btn {
+    padding: 8px 12px;
+    font-size: 12px;
+
+    .tab-name {
+      display: none;
+    }
+  }
+
+  .footer-actions {
+    flex-direction: column;
+
+    button {
+      width: 100%;
+      justify-content: center;
+    }
+  }
+}// 📁 src/app/pages/admin/pages/manage-exams/create-fulltest/create-fulltest.component.scss
+
+.fulltest-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px;
+  background: #f8fafc;
+  min-height: 100vh;
+}
+
+// ============================================================
+// HEADER
+// ============================================================
+
+.fulltest-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: white;
+  padding: 16px 24px;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 12px;
+
+  .header-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+}
+
+.btn-back {
+  padding: 8px 16px;
+  background: #e2e8f0;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  color: #334155;
+  transition: all 0.2s;
+
+  &:hover {
+    background: #cbd5e1;
+  }
+}
+
+h1 {
+  font-size: 20px;
+  font-weight: 600;
+  color: #0f172a;
+  margin: 0;
+}
+
+.status-badge {
+  padding: 4px 12px;
+  background: #fef3c7;
+  color: #d97706;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.total-questions {
+  font-size: 14px;
+  color: #64748b;
+  font-weight: 500;
+}
+
+// ============================================================
+// PROGRESS
+// ============================================================
+
+.progress-section {
+  background: white;
+  padding: 12px 20px;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  margin-bottom: 20px;
+}
+
+.progress-bar-container {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+
+  .progress-bar {
+    flex: 1;
+    height: 8px;
+    background: #e5e7eb;
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    transition: width 0.3s ease;
+    border-radius: 4px;
+  }
+
+  .progress-text {
+    font-size: 13px;
+    color: #64748b;
+    font-weight: 500;
+    min-width: 120px;
+    text-align: right;
+  }
+}
+
+// ============================================================
+// TABS
+// ============================================================
+
+.tabs-container {
+  display: flex;
+  gap: 4px;
+  background: white;
+  padding: 8px;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  margin-bottom: 20px;
+  overflow-x: auto;
+}
+
+.tab-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  color: #64748b;
+  background: transparent;
+  transition: all 0.2s;
+  white-space: nowrap;
+
+  &:hover {
+    background: #f1f5f9;
+  }
+
+  &.active {
+    background: #1e293b;
+    color: white;
+
+    .tab-count {
+      background: rgba(255,255,255,0.2);
+      color: white;
+    }
+  }
+
+  .tab-icon {
+    font-size: 16px;
+  }
+
+  .tab-name {
+    font-size: 14px;
+  }
+
+  .tab-count {
+    padding: 1px 8px;
+    background: #e5e7eb;
+    border-radius: 12px;
+    font-size: 12px;
+    color: #475569;
+    font-weight: 600;
+    transition: all 0.2s;
+
+    &.has-questions {
+      background: #dbeafe;
+      color: #2563eb;
+    }
+  }
+}
+
+// ============================================================
+// TAB CONTENT
+// ============================================================
+
+.tab-content {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  padding: 24px;
+  margin-bottom: 20px;
+  min-height: 400px;
+}
+
+.tab-panel {
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+// ============================================================
+// FOOTER ACTIONS
+// ============================================================
+
+.footer-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  background: white;
+  padding: 16px 24px;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.btn-save-draft {
+  padding: 10px 24px;
+  background: #f1f5f9;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  color: #334155;
+  transition: all 0.2s;
+
+  &:hover {
+    background: #e2e8f0;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+.btn-complete {
+  padding: 10px 32px;
+  background: #10b981;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  color: white;
+  transition: all 0.2s;
+
+  &:hover {
+    background: #059669;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+// ============================================================
+// RESPONSIVE
+// ============================================================
+
+@media (max-width: 768px) {
+  .fulltest-container {
+    padding: 12px;
+  }
+
+  .fulltest-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .header-left {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .tabs-container {
+    padding: 4px;
+    gap: 2px;
+  }
+
+  .tab-btn {
+    padding: 8px 12px;
+    font-size: 12px;
+
+    .tab-name {
+      display: none;
+    }
+  }
+
+  .footer-actions {
+    flex-direction: column;
+
+    button {
+      width: 100%;
+      justify-content: center;
+    }
+  }
+}

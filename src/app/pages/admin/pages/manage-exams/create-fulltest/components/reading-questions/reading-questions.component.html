@@ -1,0 +1,189 @@
+<!-- 📁 src/app/pages/admin/pages/manage-exams/create-fulltest/components/reading-questions/reading-questions.component.html -->
+
+<div class="reading-questions-container">
+  <!-- Header -->
+  <div class="section-header">
+    <div class="header-info">
+      <h3>📖 Reading Questions</h3>
+      <span class="question-count">Tổng: {{ getTotalQuestions() }} câu hỏi</span>
+    </div>
+    <button class="btn-add" (click)="addQuestion()">
+      ➕ Thêm câu hỏi
+    </button>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- 4 PASSAGES -->
+  <!-- ============================================================ -->
+
+  <div class="passages-grid">
+    <!-- Part 1 -->
+    <div class="passage-card">
+      <div class="passage-header">
+        <span class="part-badge part-1">Part 1</span>
+        <span class="question-count-inline">{{ questions.filter(q => q.partNumber === 1).length }} câu</span>
+      </div>
+      <textarea [(ngModel)]="partPassages[1]" 
+                (ngModelChange)="onPassageChange(1)"
+                placeholder="Nhập đoạn văn cho Part 1..." 
+                class="passage-textarea" rows="4"></textarea>
+    </div>
+
+    <!-- Part 2 -->
+    <div class="passage-card">
+      <div class="passage-header">
+        <span class="part-badge part-2">Part 2</span>
+        <span class="question-count-inline">{{ questions.filter(q => q.partNumber === 2).length }} câu</span>
+      </div>
+      <textarea [(ngModel)]="partPassages[2]" 
+                (ngModelChange)="onPassageChange(2)"
+                placeholder="Nhập đoạn văn cho Part 2..." 
+                class="passage-textarea" rows="4"></textarea>
+    </div>
+
+    <!-- Part 3 -->
+    <div class="passage-card">
+      <div class="passage-header">
+        <span class="part-badge part-3">Part 3</span>
+        <span class="question-count-inline">{{ questions.filter(q => q.partNumber === 3).length }} câu</span>
+      </div>
+      <textarea [(ngModel)]="partPassages[3]" 
+                (ngModelChange)="onPassageChange(3)"
+                placeholder="Nhập đoạn văn cho Part 3..." 
+                class="passage-textarea" rows="4"></textarea>
+    </div>
+
+    <!-- Part 4 -->
+    <div class="passage-card">
+      <div class="passage-header">
+        <span class="part-badge part-4">Part 4</span>
+        <span class="question-count-inline">{{ questions.filter(q => q.partNumber === 4).length }} câu</span>
+      </div>
+      <textarea [(ngModel)]="partPassages[4]" 
+                (ngModelChange)="onPassageChange(4)"
+                placeholder="Nhập đoạn văn cho Part 4..." 
+                class="passage-textarea" rows="4"></textarea>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- QUESTION FORM -->
+  <!-- ============================================================ -->
+
+  <div *ngIf="showQuestionForm" class="question-form">
+    <div class="form-header">
+      <h4>{{ editingIndex !== null ? '✏️ Chỉnh sửa câu hỏi' : '➕ Thêm câu hỏi mới' }}</h4>
+      <button class="btn-close-form" (click)="cancelQuestionForm()">✕</button>
+    </div>
+
+    <div class="form-body">
+      <div class="form-row">
+        <div class="form-group">
+          <label>Part *</label>
+          <select [(ngModel)]="newQuestion.partNumber" class="form-select">
+            <option *ngFor="let part of partOptions" [value]="part">Part {{ part }}</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Số thứ tự</label>
+          <input type="number" [(ngModel)]="newQuestion.orderNumber" class="form-input" min="1" disabled>
+        </div>
+        <div class="form-group">
+          <label>Loại câu hỏi</label>
+          <select [(ngModel)]="newQuestion.questionType" class="form-select">
+            <option *ngFor="let type of questionTypes" [value]="type">
+              {{ getQuestionTypeLabel(type) }}
+            </option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Nội dung câu hỏi *</label>
+        <textarea [(ngModel)]="newQuestion.questionText" 
+                  placeholder="Nhập nội dung câu hỏi..." 
+                  class="form-textarea" rows="2"></textarea>
+      </div>
+
+      <div class="options-grid">
+        <div class="option-item">
+          <label>A.</label>
+          <input type="text" [(ngModel)]="newQuestion.optionA" placeholder="Đáp án A" class="form-input">
+        </div>
+        <div class="option-item">
+          <label>B.</label>
+          <input type="text" [(ngModel)]="newQuestion.optionB" placeholder="Đáp án B" class="form-input">
+        </div>
+        <div class="option-item">
+          <label>C.</label>
+          <input type="text" [(ngModel)]="newQuestion.optionC" placeholder="Đáp án C" class="form-input">
+        </div>
+        <div class="option-item">
+          <label>D.</label>
+          <input type="text" [(ngModel)]="newQuestion.optionD" placeholder="Đáp án D" class="form-input">
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>✅ Đáp án đúng</label>
+          <select [(ngModel)]="newQuestion.correctAnswer" class="form-select">
+            <option value="A">A</option>
+            <option value="B">B</option>
+            <option value="C">C</option>
+            <option value="D">D</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>💡 Giải thích</label>
+          <input type="text" [(ngModel)]="newQuestion.explanation" placeholder="Giải thích (tùy chọn)" class="form-input">
+        </div>
+      </div>
+    </div>
+
+    <div class="form-footer">
+      <button class="btn-cancel" (click)="cancelQuestionForm()">Hủy</button>
+      <button class="btn-save" (click)="saveQuestion()">
+        {{ editingIndex !== null ? 'Cập nhật' : 'Thêm câu hỏi' }}
+      </button>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- QUESTIONS LIST (CHUNG) -->
+  <!-- ============================================================ -->
+
+  <div class="questions-list" *ngIf="questions.length > 0">
+    <div *ngFor="let q of questions; let i = index" class="question-item">
+      <div class="question-content">
+        <div class="question-header">
+          <span class="q-number">Câu {{ q.orderNumber }}</span>
+          <span class="q-part">Part {{ q.partNumber }}</span>
+          <span class="q-type">{{ getQuestionTypeLabel(q.questionType) }}</span>
+        </div>
+        <p class="q-text">{{ q.questionText || 'Chưa nhập nội dung' }}</p>
+        <div class="q-options">
+          <span>A. {{ q.optionA || '...' }}</span>
+          <span>B. {{ q.optionB || '...' }}</span>
+          <span>C. {{ q.optionC || '...' }}</span>
+          <span>D. {{ q.optionD || '...' }}</span>
+        </div>
+        <div class="q-answer">
+          ✅ Đáp án: <strong>{{ q.correctAnswer }}</strong>
+          <span *ngIf="q.explanation" class="q-explanation">💡 {{ q.explanation }}</span>
+        </div>
+      </div>
+      <div class="question-actions">
+        <button class="btn-edit" (click)="editQuestion(i)" title="Sửa">✏️</button>
+        <button class="btn-delete" (click)="deleteQuestion(i)" title="Xóa">🗑️</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Empty State -->
+  <div *ngIf="questions.length === 0 && !showQuestionForm" class="empty-state">
+    <div class="empty-icon">📭</div>
+    <p>Chưa có câu hỏi nào</p>
+    <p class="empty-hint">Nhấn "Thêm câu hỏi" để bắt đầu</p>
+  </div>
+</div>

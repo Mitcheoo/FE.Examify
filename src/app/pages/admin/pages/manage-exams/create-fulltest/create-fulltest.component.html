@@ -1,0 +1,97 @@
+<!-- 📁 src/app/pages/admin/pages/manage-exams/create-fulltest/create-fulltest.component.html -->
+
+<div class="fulltest-container">
+  <!-- Header -->
+  <div class="fulltest-header">
+    <div class="header-left">
+      <button class="btn-back" (click)="goBack()">
+        ← Quay lại
+      </button>
+      <h1>📚 {{ fullTestTitle || 'Đang tải...' }}</h1>
+      <span class="status-badge">Đang tạo</span>
+    </div>
+    <div class="header-right">
+      <span class="total-questions">
+        📊 Tổng: {{ getTotalQuestions() }} câu hỏi
+      </span>
+    </div>
+  </div>
+
+  <!-- Progress -->
+  <div class="progress-section">
+    <div class="progress-bar-container">
+      <div class="progress-bar">
+        <div class="progress-fill" 
+             [style.width]="(getTotalQuestions() / 12 * 100) + '%'"
+             [style.backgroundColor]="getTotalQuestions() > 0 ? '#10b981' : '#e5e7eb'">
+        </div>
+      </div>
+      <span class="progress-text">{{ getTotalQuestions() }}/12 câu hỏi (tối thiểu)</span>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs-container">
+    <button *ngFor="let tab of tabs" 
+            class="tab-btn" 
+            [class.active]="activeTab === tab.key"
+            (click)="switchTab(tab.key)">
+      <span class="tab-icon">{{ tab.icon }}</span>
+      <span class="tab-name">{{ tab.name }}</span>
+      <span class="tab-count" 
+            [class.has-questions]="getQuestionCount(tab.key) > 0">
+        {{ getQuestionCount(tab.key) }}
+      </span>
+    </button>
+  </div>
+
+  <!-- Content -->
+  <div class="tab-content">
+    <!-- READING -->
+    <div *ngIf="activeTab === 'reading'" class="tab-panel">
+  <app-reading-questions
+  [exerciseId]="readingExerciseId"
+  [questions]="readingQuestions"
+  (questionsChange)="onReadingQuestionsChange($event)"
+  (passagesChange)="onReadingPassagesChange($event)">
+</app-reading-questions>
+    </div>
+
+    <!-- LISTENING -->
+    <div *ngIf="activeTab === 'listening'" class="tab-panel">
+      <app-listening-questions
+        [exerciseId]="listeningExerciseId"
+        [questions]="listeningQuestions"
+        (questionsChange)="onListeningQuestionsChange($event)">
+      </app-listening-questions>
+    </div>
+
+    <!-- WRITING -->
+    <div *ngIf="activeTab === 'writing'" class="tab-panel">
+      <app-writing-questions
+        [exerciseId]="writingExerciseId"
+        [questions]="writingQuestions"
+        (questionsChange)="onWritingQuestionsChange($event)">
+      </app-writing-questions>
+    </div>
+
+    <!-- SPEAKING -->
+    <div *ngIf="activeTab === 'speaking'" class="tab-panel">
+      <app-speaking-questions
+        [exerciseId]="speakingExerciseId"
+        [questions]="speakingQuestions"
+        (questionsChange)="onSpeakingQuestionsChange($event)">
+      </app-speaking-questions>
+    </div>
+  </div>
+
+  <!-- Footer Actions -->
+  <div class="footer-actions">
+    <button class="btn-save-draft" (click)="saveDraft()" [disabled]="isSaving">
+      {{ isSaving ? '⏳ Đang lưu...' : '💾 Lưu nháp' }}
+    </button>
+    <button class="btn-complete" (click)="completeFullTest()" [disabled]="isComplete">
+      {{ isComplete ? '⏳ Đang hoàn tất...' : '✅ Hoàn tất Full Test' }}
+    </button>
+  </div>
+</div>

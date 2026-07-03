@@ -1,87 +1,134 @@
 <div class="speaking-container">
-  <div class="speaking-header">
-    <div class="header-content">
-      <h2>🎙️ Speaking Test</h2>
-      <p>{{ questions.length }} câu hỏi - Ghi âm câu trả lời của bạn</p>
-    </div>
-    <div class="progress-section">
-      <div class="progress-bar">
-        <div class="progress-fill" [style.width.%]="getProgressPercent()"></div>
-      </div>
-      <span>{{ getProgressPercent() }}% hoàn thành</span>
-    </div>
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="loading-state">
+    <div class="spinner"></div>
+    <p>Đang tải bài thi...</p>
   </div>
 
-  <!-- 3 Questions -->
-  <div class="questions-container">
-    <div *ngFor="let q of questions; let i = index" class="question-card">
-      <div class="question-header">
-        <span class="q-number">Câu {{ i + 1 }}</span>
-        <span class="q-status" [class.completed]="audioBlobs[i]">
-          {{ audioBlobs[i] ? '✅ Đã ghi âm' : '⏳ Chưa ghi âm' }}
-        </span>
+  <!-- Error State -->
+  <div *ngIf="!isLoading && !hasQuestions" class="error-state">
+    <div class="error-icon">⚠️</div>
+    <h3>Không có câu hỏi</h3>
+    <p>{{ errorMessage || 'Bài thi này chưa có câu hỏi. Vui lòng liên hệ Admin để thêm câu hỏi.' }}</p>
+    <button class="btn-back" (click)="goBack()">← Quay lại</button>
+  </div>
+
+  <!-- Content -->
+  <ng-container *ngIf="!isLoading && hasQuestions">
+    <div class="speaking-header">
+      <div class="header-content">
+        <h2>🎙️ Speaking Test</h2>
+        <p>{{ questions.length }} câu hỏi - Ghi âm câu trả lời của bạn</p>
       </div>
-
-      <div class="question-text">{{ q.questionText }}</div>
-
-      <div class="time-info">
-        <span>⏱️ Chuẩn bị: {{ q.preparationTime || 30 }}s</span>
-        <span>🎤 Nói: {{ q.speakingTime || 60 }}s</span>
+      <div class="progress-section">
+        <div class="progress-bar">
+          <div class="progress-fill" [style.width.%]="getProgressPercent()"></div>
+        </div>
+        <span>{{ getProgressPercent() }}% hoàn thành</span>
       </div>
+    </div>
 
-      <!-- Transcript -->
-      <div class="transcript-section">
-        <label>📝 Nội dung bài nói (Transcript):</label>
-        <textarea 
-          [(ngModel)]="transcripts[i]"
-          (input)="updateTranscript(i, $event)"
-          placeholder="Nhập nội dung bạn đã nói..."
-          rows="3"
-          [disabled]="isSubmitting">
-        </textarea>
-      </div>
+    <!-- Questions -->
+    <div class="questions-container">
+      <div *ngFor="let q of questions; let i = index" class="question-card">
+        <div class="question-header">
+          <span class="q-number">Câu {{ i + 1 }}</span>
+          <span class="q-status" [class.completed]="audioBlobs[i]">
+            {{ audioBlobs[i] ? '✅ Đã ghi âm' : '⏳ Chưa ghi âm' }}
+          </span>
+        </div>
 
-      <!-- Recording Controls -->
-      <div class="recording-controls">
-        <!-- Chưa ghi âm và không đang ghi âm câu nào -->
-        <button 
-          *ngIf="!audioBlobs[i] && !(isRecording && currentRecordingIndex === i)"
-          class="btn-record" 
-          (click)="startRecording(i)"
-          [disabled]="isPreparing || isRecording">
-          🎙️ Bắt đầu ghi âm
-        </button>
+        <div class="question-text">{{ q.questionText }}</div>
 
-        <!-- Đang ghi âm câu này -->
-        <button 
-          *ngIf="isRecording && currentRecordingIndex === i"
-          class="btn-stop" 
-          (click)="stopRecording()">
-          ⏹️ Dừng ghi âm
-        </button>
+        <div class="time-info">
+          <span>⏱️ Chuẩn bị: {{ q.preparationTime || 30 }}s</span>
+          <span>🎤 Nói: {{ q.speakingTime || 60 }}s</span>
+        </div>
 
-        <!-- Đã ghi âm -->
-        <div *ngIf="audioBlobs[i]" class="audio-controls">
-          <span class="status-icon">✅ Đã ghi âm</span>
-          <button class="btn-play" (click)="playRecording(i)" [disabled]="isPlaying[i]">
-            {{ isPlaying[i] ? '⏳ Đang phát...' : '▶️ Nghe lại' }}
+        <!-- Recording Controls -->
+        <div class="recording-controls">
+          <button 
+            *ngIf="!audioBlobs[i] && !(isRecording && currentRecordingIndex === i)"
+            class="btn-record" 
+            (click)="startRecording(i)"
+            [disabled]="isRecording">
+            🎙️ Bắt đầu ghi âm
           </button>
-          <button class="btn-rerecord" (click)="startRecording(i)">
-            🔄 Ghi âm lại
+
+          <button 
+            *ngIf="isRecording && currentRecordingIndex === i"
+            class="btn-stop" 
+            (click)="stopRecording()">
+            ⏹️ Dừng ghi âm
           </button>
+
+          <div *ngIf="audioBlobs[i]" class="audio-controls">
+            <span class="status-icon">✅ Đã ghi âm</span>
+            <button class="btn-play" (click)="playRecording(i)" [disabled]="isPlaying[i]">
+              {{ isPlaying[i] ? '⏳ Đang phát...' : '▶️ Nghe lại' }}
+            </button>
+            <button class="btn-rerecord" (click)="startRecording(i)">
+              🔄 Ghi âm lại
+            </button>
+          </div>
+        </div>
+        
+        <!-- ✅ TRANSCRIPT PREVIEW -->
+        <div *ngIf="audioBlobs[i]" class="transcript-preview">
+          <div class="transcript-header">
+            <span class="transcript-label">📝 Nội dung nhận diện:</span>
+            <span class="transcript-status" [class]="getTranscriptStatusClass(transcriptStatus[i])">
+              {{ getTranscriptStatusText(transcriptStatus[i]) }}
+            </span>
+            <button 
+              *ngIf="transcriptStatus[i] !== 'loading'"
+              class="btn-preview" 
+              (click)="previewTranscript(i)"
+              [disabled]="isPreviewingTranscript[i]">
+              🔄 Kiểm tra lại
+            </button>
+          </div>
+          
+          <div class="transcript-content" [class.poor]="!transcriptQuality[i] && transcriptStatus[i] === 'poor'">
+            <ng-container [ngSwitch]="transcriptStatus[i]">
+              <div *ngSwitchCase="'loading'" class="transcript-loading">
+                <span class="spinner-small"></span>
+                Đang nhận diện giọng nói...
+              </div>
+              <div *ngSwitchCase="'good'" class="transcript-good">
+                <pre>{{ whisperTranscripts[i] || 'Đang xử lý...' }}</pre>
+              </div>
+              <div *ngSwitchCase="'poor'" class="transcript-poor">
+                <pre>{{ whisperTranscripts[i] || 'Không nhận diện được' }}</pre>
+                <div class="warning-text">
+                  ⚠️ Chất lượng ghi âm kém. Vui lòng ghi âm lại để có kết quả chính xác.
+                </div>
+              </div>
+              <div *ngSwitchCase="'error'" class="transcript-error">
+                ❌ Lỗi nhận diện. Vui lòng thử lại.
+              </div>
+              <div *ngSwitchDefault class="transcript-pending">
+                ⏳ Nhấn "Kiểm tra lại" để xem nội dung
+              </div>
+            </ng-container>
+          </div>
+        </div>
+
+        <div *ngIf="!audioBlobs[i]" class="recording-required">
+          ⚠️ Bắt buộc ghi âm câu trả lời
         </div>
       </div>
     </div>
-  </div>
 
-  <!-- Actions -->
-  <div class="actions">
-    <button class="btn-back" (click)="goBack()">← Quay lại</button>
-    <button 
-      class="btn-submit" 
-      (click)="submitSpeaking()" 
-      [disabled]="isSubmitting">
-      {{ isProcessing ? '⏳ Đang xử lý...' : '📤 Nộp bài' }}
-    </button>
-  </div>
+    <!-- Actions -->
+    <div class="actions">
+      <button class="btn-back" (click)="goBack()">← Quay lại</button>
+      <button 
+        class="btn-submit" 
+        (click)="submitSpeaking()" 
+        [disabled]="isSubmitting">
+        {{ isProcessing ? '⏳ Đang xử lý...' : '📤 Nộp bài' }}
+      </button>
+    </div>
+  </ng-container>
 </div>

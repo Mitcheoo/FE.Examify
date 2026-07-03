@@ -1,4 +1,6 @@
-﻿import { Component, inject, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
+﻿// 📁 src/app/pages/exam-writing/exam-writing.component.ts
+
+import { Component, inject, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -35,13 +37,14 @@ export class ExamWritingComponent implements OnInit, OnDestroy {
   wordCounts: Record<string, number> = {};
   timeRemaining: number = 3600;
   isSubmitting = false;
+  isLoading = true;
+  errorMessage: string = '';
   private timerInterval: any;
   private examId: string = '';
   private fullTestId: string = '';
   private userId: string = '';
   private sessionId: string = '';
 
-  // ✅ HYBRID: Dùng để debounce sync lên server
   private syncTimeout: any = null;
   private isSyncing: boolean = false;
   private hasUnsavedChanges: boolean = false;
@@ -49,7 +52,6 @@ export class ExamWritingComponent implements OnInit, OnDestroy {
   ngOnInit() {
     this.userId = this.authService.getCurrentUser()?.id || 'anonymous';
     
-    // Lấy session ID từ query params
     this.route.queryParams.subscribe(params => {
       if (params['sessionId']) {
         this.sessionId = params['sessionId'];
@@ -61,7 +63,6 @@ export class ExamWritingComponent implements OnInit, OnDestroy {
       }
     });
     
-    // Fallback: Lấy từ navigation state
     const navigation = this.router.getCurrentNavigation();
     const state = navigation?.extras?.state as { fullTestId?: string; sessionId?: string };
     if (state?.sessionId && !this.sessionId) {
@@ -84,16 +85,23 @@ export class ExamWritingComponent implements OnInit, OnDestroy {
       this.loadSavedAnswers();
     });
 
-    // ✅ LƯU TRƯỚC KHI THOÁT
     window.addEventListener('beforeunload', () => {
       this.syncToServer();
     });
   }
 
-  // ========== LOAD SAVED ANSWERS (ƯU TIÊN SERVER) ==========
+  // ========== LOAD SAVED ANSWERS ==========
   loadSavedAnswers() {
-    // 1. Load từ localStorage (nhanh)
     const localKey = 'writing_answers_' + this.examId + '_' + this.userId;
+    
+    const isNewSession = localStorage.getItem(`new_session_${this.sessionId}`) === 'true';
+    
+    if (isNewSession) {
+      localStorage.removeItem(localKey);
+      console.log('🗑️ Cleared old writing draft answers for new session');
+      localStorage.removeItem(`new_session_${this.sessionId}`);
+    }
+    
     const localData = localStorage.getItem(localKey);
     if (localData) {
       try {
@@ -108,18 +116,15 @@ export class ExamWritingComponent implements OnInit, OnDestroy {
       }
     }
 
-    // 2. Load từ server (nếu có sessionId)
     if (this.sessionId) {
       this.examService.getDraftAnswers(this.sessionId).subscribe({
         next: (data: any) => {
           if (data && data.length > 0) {
-            // Merge: ưu tiên server (mới hơn)
             const serverAnswers: Record<string, string> = {};
             data.forEach((item: any) => {
               serverAnswers[item.questionId] = item.userAnswer || '';
             });
             
-            // Merge dữ liệu: server có thì lấy server, không thì giữ local
             let mergedCount = 0;
             Object.keys(serverAnswers).forEach(key => {
               if (!this.answers[key] || serverAnswers[key] !== this.answers[key]) {
@@ -152,27 +157,24 @@ export class ExamWritingComponent implements OnInit, OnDestroy {
     this.hasUnsavedChanges = true;
   }
 
-  // ========== SYNC TO SERVER (DEBOUNCE 3s) ==========
+  // ========== SYNC TO SERVER ==========
   syncToServer() {
     if (this.isSyncing || !this.sessionId) return;
     
-    // Clear timeout cũ
     if (this.syncTimeout) {
       clearTimeout(this.syncTimeout);
     }
 
-    // Debounce: chỉ sync sau 3s không có thay đổi
     this.syncTimeout = setTimeout(() => {
       if (Object.keys(this.answers).length === 0) return;
       
       this.isSyncing = true;
       
-      // Chuyển answers sang format array
       const answerList = Object.entries(this.answers)
         .filter(([_, answer]) => answer && answer.trim().length > 0)
         .map(([questionId, userAnswer]) => ({
           questionId: questionId,
-          skillType: 2, // Writing
+          skillType: 2,
           userAnswer: userAnswer || ''
         }));
 
@@ -199,10 +201,10 @@ export class ExamWritingComponent implements OnInit, OnDestroy {
           this.isSyncing = false;
         }
       });
-    }, 3000); // 3 giây
+    }, 3000);
   }
 
-  // ========== FORCE SYNC (khi chuyển kỹ năng hoặc submit) ==========
+  // ========== FORCE SYNC ==========
   forceSyncToServer(): Promise<void> {
     return new Promise((resolve) => {
       if (this.syncTimeout) {
@@ -248,85 +250,69 @@ export class ExamWritingComponent implements OnInit, OnDestroy {
 
   // ========== ON TEXT CHANGE ==========
   onTextChange(questionId: string) {
-    // 1. Cập nhật word count
     this.updateWordCount(questionId);
-    
-    // 2. Lưu vào localStorage (ngay lập tức)
     this.saveToLocal();
-    
-    // 3. Schedule sync lên server (debounce)
     this.syncToServer();
-    
     this.cdr.detectChanges();
   }
 
- loadExam() {
-  console.log('🔄 Loading Writing exam...');
-  //reset
-  this.answers = {};
-  this.wordCounts = {};
-  
-  this.examService.getWritingExam(this.examId).subscribe({
-    next: (data: any) => {
-      console.log('✅ Raw Writing data:', data);
-      
-      // ✅ NẾU KHÔNG CÓ CÂU HỎI, TẠO FALLBACK
-      let questions = data.questions || [];
-      if (questions.length === 0) {
-        console.warn('⚠️ Không có câu hỏi từ API, tạo câu hỏi mẫu...');
-        questions = this.generateFallbackQuestions();
+  // ========== LOAD EXAM ==========
+  loadExam() {
+    console.log('🔄 Loading Writing exam...');
+    this.isLoading = true;
+    this.errorMessage = '';
+    this.answers = {};
+    this.wordCounts = {};
+    
+    this.examService.getWritingExam(this.examId).subscribe({
+      next: (data: any) => {
+        console.log('✅ Raw Writing data:', data);
+        
+        const questions = data.questions || [];
+        
+        // ✅ KHÔNG CÓ CÂU HỎI - HIỂN THỊ THÔNG BÁO
+        if (questions.length === 0) {
+          console.warn('⚠️ Không có câu hỏi từ API');
+          this.errorMessage = '⚠️ Chưa có câu hỏi cho bài thi này. Vui lòng quay lại sau.';
+          this.isLoading = false;
+          this.cdr.detectChanges();
+          return;
+        }
+        
+        this.questions = questions;
+        
+        this.questions.forEach((q: WritingQuestion) => {
+          if (!this.answers[q.id]) {
+            this.answers[q.id] = '';
+            this.wordCounts[q.id] = 0;
+          }
+        });
+        
+        this.exam = {
+          exerciseId: data.exerciseId,
+          title: data.title,
+          timeLimitSeconds: data.timeLimitSeconds || 3600,
+          questions: this.questions,
+          totalQuestions: this.questions.length
+        };
+        
+        console.log('✅ Parsed Writing exam:', this.exam);
+        console.log('✅ Questions:', this.questions.length);
+        
+        this.timeRemaining = this.exam.timeLimitSeconds;
+        this.isLoading = false;
+        this.startTimer();
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        console.error('❌ Error loading Writing exam:', err);
+        this.isLoading = false;
+        this.errorMessage = '❌ Không thể tải đề thi. Vui lòng thử lại sau!';
+        this.cdr.detectChanges();
+        alert('Không thể tải đề thi. Vui lòng thử lại!');
       }
-      
-      this.questions = questions;
-      
-      this.questions.forEach((q: WritingQuestion) => {
-        if (!this.answers[q.id]) {
-          this.answers[q.id] = '';
-          this.wordCounts[q.id] = 0;
-        }
-      });
-      
-      this.exam = {
-        exerciseId: data.exerciseId,
-        title: data.title,
-        timeLimitSeconds: data.timeLimitSeconds || 3600,
-        questions: this.questions,
-        totalQuestions: this.questions.length
-      };
-      
-      console.log('✅ Parsed Writing exam:', this.exam);
-      console.log('✅ Questions:', this.questions.length);
-      
-      this.timeRemaining = this.exam.timeLimitSeconds;
-      this.startTimer();
-      this.cdr.detectChanges();
-    },
-    error: (err) => {
-      console.error('❌ Error loading Writing exam:', err);
-      
-      // ✅ TẠO FALLBACK KHI API LỖI
-      const fallbackQuestions = this.generateFallbackQuestions();
-      this.questions = fallbackQuestions;
-      this.questions.forEach((q: WritingQuestion) => {
-        if (!this.answers[q.id]) {
-          this.answers[q.id] = '';
-          this.wordCounts[q.id] = 0;
-        }
-      });
-      this.exam = {
-        exerciseId: this.examId,
-        title: 'Writing Test (Fallback)',
-        timeLimitSeconds: 3600,
-        questions: this.questions,
-        totalQuestions: this.questions.length
-      };
-      this.timeRemaining = this.exam.timeLimitSeconds;
-      this.startTimer();
-      this.cdr.detectChanges();
-      alert('Không thể tải đề thi từ server. Sử dụng đề thi mẫu!');
-    }
-  });
-}
+    });
+  }
 
   updateWordCount(questionId: string) {
     const text = this.answers[questionId] || '';
@@ -394,94 +380,76 @@ export class ExamWritingComponent implements OnInit, OnDestroy {
     }
     return count;
   }
-async submitExam() {
-  if (this.timerInterval) {
-    clearInterval(this.timerInterval);
-    this.timerInterval = null;
+
+  // ========== SUBMIT ==========
+  async submitExam() {
+    if (this.timerInterval) {
+      clearInterval(this.timerInterval);
+      this.timerInterval = null;
+    }
+
+    await this.forceSyncToServer();
+
+    const totalTime = (this.exam?.timeLimitSeconds || 3600) - this.timeRemaining;
+    
+    const answersDict: Record<string, string> = {};
+    this.questions.forEach((q: WritingQuestion) => {
+      if (this.answers[q.id] && this.answers[q.id].trim()) {
+        answersDict[q.id] = this.answers[q.id];
+      }
+    });
+
+    const submitData = {
+      exerciseId: this.examId,
+      answers: answersDict,
+      timeSpentSeconds: totalTime,
+      sessionId: this.sessionId
+    };
+
+    console.log('📤 Submitting Writing:', submitData);
+    console.log('📤 Answers count:', Object.keys(answersDict).length);
+    console.log('📌 Total time spent:', totalTime, 'seconds');
+    console.log('📌 Session ID:', this.sessionId);
+
+    this.isSubmitting = true;
+    this.examService.submitWriting(submitData).subscribe({
+      next: (result) => {
+        console.log('✅ Submit success:', result);
+        
+        const resultWithSource = {
+          ...result,
+          timeSpentSeconds: totalTime,
+          source: this.fullTestId ? 'fulltest' : 'standalone',
+          fullTestId: this.fullTestId || null,
+          submittedAt: new Date().toISOString()
+        };
+        
+        const storageKey = 'writing_result_' + this.examId + '_' + this.userId;
+        localStorage.setItem(storageKey, JSON.stringify(resultWithSource));
+        
+        console.log('💾 Saved to localStorage with timeSpentSeconds:', totalTime);
+        
+        const draftKey = 'writing_answers_' + this.examId + '_' + this.userId;
+        localStorage.removeItem(draftKey);
+        
+        const returnUrl = this.fullTestId || this.examId;
+        this.router.navigate(['/exam', returnUrl]);
+      },
+      error: (err) => {
+        console.error('❌ Submit error:', err);
+        alert('Có lỗi xảy ra khi nộp bài. Vui lòng thử lại!');
+        this.isSubmitting = false;
+      }
+    });
   }
-
-  // ✅ FORCE SYNC TRƯỚC KHI SUBMIT
-  await this.forceSyncToServer();
-
-  const totalTime = (this.exam?.timeLimitSeconds || 3600) - this.timeRemaining;
-  
-  const answersDict: Record<string, string> = {};
-  this.questions.forEach((q: WritingQuestion) => {
-    if (this.answers[q.id] && this.answers[q.id].trim()) {
-      answersDict[q.id] = this.answers[q.id];
-    }
-  });
-
-  const submitData = {
-    exerciseId: this.examId,
-    answers: answersDict,
-    timeSpentSeconds: totalTime,
-    sessionId: this.sessionId
-  };
-
-  console.log('📤 Submitting Writing:', submitData);
-  console.log('📤 Answers count:', Object.keys(answersDict).length);
-  console.log('📌 Total time spent:', totalTime, 'seconds');  // ✅ LOG THỜI GIAN
-  console.log('📌 Session ID:', this.sessionId);
-
-  this.isSubmitting = true;
-  this.examService.submitWriting(submitData).subscribe({
-    next: (result) => {
-      console.log('✅ Submit success:', result);
-      
-      // ✅ QUAN TRỌNG: THÊM timeSpentSeconds: totalTime
-      const resultWithSource = {
-        ...result,
-        timeSpentSeconds: totalTime,  // ✅ GHI ĐÈ BẰNG GIÁ TRỊ THỰC
-        source: this.fullTestId ? 'fulltest' : 'standalone',
-        fullTestId: this.fullTestId || null,
-        submittedAt: new Date().toISOString()
-      };
-      
-      const storageKey = 'writing_result_' + this.examId + '_' + this.userId;
-      localStorage.setItem(storageKey, JSON.stringify(resultWithSource));
-      
-      console.log('💾 Saved to localStorage with timeSpentSeconds:', totalTime);
-      
-      // ✅ XÓA DRAFT ANSWERS
-      const draftKey = 'writing_answers_' + this.examId + '_' + this.userId;
-      localStorage.removeItem(draftKey);
-      
-      // ✅ QUAY LẠI FULL TEST
-      const returnUrl = this.fullTestId || this.examId;
-      this.router.navigate(['/exam', returnUrl]);
-    },
-    error: (err) => {
-      console.error('❌ Submit error:', err);
-      alert('Có lỗi xảy ra khi nộp bài. Vui lòng thử lại!');
-      this.isSubmitting = false;
-    }
-  });
-}
-// Thêm vào class ExamWritingComponent
-
-// ========== TẠO FALLBACK QUESTIONS ==========
-generateFallbackQuestions(): WritingQuestion[] {
-  return [
-    {
-      id: crypto.randomUUID(),  // ✅ TẠO GUID THẬT
-      orderNumber: 1,
-      taskType: 1,
-      promptText: 'Task 1: Write a letter to your friend inviting them to your birthday party. Include the date, time, and location.',
-      minWords: 150,
-      maxWords: 200,
-      recommendedTimeMinutes: 20
-    },
-    {
-      id: crypto.randomUUID(),  // ✅ TẠO GUID THẬT
-      orderNumber: 2,
-      taskType: 2,
-      promptText: 'Task 2: Some people believe that technology has made our lives more complicated. To what extent do you agree or disagree?',
-      minWords: 250,
-      maxWords: 300,
-      recommendedTimeMinutes: 40
-    }
-  ];
+goBack(): void {
+  if (this.fullTestId) {
+    this.router.navigate(['/exam', this.fullTestId]);
+  } else if (this.examId) {
+    this.router.navigate(['/exam', this.examId]);
+  } else {
+    this.router.navigate(['/exam-list']);
+  }
 }
   ngOnDestroy() {
     if (this.timerInterval) {
@@ -490,7 +458,6 @@ generateFallbackQuestions(): WritingQuestion[] {
     if (this.syncTimeout) {
       clearTimeout(this.syncTimeout);
     }
-    // ✅ FORCE SYNC TRƯỚC KHI THOÁT
     this.forceSyncToServer();
     window.removeEventListener('beforeunload', () => {});
   }

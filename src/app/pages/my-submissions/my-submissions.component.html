@@ -1,0 +1,142 @@
+<!-- 📁 src/app/pages/my-submissions/my-submissions.component.html -->
+
+<app-header></app-header>
+
+<div class="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 pt-24 pb-12">
+  <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+    
+    <!-- Header -->
+    <div class="flex flex-col md:flex-row justify-between items-center mb-8">
+      <div class="text-center md:text-left">
+        <h1 class="text-3xl md:text-4xl font-bold text-slate-800">
+          📝 Lịch sử làm bài
+        </h1>
+        <p class="text-slate-600 mt-1">Xem lại tất cả bài thi đã hoàn thành</p>
+      </div>
+      <button 
+        (click)="refresh()"
+        class="mt-4 md:mt-0 px-4 py-2 bg-vstep text-white rounded-lg hover:bg-vstep-dark transition flex items-center gap-2"
+        [disabled]="isLoading">
+        <span *ngIf="isLoading" class="inline-block w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+        <span *ngIf="!isLoading">🔄</span>
+        {{ isLoading ? 'Đang tải...' : 'Làm mới' }}
+      </button>
+    </div>
+
+    <!-- Stats -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+      <div class="bg-white rounded-xl shadow-card p-4 text-center">
+        <div class="text-2xl font-bold text-primary">{{ submissions.length }}</div>
+        <div class="text-sm text-slate-600">Tổng số bài</div>
+      </div>
+      <div class="bg-white rounded-xl shadow-card p-4 text-center">
+        <div class="text-2xl font-bold text-vstep">{{ getAvgScore() }}</div>
+        <div class="text-sm text-slate-600">Điểm TB</div>
+      </div>
+      <div class="bg-white rounded-xl shadow-card p-4 text-center">
+        <div class="text-2xl font-bold text-emerald-500">{{ getBestScore() }}</div>
+        <div class="text-sm text-slate-600">Điểm cao nhất</div>
+      </div>
+      <div class="bg-white rounded-xl shadow-card p-4 text-center">
+        <div class="text-2xl font-bold text-amber-500">{{ getTotalTime() }}</div>
+        <div class="text-sm text-slate-600">Tổng thời gian</div>
+      </div>
+    </div>
+
+    <!-- Filter -->
+    <div class="bg-white rounded-xl shadow-card p-4 mb-6">
+      <div class="flex flex-col md:flex-row gap-4">
+        <select 
+          [(ngModel)]="selectedSkill"
+          (ngModelChange)="filterSubmissions()"
+          class="px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-white"
+        >
+          <option value="all">📊 Tất cả kỹ năng</option>
+          <option value="Reading">📖 Reading</option>
+          <option value="Listening">🎧 Listening</option>
+          <option value="Writing">✍️ Writing</option>
+          <option value="Speaking">🎙️ Speaking</option>
+        </select>
+
+        <input 
+          type="text"
+          [(ngModel)]="searchTerm"
+          (ngModelChange)="filterSubmissions()"
+          placeholder="🔍 Tìm kiếm bài thi..."
+          class="flex-1 px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+        >
+      </div>
+    </div>
+
+    <!-- Loading -->
+    <div *ngIf="isLoading" class="flex flex-col items-center justify-center py-16">
+      <div class="w-12 h-12 border-4 border-vstep/20 border-t-vstep rounded-full animate-spin"></div>
+      <p class="mt-4 text-slate-600">Đang tải lịch sử làm bài...</p>
+    </div>
+
+    <!-- Error -->
+    <div *ngIf="!isLoading && errorMessage" class="text-center py-16">
+      <div class="text-6xl mb-4">❌</div>
+      <p class="text-slate-600 text-lg">{{ errorMessage }}</p>
+      <button 
+        (click)="refresh()"
+        class="mt-4 px-6 py-2 bg-vstep text-white rounded-lg hover:bg-vstep-dark transition">
+        🔄 Thử lại
+      </button>
+    </div>
+
+    <!-- Submissions List -->
+    <div *ngIf="!isLoading && filteredSubmissions.length > 0" class="space-y-4">
+      <div *ngFor="let sub of filteredSubmissions" 
+           class="bg-white rounded-xl shadow-card hover:shadow-card-hover transition-all duration-300 p-5 cursor-pointer"
+           (click)="viewDetail(sub.submissionId)">
+        
+        <div class="flex flex-col md:flex-row items-start md:items-center gap-4">
+          <!-- Icon -->
+          <div class="text-3xl w-12 text-center flex-shrink-0">{{ getSkillIcon(sub.skillType) }}</div>
+          
+          <!-- Info -->
+          <div class="flex-1 min-w-0">
+            <div class="flex flex-wrap items-center gap-2">
+              <h3 class="font-semibold text-slate-800">{{ sub.exerciseTitle || 'Bài thi không tên' }}</h3>
+              <span class="px-2 py-0.5 rounded-full text-xs font-medium bg-vstep-lighter text-vstep">
+                {{ sub.skillName }}
+              </span>
+            </div>
+            <div class="flex flex-wrap gap-4 mt-1 text-sm text-slate-500">
+              <span>📅 {{ formatDate(sub.submittedAt) }}</span>
+              <span *ngIf="sub.totalQuestions">📝 {{ sub.totalQuestions }} câu</span>
+              <span *ngIf="sub.timeSpentSeconds">⏱️ {{ formatTime(sub.timeSpentSeconds) }}</span>
+            </div>
+          </div>
+          
+          <!-- Score -->
+          <div class="flex items-center gap-4">
+            <div class="text-center">
+              <div class="text-2xl font-bold" [class]="getScoreColor(sub.totalScore)">
+                {{ sub.totalScore }}/10
+              </div>
+              <div *ngIf="sub.correctCount !== undefined && sub.totalQuestions" class="text-xs text-slate-500">
+                ✅ {{ sub.correctCount }}/{{ sub.totalQuestions }}
+              </div>
+            </div>
+            <span class="text-slate-400 text-xl">›</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Empty State -->
+    <div *ngIf="!isLoading && filteredSubmissions.length === 0 && !errorMessage" class="text-center py-16">
+      <div class="text-6xl mb-4">📭</div>
+      <h3 class="text-xl font-semibold text-slate-800">Chưa có bài làm nào</h3>
+      <p class="text-slate-600 mt-2">Hãy bắt đầu luyện tập ngay hôm nay!</p>
+      <button class="mt-4 px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition" routerLink="/exam-list">
+        🚀 Bắt đầu luyện tập
+      </button>
+    </div>
+
+  </div>
+</div>
+
+<app-footer></app-footer>

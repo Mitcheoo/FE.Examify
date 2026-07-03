@@ -1,0 +1,86 @@
+<!-- 📁 src/app/pages/login/login.component.html -->
+
+<app-header></app-header>
+
+<div class="login-container">
+  <div class="login-card">
+    
+    <!-- Header -->
+    <div class="login-header">
+      <div class="logo-icon">📚</div>
+      <h2>Chào mừng trở lại</h2>
+      <p>Đăng nhập để tiếp tục luyện tập VSTEP</p>
+    </div>
+
+    <!-- Form -->
+    <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
+      
+      <!-- Username -->
+      <div class="form-group">
+        <label for="userName">👤 Tên đăng nhập</label>
+        <input
+          id="userName"
+          type="text"
+          formControlName="userName"
+          placeholder="Nhập tên đăng nhập của bạn"
+          [class.error]="loginForm.get('userName')?.invalid && loginForm.get('userName')?.touched"
+        >
+        <div class="error-message" *ngIf="loginForm.get('userName')?.touched && loginForm.get('userName')?.invalid">
+          <span *ngIf="loginForm.get('userName')?.errors?.['required']">⚠️ Tên đăng nhập không được để trống</span>
+          <span *ngIf="loginForm.get('userName')?.errors?.['minlength']">⚠️ Tên đăng nhập phải có ít nhất 3 ký tự</span>
+        </div>
+      </div>
+
+      <!-- Password -->
+      <div class="form-group">
+        <label for="password">🔒 Mật khẩu</label>
+        <div class="password-wrapper">
+          <input
+            id="password"
+            [type]="showPassword ? 'text' : 'password'"
+            formControlName="password"
+            placeholder="Nhập mật khẩu của bạn"
+            [class.error]="loginForm.get('password')?.invalid && loginForm.get('password')?.touched"
+          >
+          <button type="button" class="toggle-password" (click)="togglePassword()">
+            {{ showPassword ? '🙈' : '👁️' }}
+          </button>
+        </div>
+        <div class="error-message" *ngIf="loginForm.get('password')?.touched && loginForm.get('password')?.invalid">
+          <span *ngIf="loginForm.get('password')?.errors?.['required']">⚠️ Mật khẩu không được để trống</span>
+          <span *ngIf="loginForm.get('password')?.errors?.['minlength']">⚠️ Mật khẩu phải có ít nhất 6 ký tự</span>
+        </div>
+      </div>
+
+      <!-- Options -->
+      <div class="form-options">
+        <label class="checkbox-label">
+          <input type="checkbox" formControlName="rememberMe">
+          <span>Ghi nhớ đăng nhập</span>
+        </label>
+        <a routerLink="/forgot-password" class="forgot-link">Quên mật khẩu?</a>
+      </div>
+
+      <!-- Submit -->
+      <button type="submit" class="btn-login" [disabled]="loginForm.invalid || isLoading">
+        <span *ngIf="!isLoading">🚀 Đăng nhập</span>
+        <span *ngIf="isLoading" class="spinner"></span>
+      </button>
+
+      <!-- Error -->
+      <div class="alert alert-error" *ngIf="errorMessage">
+        ❌ {{ errorMessage }}
+      </div>
+    </form>
+
+    <!-- Footer -->
+    <div class="login-footer">
+      <p>Chưa có tài khoản? <a routerLink="/register">Đăng ký ngay</a></p>
+    </div>
+
+   
+
+  </div>
+</div>
+
+<app-footer></app-footer>

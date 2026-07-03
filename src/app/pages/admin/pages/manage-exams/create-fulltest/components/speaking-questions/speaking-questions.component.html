@@ -1,0 +1,109 @@
+<!-- 📁 src/app/pages/admin/pages/manage-exams/create-fulltest/components/speaking-questions/speaking-questions.component.html -->
+
+<div class="speaking-questions-container">
+  <!-- Header -->
+  <div class="section-header">
+    <div class="header-info">
+      <h3>🎙️ Speaking Questions</h3>
+      <span class="question-count">{{ questions.length }} câu hỏi</span>
+    </div>
+    <button class="btn-add" (click)="addQuestion()">
+      ➕ Thêm câu hỏi
+    </button>
+  </div>
+
+  <!-- Question Form -->
+  <div *ngIf="showQuestionForm" class="question-form">
+    <div class="form-header">
+      <h4>{{ editingIndex !== null ? '✏️ Chỉnh sửa câu hỏi' : '➕ Thêm câu hỏi mới' }}</h4>
+      <button class="btn-close-form" (click)="cancelQuestionForm()">✕</button>
+    </div>
+
+    <div class="form-body">
+      <div class="form-row">
+        <div class="form-group">
+          <label>Part *</label>
+          <input type="number" [(ngModel)]="newQuestion.partNumber" class="form-input" min="1">
+        </div>
+        <div class="form-group">
+          <label>Số thứ tự</label>
+          <input type="number" [(ngModel)]="newQuestion.orderNumber" class="form-input" min="1">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>📝 Nội dung câu hỏi *</label>
+        <textarea [(ngModel)]="newQuestion.questionText" 
+                  placeholder="Nhập câu hỏi Speaking..." 
+                  class="form-textarea" rows="2"></textarea>
+        <small class="hint">Ví dụ: Describe your favorite hobby. Why do you enjoy it?</small>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>⏱️ Thời gian chuẩn bị (giây)</label>
+          <input type="number" [(ngModel)]="newQuestion.preparationTime" class="form-input" min="10" step="5">
+          <small class="hint">{{ formatTime(newQuestion.preparationTime) }}</small>
+        </div>
+        <div class="form-group">
+          <label>⏱️ Thời gian nói (giây)</label>
+          <input type="number" [(ngModel)]="newQuestion.speakingTime" class="form-input" min="30" step="10">
+          <small class="hint">{{ formatTime(newQuestion.speakingTime) }}</small>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>📝 Câu trả lời mẫu (Sample Answer) - Tùy chọn</label>
+        <textarea [(ngModel)]="newQuestion.sampleAnswer" 
+                  placeholder="Nhập câu trả lời mẫu..." 
+                  class="form-textarea" rows="3"></textarea>
+      </div>
+
+      <div class="form-group">
+        <label>🎵 Audio mẫu (Tùy chọn)</label>
+        <input type="text" [(ngModel)]="newQuestion.audioUrl" 
+               placeholder="Nhập URL audio mẫu..." 
+               class="form-input">
+        <small class="hint">Có thể để trống nếu không có audio mẫu</small>
+      </div>
+    </div>
+
+    <div class="form-footer">
+      <button class="btn-cancel" (click)="cancelQuestionForm()">Hủy</button>
+      <button class="btn-save" (click)="saveQuestion()">
+        {{ editingIndex !== null ? 'Cập nhật' : 'Thêm câu hỏi' }}
+      </button>
+    </div>
+  </div>
+
+  <!-- Questions List -->
+  <div class="questions-list" *ngIf="questions.length > 0">
+    <div *ngFor="let q of questions; let i = index" class="question-item">
+      <div class="question-content">
+        <div class="question-header">
+          <span class="q-number">Câu {{ q.orderNumber }}</span>
+          <span class="q-part">Part {{ q.partNumber }}</span>
+          <span class="q-time">
+            ⏱️ Prep: {{ formatTime(q.preparationTime) }} | Speak: {{ formatTime(q.speakingTime) }}
+          </span>
+        </div>
+        <p class="q-text">{{ q.questionText || 'Chưa nhập nội dung' }}</p>
+        <div class="q-extra" *ngIf="q.sampleAnswer || q.audioUrl">
+          <span *ngIf="q.sampleAnswer" class="q-sample">📝 Có câu trả lời mẫu</span>
+          <span *ngIf="q.audioUrl" class="q-audio">🎵 Có audio mẫu</span>
+        </div>
+      </div>
+      <div class="question-actions">
+        <button class="btn-edit" (click)="editQuestion(i)" title="Sửa">✏️</button>
+        <button class="btn-delete" (click)="deleteQuestion(i)" title="Xóa">🗑️</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Empty State -->
+  <div *ngIf="questions.length === 0 && !showQuestionForm" class="empty-state">
+    <div class="empty-icon">🎙️</div>
+    <p>Chưa có câu hỏi nào</p>
+    <p class="empty-hint">Nhấn "Thêm câu hỏi" để bắt đầu</p>
+  </div>
+</div>

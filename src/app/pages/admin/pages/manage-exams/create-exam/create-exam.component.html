@@ -1,3 +1,5 @@
+<!-- 📁 src/app/pages/admin/pages/manage-exams/create-exam/create-exam.component.html -->
+
 <div class="create-exam-container">
   <div class="create-exam-card">
     <!-- Header -->
@@ -177,29 +179,35 @@
     </div>
 
     <!-- Full Test Mode -->
-    <div *ngIf="mode === 'fulltest'" class="form-section">
-      <h3>📌 Cấu hình Full Test</h3>
-      <p class="hint">Chọn 4 bài thi kỹ năng có sẵn</p>
+<!-- 📁 create-exam.component.html -->
 
-      <div class="skill-selector" *ngFor="let skill of [0, 1, 2, 3]">
-        <div class="skill-label">{{ getSkillName(skill) }}</div>
-        <div class="skill-controls">
-          <select [(ngModel)]="fullTestData[['reading', 'listening', 'writing', 'speaking'][skill] + 'ExerciseId']" 
-                  class="form-select skill-select">
-            <option value="">-- Chọn bài có sẵn --</option>
-            <option *ngFor="let ex of getAvailableExercises(['reading', 'listening', 'writing', 'speaking'][skill])" 
-                    [value]="ex.id">
-              {{ ex.title }}
-            </option>
-          </select>
-        </div>
-      </div>
+<!-- Full Test Mode -->
+<div *ngIf="mode === 'fulltest'" class="form-section">
+  <h3>📌 Cấu hình Full Test</h3>
+  <p class="hint">
+    💡 <strong>Không cần chọn bài có sẵn.</strong> Hệ thống sẽ tự động tạo 4 bài thi kỹ năng mới.
+    <br>Bạn có thể chọn bài có sẵn nếu muốn sử dụng lại.
+  </p>
 
-      <div class="note-box">
-        <p>💡 <strong>Lưu ý:</strong> Full Test sẽ tổng hợp 4 bài thi kỹ năng đã chọn.</p>
-        <p>📌 Để tạo bài thi kỹ năng mới, hãy chuyển sang chế độ <strong>"Tạo Exercise"</strong></p>
-      </div>
+  <div class="skill-selector" *ngFor="let skill of [0, 1, 2, 3]">
+    <div class="skill-label">{{ getSkillName(skill) }}</div>
+    <div class="skill-controls">
+      <select [(ngModel)]="fullTestData[['reading', 'listening', 'writing', 'speaking'][skill] + 'ExerciseId']" 
+              class="form-select skill-select">
+        <option value="">-- Tự động tạo mới --</option>
+        <option *ngFor="let ex of getAvailableExercises(['reading', 'listening', 'writing', 'speaking'][skill])" 
+                [value]="ex.id">
+          {{ ex.title }}
+        </option>
+      </select>
     </div>
+  </div>
+
+  <div class="note-box">
+    <p>💡 <strong>Lưu ý:</strong> Để trống tất cả để hệ thống tự tạo 4 bài thi kỹ năng mới.</p>
+    <p>📌 Chọn bài có sẵn nếu bạn muốn sử dụng lại bài thi đã có.</p>
+  </div>
+</div>
 
     <!-- Actions -->
     <div class="form-actions">

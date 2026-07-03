@@ -1,117 +1,485 @@
-<div class="result-container">
-  <!-- Loading -->
-  <div class="loading-container" *ngIf="isLoading">
-    <div class="spinner"></div>
-    <p>Đang tải kết quả...</p>
+<!-- 📁 src/app/pages/fulltest-result/fulltest-result.component.html -->
+
+<div class="min-h-screen bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900 p-4 md:p-8 mt-14">
+  
+  <!-- LOADING -->
+  <div *ngIf="isLoading" class="flex flex-col items-center justify-center min-h-[400px] text-white">
+    <div class="w-12 h-12 border-4 border-white/20 border-t-primary rounded-full animate-spin"></div>
+    <p class="mt-4 text-white/70">Đang tải kết quả...</p>
   </div>
 
-  <!-- Error -->
-  <div class="error-container" *ngIf="!isLoading && errorMessage">
-    <div class="error-icon">❌</div>
-    <p>{{ errorMessage }}</p>
-    <button class="btn-back" (click)="goBack()">← Quay lại</button>
+  <!-- ERROR -->
+  <div *ngIf="!isLoading && errorMessage" class="text-center text-white py-12">
+    <div class="text-6xl mb-4">❌</div>
+    <p class="text-lg">{{ errorMessage }}</p>
+    <button class="mt-6 px-6 py-2 bg-white/10 border border-white/20 rounded-lg text-white hover:bg-white/20 transition" (click)="goBack()">
+      ← Quay lại
+    </button>
   </div>
 
-  <!-- Result -->
-  <div class="result-content" *ngIf="result && !isLoading && !errorMessage">
-    <!-- Header -->
-    <div class="result-header">
-      <button class="btn-back" (click)="goBack()">← Quay lại</button>
-      <h1>📊 KẾT QUẢ FULL TEST</h1>
-      <div class="placeholder"></div>
-    </div>
-
-    <!-- Title -->
-    <div class="result-title">
-      <h2>{{ result.fullTestTitle }}</h2>
-      <p>Hoàn thành lúc: {{ getCompletionDate() }}</p>
-    </div>
-
-    <!-- Summary Stats -->
-    <div class="summary-stats">
-      <div class="stat-card">
-        <div class="stat-icon">📝</div>
-        <div class="stat-content">
-          <div class="stat-value">{{ getCompletedSkills() }}/4</div>
-          <div class="stat-label">Kỹ năng đã làm</div>
-        </div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-icon">✅</div>
-        <div class="stat-content">
-          <div class="stat-value">{{ getTotalCorrect() }}/{{ getTotalQuestions() }}</div>
-          <div class="stat-label">Câu đúng</div>
-        </div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-icon">⏱️</div>
-        <div class="stat-content">
-          <div class="stat-value">{{ formatTime(result.totalTimeSpentSeconds) }}</div>
-          <div class="stat-label">Tổng thời gian</div>
-        </div>
+  <!-- MAIN CONTENT -->
+  <div *ngIf="result && !isLoading && !errorMessage" class="max-w-6xl mx-auto">
+    
+    <!-- HEADER -->
+    <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
+      <button class="px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white hover:bg-white/20 transition" (click)="goBack()">
+        🔙 Quay lại
+      </button>
+      <h1 class="text-xl md:text-2xl font-bold bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">
+        📊 KẾT QUẢ FULL TEST
+      </h1>
+      <div class="px-4 py-2 bg-white/10 border border-amber-500/30 rounded-full text-amber-400 text-sm">
+        ⭐ Lần 2/5
       </div>
     </div>
 
-    <!-- Total Score Card -->
-    <div class="total-score-card">
-      <div class="total-score-circle">
-        <div class="total-score-value">{{ result.totalScore }}</div>
-        <div class="total-score-label">/10</div>
+    <!-- TITLE -->
+    <div class="text-center text-white mb-6">
+      <h2 class="text-2xl md:text-3xl font-bold bg-gradient-to-r from-white to-blue-200 bg-clip-text text-transparent">
+        {{ result.fullTestTitle }}
+      </h2>
+      <p class="text-white/60 mt-2">
+        📅 Hoàn thành lúc: {{ getCompletionDate() }} &nbsp;|&nbsp; ⏱️ {{ formatTime(result.totalTimeSpentSeconds) }}
+      </p>
+    </div>
+
+    <!-- STATUS BANNER -->
+    <div class="flex flex-wrap items-center justify-between gap-4 p-4 rounded-xl mb-6"
+         [class]="isFullComplete() ? 'bg-emerald-500/20 border border-emerald-500/50' : 'bg-amber-500/20 border border-amber-500/50'">
+      <div class="flex items-center gap-3">
+        <span class="text-2xl">{{ isFullComplete() ? '✅' : '⚠️' }}</span>
+        <span class="text-white font-medium">
+          {{ isFullComplete() 
+            ? 'Hoàn thành 4/4 kỹ năng! 🎉 Điểm chính thức: ' + result.totalScore + '/10'
+            : 'Hoàn thành ' + getCompletedSkills() + '/4 kỹ năng - Điểm tạm tính: ' + result.totalScore + '/10' 
+          }}
+        </span>
       </div>
-      <div class="total-score-info">
-        <div class="vstep-band">🎖️ {{ result.vstepBand }}</div>
-        <div class="vstep-level">📊 Cấp độ: Bậc {{ result.vstepLevel }}</div>
-        <div class="score-text">📈 {{ getScoreText(result.totalScore) }}</div>
+      <button *ngIf="!isFullComplete()" class="px-6 py-2 bg-amber-500 text-white rounded-lg font-semibold hover:bg-amber-600 transition" (click)="continueFullTest()">
+        🔄 Làm tiếp
+      </button>
+    </div>
+
+    <!-- SUMMARY STATS -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+      <div class="bg-white/10 backdrop-blur rounded-xl p-4 flex items-center gap-4 border border-white/5">
+        <span class="text-3xl">📚</span>
+        <div>
+          <div class="text-xl font-bold text-white">{{ getCompletedSkills() }}/4</div>
+          <div class="text-xs text-white/60">Kỹ năng đã làm</div>
+        </div>
+      </div>
+      <div class="bg-white/10 backdrop-blur rounded-xl p-4 flex items-center gap-4 border border-white/5">
+        <span class="text-3xl">✅</span>
+        <div>
+          <div class="text-xl font-bold text-white">{{ getTotalCorrect() }}/{{ getTotalQuestions() }}</div>
+          <div class="text-xs text-white/60">Câu đúng (Reading/Listening)</div>
+        </div>
+      </div>
+      <div class="bg-white/10 backdrop-blur rounded-xl p-4 flex items-center gap-4 border border-white/5">
+        <span class="text-3xl">⏱️</span>
+        <div>
+          <div class="text-xl font-bold text-white">{{ formatTime(result.totalTimeSpentSeconds) }}</div>
+          <div class="text-xs text-white/60">Tổng thời gian</div>
+        </div>
+      </div>
+      <div class="bg-white/10 backdrop-blur rounded-xl p-4 flex items-center gap-4 border border-white/5">
+        <span class="text-3xl">🎯</span>
+        <div>
+          <div class="text-xl font-bold text-white">{{ result.totalScore }}/10</div>
+          <div class="text-xs text-white/60">Điểm tổng (4 kỹ năng)</div>
+        </div>
       </div>
     </div>
 
-    <!-- Skills Grid -->
-    <div class="skills-grid">
-      <div class="skill-card" *ngFor="let skill of result.skills" [class]="getSkillColorClass(skill.score)">
-        <div class="skill-header">
-          <span class="skill-icon">{{ getSkillIcon(skill.skillName) }}</span>
-          <h3>{{ skill.skillName }}</h3>
-          <span class="skill-status" [class.completed]="skill.status === 'completed'">
-            {{ skill.status === 'completed' ? '✅ Đã hoàn thành' : '⏳ Chưa làm' }}
-          </span>
+    <!-- RANKING CARD -->
+    <div class="bg-white rounded-2xl p-6 mb-6 shadow-2xl border-l-8" [class]="getVstepColor(result.averageScore)">
+      <div class="flex flex-col md:flex-row items-center gap-6">
+        <div class="text-6xl">{{ getVstepBandEmoji(result.averageScore) }}</div>
+        <div class="flex-1 text-center md:text-left">
+          <div class="text-2xl font-bold text-slate-800">{{ getVstepBand(result.averageScore) }}</div>
+          <div class="text-slate-600">
+            Điểm trung bình: {{ result.averageScore }}/10
+            <span class="text-emerald-600 ml-2" *ngIf="isFullComplete()">| ✅ Đạt chuẩn</span>
+            <span class="text-amber-600 ml-2" *ngIf="!isFullComplete()">| ⚠️ Cần hoàn thành 4 kỹ năng</span>
+          </div>
+          <div class="mt-2">
+            <div class="h-2 bg-slate-200 rounded-full overflow-hidden">
+              <div class="h-full rounded-full transition-all duration-500" 
+                   [class]="getVstepBgColor(result.averageScore)"
+                   [style.width.%]="getVstepProgress(result.averageScore)"></div>
+            </div>
+            <span class="text-sm text-slate-500">{{ getNextTarget(result.averageScore) }}</span>
+          </div>
         </div>
+      </div>
+    </div>
 
-        <div class="skill-score" *ngIf="skill.status === 'completed'">
-          <div class="score-number">{{ skill.score }}/10</div>
-          <div class="progress-bar-container">
-            <div class="progress-bar">
-              <div class="progress-fill" 
-                   [style.width]="getScorePercent(skill.score) + '%'"
-                   [style.backgroundColor]="getSkillColor(skill.score)">
+    <!-- SKILLS GRID -->
+    <div class="mb-6">
+      <h3 class="text-lg font-semibold text-white mb-4">📊 PHÂN TÍCH KẾT QUẢ THEO KỸ NĂNG</h3>
+      
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div *ngFor="let skill of result.skills" 
+             class="bg-white rounded-xl p-5 shadow-card hover:shadow-card-hover transition-all duration-300 border-l-4"
+             [class]="getSkillColorClass(skill.score)">
+          
+          <!-- Skill Header -->
+          <div class="flex flex-wrap items-center gap-2 mb-3">
+            <span class="text-2xl">{{ getSkillIcon(skill.skillName) }}</span>
+            <h4 class="flex-1 font-semibold text-slate-800">{{ skill.skillName }}</h4>
+            <span class="text-xs px-2 py-1 rounded-full"
+                  [class]="skill.status === 'completed' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'">
+              {{ skill.status === 'completed' ? '✅ Đã làm' : '⏳ Chưa làm' }}
+            </span>
+            <span *ngIf="skill.status === 'completed'" 
+                  class="text-xs px-2 py-1 rounded-full bg-primary/10 text-primary font-semibold">
+              {{ getShortVstepBand(skill.score) }}
+            </span>
+          </div>
+
+          <!-- Skill Score -->
+          <div *ngIf="skill.status === 'completed'">
+            <div class="text-2xl font-bold text-primary mb-2">{{ skill.score }}/10</div>
+            <div class="h-2 bg-slate-200 rounded-full overflow-hidden mb-3">
+              <div class="h-full rounded-full transition-all duration-500" 
+                   [style.width.%]="getScorePercent(skill.score)"
+                   [style.backgroundColor]="skill.score >= 8 ? '#22C55E' : skill.score >= 6 ? '#F59E0B' : skill.score >= 4 ? '#F97316' : '#EF4444'">
               </div>
             </div>
+            <div class="flex justify-between text-sm text-slate-600">
+              <span *ngIf="skill.isAutoGraded">✅ Đúng: {{ skill.correctCount }}/{{ skill.totalQuestions }}</span>
+              <span *ngIf="!skill.isAutoGraded">📝 {{ skill.skillName === 'Writing' ? 'Bài viết' : 'Ghi âm' }}</span>
+              <span>⏱️ {{ formatTime(skill.timeSpentSeconds) }}</span>
+            </div>
           </div>
-          <div class="skill-stats">
-            <span>✅ Đúng: {{ skill.correctCount }}/{{ skill.totalQuestions }}</span>
-            <span>⏱️ {{ formatTime(skill.timeSpentSeconds) }}</span>
+
+          <!-- Skill Pending -->
+          <div *ngIf="skill.status !== 'completed'" class="text-center py-4 bg-slate-50 rounded-lg mb-3 text-slate-500">
+            ⏳ Bạn chưa làm bài thi này
+          </div>
+
+          <!-- Skill Actions -->
+          <div class="flex gap-2 mt-3">
+            <button *ngIf="skill.isAutoGraded && skill.status === 'completed'"
+                    class="flex-1 px-3 py-2 bg-gradient-to-r from-primary to-blue-600 text-white rounded-lg text-sm font-medium hover:shadow-lg transition"
+                    (click)="openAnswerDetail(skill)">
+              📝 Xem đáp án chi tiết
+            </button>
+            <button *ngIf="!skill.isAutoGraded && skill.status === 'completed'"
+                    class="flex-1 px-3 py-2 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-lg text-sm font-medium hover:shadow-lg transition"
+                    (click)="viewSkillSubmission(skill.skillType, skill.examId)">
+              📋 Xem bài làm
+            </button>
+            <button class="flex-1 px-3 py-2 bg-slate-100 text-slate-700 rounded-lg text-sm font-medium border border-slate-200 hover:bg-slate-200 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                    (click)="retakeSkill(skill.skillType, skill.examId)"
+                    [disabled]="skill.status !== 'completed'">
+              {{ skill.status === 'completed' ? '🔄 Làm lại' : '➡️ Làm bài ngay' }}
+            </button>
           </div>
         </div>
-
-        <div class="skill-pending" *ngIf="skill.status !== 'completed'">
-          <p>⚠️ Bạn chưa làm bài thi này</p>
-        </div>
-
-        <button class="btn-view-detail" 
-                (click)="viewSkillDetail(skill.skillType, skill.examId)"
-                [disabled]="skill.status !== 'completed'">
-          {{ skill.status === 'completed' ? '📋 Xem chi tiết' : '🔒 Chưa có dữ liệu' }}
-        </button>
       </div>
     </div>
 
-    <!-- Action Buttons -->
-    <div class="action-buttons">
-      <button class="btn-retake" (click)="retakeFullTest()">
+    <!-- VSTEP REFERENCE -->
+    <div class="bg-white/10 backdrop-blur rounded-xl p-6 mb-6 border border-white/5">
+      <h4 class="text-white font-semibold mb-4">📋 Bảng quy đổi VSTEP</h4>
+      <div class="space-y-2">
+        <div class="flex flex-wrap items-center gap-4 p-3 rounded-lg bg-white/5">
+          <span class="font-semibold text-white w-32">🥉 Bậc 1 (B1)</span>
+          <span class="text-white/70 w-24">4.0 - 5.9</span>
+          <span class="text-white/50 text-sm">Sơ cấp - Giao tiếp cơ bản</span>
+        </div>
+        <div class="flex flex-wrap items-center gap-4 p-3 rounded-lg bg-white/5">
+          <span class="font-semibold text-white w-32">🥈 Bậc 2 (B2)</span>
+          <span class="text-white/70 w-24">6.0 - 7.9</span>
+          <span class="text-white/50 text-sm">Trung cấp - Giao tiếp tốt</span>
+        </div>
+        <div class="flex flex-wrap items-center gap-4 p-3 rounded-lg bg-white/5">
+          <span class="font-semibold text-white w-32">🥇 Bậc 3 (C1)</span>
+          <span class="text-white/70 w-24">8.0 - 10.0</span>
+          <span class="text-white/50 text-sm">Cao cấp - Sử dụng thành thạo</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- LEARNING PATH -->
+    <div class="bg-white/10 backdrop-blur rounded-xl p-6 mb-6 border border-white/5">
+      <h4 class="text-white font-semibold mb-4">💡 LỘ TRÌNH HỌC TẬP THEO VSTEP</h4>
+      <div class="flex items-center justify-between mb-6 relative">
+        <div class="absolute top-5 left-[18%] right-[18%] h-0.5 bg-white/20"></div>
+        <div *ngFor="let step of ['B1', 'B2', 'C1']; let i = index" class="flex flex-col items-center z-10">
+          <div class="w-10 h-10 rounded-full flex items-center justify-center font-bold transition-all duration-300"
+               [class]="i < getVstepLevel(result.averageScore) ? 'bg-emerald-500 text-white' : 
+                        i === getVstepLevel(result.averageScore) && getVstepLevel(result.averageScore) > 0 ? 'bg-amber-500 text-white shadow-lg shadow-amber-500/40' : 
+                        'bg-white/10 text-white/50 border-2 border-white/20'">
+            {{ i + 1 }}
+          </div>
+          <span class="text-white text-sm mt-2 font-semibold">{{ step }}</span>
+          <span class="text-white/40 text-xs">{{ i === 0 ? '4.0' : i === 1 ? '6.0' : '8.0' }}</span>
+        </div>
+      </div>
+      <div class="space-y-1">
+        <p *ngFor="let rec of getLearningPath()" class="text-white/80 text-sm">• {{ rec }}</p>
+      </div>
+    </div>
+
+    <!-- ACHIEVEMENTS -->
+    <div class="bg-white/10 backdrop-blur rounded-xl p-6 mb-6 border border-white/5">
+      <h4 class="text-white font-semibold mb-4">🏆 THÀNH TÍCH ĐẠT ĐƯỢC</h4>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+        <div *ngIf="getCompletedSkills() >= 4" class="bg-white/5 rounded-xl p-4 text-center hover:bg-white/10 transition">
+          <div class="text-3xl mb-2">⭐</div>
+          <div class="text-white font-semibold text-sm">Lần đầu hoàn thành</div>
+          <div class="text-white/50 text-xs">Đã hoàn thành toàn bộ Full Test</div>
+        </div>
+        <div *ngIf="result.skills.some(s => s.score >= 8)" class="bg-white/5 rounded-xl p-4 text-center hover:bg-white/10 transition">
+          <div class="text-3xl mb-2">🎯</div>
+          <div class="text-white font-semibold text-sm">Đạt 8.0+</div>
+          <div class="text-white/50 text-xs">Một kỹ năng đạt điểm cao</div>
+        </div>
+        <div *ngIf="result.averageScore >= 6" class="bg-white/5 rounded-xl p-4 text-center hover:bg-white/10 transition">
+          <div class="text-3xl mb-2">🏅</div>
+          <div class="text-white font-semibold text-sm">Đạt B2</div>
+          <div class="text-white/50 text-xs">Trình độ trung cấp</div>
+        </div>
+        <div *ngIf="result.totalTimeSpentSeconds > 1800" class="bg-white/5 rounded-xl p-4 text-center hover:bg-white/10 transition">
+          <div class="text-3xl mb-2">🔥</div>
+          <div class="text-white font-semibold text-sm">Độ dài</div>
+          <div class="text-white/50 text-xs">Làm bài trên 30 phút</div>
+        </div>
+      </div>
+      <button class="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white hover:bg-white/20 transition" (click)="openAchievementModal()">
+        🏆 Xem tất cả thành tích
+      </button>
+    </div>
+
+    <!-- SHARE -->
+    <div class="mb-6">
+      <h4 class="text-white font-semibold mb-3">📤 CHIA SẺ KẾT QUẢ</h4>
+      <div class="flex flex-wrap gap-2">
+        <button class="px-4 py-2 bg-[#1877f2] text-white rounded-lg text-sm font-medium hover:opacity-90 transition" (click)="shareOnFacebook()">📘 Facebook</button>
+        <button class="px-4 py-2 bg-black text-white rounded-lg text-sm font-medium hover:opacity-90 transition" (click)="shareOnTwitter()">🐦 Twitter</button>
+        <button class="px-4 py-2 bg-[#0a66c2] text-white rounded-lg text-sm font-medium hover:opacity-90 transition" (click)="shareOnLinkedIn()">💼 LinkedIn</button>
+        <button class="px-4 py-2 bg-slate-600 text-white rounded-lg text-sm font-medium hover:bg-slate-700 transition" (click)="copyLink()">📋 Copy Link</button>
+        <button class="px-4 py-2 bg-red-500 text-white rounded-lg text-sm font-medium hover:bg-red-600 transition" (click)="shareEmail()">📧 Email</button>
+        <button class="px-4 py-2 bg-rose-500 text-white rounded-lg text-sm font-medium hover:bg-rose-600 transition" (click)="openPdfModal()">📄 PDF</button>
+        <button class="px-4 py-2 bg-emerald-500 text-white rounded-lg text-sm font-medium hover:bg-emerald-600 transition" (click)="printResult()">🖨️ In</button>
+      </div>
+    </div>
+
+    <!-- MAIN ACTIONS -->
+    <div class="flex flex-wrap gap-4 justify-center mb-6">
+      <button class="px-6 py-3 bg-gradient-to-r from-emerald-500 to-green-500 text-white rounded-full font-semibold hover:shadow-lg transition" (click)="retakeFullTest()">
         🔄 Làm lại Full Test
       </button>
-      <button class="btn-home" (click)="goBack()">
+      <button class="px-6 py-3 bg-white/15 backdrop-blur text-white rounded-full font-semibold border border-white/20 hover:bg-white/25 transition" (click)="goHome()">
         🏠 Về trang chính
       </button>
+      <button class="px-6 py-3 bg-primary/30 text-white rounded-full font-semibold border border-primary/40 hover:bg-primary/40 transition" (click)="goBack()">
+        📊 Xem tất cả bài
+      </button>
+    </div>
+
+    <!-- RATING -->
+    <div class="text-center text-white/70 py-4">
+      <p class="mb-2">💬 Bạn nghĩ gì về kết quả này? Hãy để lại đánh giá!</p>
+      <div class="flex justify-center gap-2">
+        <span *ngFor="let star of [1,2,3,4,5]" 
+              class="text-3xl cursor-pointer transition-transform hover:scale-125"
+              [class]="star <= selectedRating ? 'text-amber-400' : 'text-white/20'"
+              (click)="selectRating(star)">
+          ★
+        </span>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ============================================================
+MODAL: ANSWER DETAIL (READING/LISTENING)
+============================================================ -->
+<div *ngIf="showAnswerDetail && selectedSkill?.isAutoGraded" 
+     class="fixed inset-0 bg-black/70 backdrop-blur z-[1000] flex items-center justify-center p-4"
+     (click)="closeAnswerDetail()">
+  <div class="bg-white rounded-2xl max-w-3xl w-full max-h-[90vh] flex flex-col" (click)="$event.stopPropagation()">
+    <div class="flex justify-between items-center p-6 border-b border-slate-200">
+      <h3 class="text-xl font-bold text-slate-800">{{ selectedSkill?.skillName }} - CHI TIẾT BÀI LÀM</h3>
+      <button class="text-slate-400 hover:text-slate-600 text-2xl transition" (click)="closeAnswerDetail()">✕</button>
+    </div>
+    <div class="p-6 overflow-y-auto flex-1">
+      <div class="flex flex-wrap gap-6 p-4 bg-slate-50 rounded-xl mb-6">
+        <span class="text-slate-700 font-medium">📊 Điểm: {{ selectedSkill?.score }}/10</span>
+        <span class="text-slate-700 font-medium">✅ Đúng: {{ selectedSkill?.correctCount }}/{{ selectedSkill?.totalQuestions }}</span>
+        <span class="text-slate-700 font-medium">⏱️ Thời gian: {{ formatTime(selectedSkill?.timeSpentSeconds || 0) }}</span>
+      </div>
+      
+      <div class="space-y-4">
+        <div *ngFor="let part of selectedSkill?.parts || []; let pIndex = index" class="border border-slate-200 rounded-xl p-4">
+          <h5 class="font-semibold text-primary mb-2">📄 Part {{ part.partNumber }}</h5>
+          <div class="flex gap-4 text-sm text-slate-600 mb-3">
+            <span>✅ {{ part.correctCount }}/{{ part.totalQuestions }} đúng</span>
+            <span>📊 {{ part.score }}/10</span>
+          </div>
+          <div *ngFor="let q of part.questions; let qIndex = index" class="p-4 bg-slate-50 rounded-lg mb-3 last:mb-0">
+            <div class="flex justify-between items-center mb-2">
+              <span class="font-semibold text-slate-700">Câu {{ qIndex + 1 }}</span>
+              <span [class]="q.isCorrect ? 'text-emerald-600' : 'text-red-600'" class="font-semibold text-sm">
+                {{ q.isCorrect ? '✅ Đúng' : '❌ Sai' }}
+              </span>
+            </div>
+            <div class="text-slate-700 mb-2">{{ q.questionText }}</div>
+            <div class="text-sm">
+              <div class="text-slate-600">📝 Bạn chọn: <span class="font-medium text-primary">{{ q.userAnswer || 'Chưa trả lời' }}</span></div>
+              <div *ngIf="!q.isCorrect" class="text-emerald-600">✅ Đáp án đúng: <span class="font-medium">{{ q.correctAnswer }}</span></div>
+              <div *ngIf="q.explanation" class="mt-2 p-3 bg-blue-50 rounded-lg text-slate-700 text-sm">💡 {{ q.explanation }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="flex flex-wrap gap-3 p-6 border-t border-slate-200">
+      <button class="px-6 py-2 bg-slate-200 text-slate-700 rounded-lg font-medium hover:bg-slate-300 transition" (click)="closeAnswerDetail()">Đóng</button>
+      <button class="px-6 py-2 bg-gradient-to-r from-primary to-blue-600 text-white rounded-lg font-medium hover:shadow-lg transition" (click)="viewSkillDetail(selectedSkill?.skillType || 0, selectedSkill?.examId || '')">
+        🔄 Làm lại bài này
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+MODAL: SHARE
+============================================================ -->
+<div *ngIf="showShareModal" class="fixed inset-0 bg-black/70 backdrop-blur z-[1000] flex items-center justify-center p-4" (click)="closeShareModal()">
+  <div class="bg-white rounded-2xl max-w-md w-full" (click)="$event.stopPropagation()">
+    <div class="flex justify-between items-center p-6 border-b border-slate-200">
+      <h3 class="text-xl font-bold text-slate-800">📤 CHIA SẺ KẾT QUẢ</h3>
+      <button class="text-slate-400 hover:text-slate-600 text-2xl transition" (click)="closeShareModal()">✕</button>
+    </div>
+    <div class="p-6">
+      <div class="bg-gradient-to-br from-slate-900 to-blue-950 rounded-xl p-6 text-center text-white mb-6">
+        <div class="text-4xl font-bold text-amber-400">{{ result?.totalScore }}/10</div>
+        <div class="text-sm opacity-80 mt-1">{{ result?.vstepBand }}</div>
+        <div class="flex justify-center gap-4 mt-3 text-sm opacity-70">
+          <span *ngIf="hasSkill(0)">{{ getSkillIconByIndex(0) }} {{ getSkillScore(0) }}/10</span>
+          <span *ngIf="hasSkill(1)">{{ getSkillIconByIndex(1) }} {{ getSkillScore(1) }}/10</span>
+          <span *ngIf="hasSkill(2)">{{ getSkillIconByIndex(2) }} {{ getSkillScore(2) }}/10</span>
+          <span *ngIf="hasSkill(3)">{{ getSkillIconByIndex(3) }} {{ getSkillScore(3) }}/10</span>
+        </div>
+        <div class="text-xs opacity-50 mt-3">{{ getCompletionDate() }}</div>
+      </div>
+      <div class="flex flex-wrap gap-2 justify-center">
+        <button class="px-4 py-2 bg-[#1877f2] text-white rounded-lg text-sm font-medium hover:opacity-90 transition" (click)="shareOnFacebook()">📘 Facebook</button>
+        <button class="px-4 py-2 bg-black text-white rounded-lg text-sm font-medium hover:opacity-90 transition" (click)="shareOnTwitter()">🐦 Twitter</button>
+        <button class="px-4 py-2 bg-[#0a66c2] text-white rounded-lg text-sm font-medium hover:opacity-90 transition" (click)="shareOnLinkedIn()">💼 LinkedIn</button>
+        <button class="px-4 py-2 bg-slate-600 text-white rounded-lg text-sm font-medium hover:bg-slate-700 transition" (click)="copyLink()">📋 Copy Link</button>
+        <button class="px-4 py-2 bg-red-500 text-white rounded-lg text-sm font-medium hover:bg-red-600 transition" (click)="shareEmail()">📧 Email</button>
+      </div>
+    </div>
+    <div class="p-6 border-t border-slate-200">
+      <button class="w-full px-6 py-2 bg-slate-200 text-slate-700 rounded-lg font-medium hover:bg-slate-300 transition" (click)="closeShareModal()">Đóng</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+MODAL: PDF
+============================================================ -->
+<div *ngIf="showPdfModal" class="fixed inset-0 bg-black/70 backdrop-blur z-[1000] flex items-center justify-center p-4" (click)="closePdfModal()">
+  <div class="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] flex flex-col" (click)="$event.stopPropagation()">
+    <div class="flex justify-between items-center p-6 border-b border-slate-200">
+      <h3 class="text-xl font-bold text-slate-800">📄 XUẤT KẾT QUẢ PDF</h3>
+      <button class="text-slate-400 hover:text-slate-600 text-2xl transition" (click)="closePdfModal()">✕</button>
+    </div>
+    <div class="p-6 overflow-y-auto flex-1">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-6">
+        <label class="flex items-center gap-2 text-slate-700 cursor-pointer"><input type="checkbox" checked class="accent-primary"> Bao gồm tất cả kỹ năng</label>
+        <label class="flex items-center gap-2 text-slate-700 cursor-pointer"><input type="checkbox" checked class="accent-primary"> Chi tiết câu hỏi và đáp án</label>
+        <label class="flex items-center gap-2 text-slate-700 cursor-pointer"><input type="checkbox" checked class="accent-primary"> Phân tích điểm mạnh/yếu</label>
+        <label class="flex items-center gap-2 text-slate-700 cursor-pointer"><input type="checkbox" checked class="accent-primary"> Gợi ý học tập</label>
+      </div>
+      <div class="bg-slate-50 rounded-xl p-6">
+        <div class="bg-white rounded-lg p-6 shadow-card">
+          <div class="text-center border-b-2 border-primary pb-4 mb-4">
+            <h2 class="text-xl font-bold text-slate-800">📊 EXAMIFY - BÁO CÁO KẾT QUẢ</h2>
+            <p class="text-sm text-slate-500">VSTEP Full Test - {{ getCompletionDate() }}</p>
+          </div>
+          <div class="text-center">
+            <div class="text-3xl font-bold text-primary">Điểm tổng: {{ result?.totalScore }}/10</div>
+            <div class="text-slate-600 mt-1">{{ result?.vstepBand }}</div>
+            <div class="flex justify-center gap-4 mt-3 text-sm text-slate-600">
+              <span *ngIf="hasSkill(0)">{{ getSkillIconByIndex(0) }} {{ getSkillScore(0) }}/10</span>
+              <span *ngIf="hasSkill(1)">{{ getSkillIconByIndex(1) }} {{ getSkillScore(1) }}/10</span>
+              <span *ngIf="hasSkill(2)">{{ getSkillIconByIndex(2) }} {{ getSkillScore(2) }}/10</span>
+              <span *ngIf="hasSkill(3)">{{ getSkillIconByIndex(3) }} {{ getSkillScore(3) }}/10</span>
+            </div>
+            <div class="mt-4 p-4 bg-blue-50 rounded-lg text-left">
+              <p class="font-semibold text-slate-700">💡 Gợi ý học tập:</p>
+              <ul class="text-sm text-slate-600 space-y-1 mt-1">
+                <li *ngFor="let rec of getLearningPath()">• {{ rec }}</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="flex flex-wrap gap-3 p-6 border-t border-slate-200">
+      <button class="px-6 py-2 bg-slate-200 text-slate-700 rounded-lg font-medium hover:bg-slate-300 transition" (click)="closePdfModal()">Đóng</button>
+      <button class="px-6 py-2 bg-rose-500 text-white rounded-lg font-medium hover:bg-rose-600 transition" (click)="downloadPDF()">📄 Xuất PDF</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+MODAL: ACHIEVEMENTS
+============================================================ -->
+<div *ngIf="showAchievementModal" class="fixed inset-0 bg-black/70 backdrop-blur z-[1000] flex items-center justify-center p-4" (click)="closeAchievementModal()">
+  <div class="bg-white rounded-2xl max-w-md w-full max-h-[90vh] flex flex-col" (click)="$event.stopPropagation()">
+    <div class="flex justify-between items-center p-6 border-b border-slate-200">
+      <h3 class="text-xl font-bold text-slate-800">🏆 THÀNH TÍCH CỦA BẠN</h3>
+      <button class="text-slate-400 hover:text-slate-600 text-2xl transition" (click)="closeAchievementModal()">✕</button>
+    </div>
+    <div class="p-6 overflow-y-auto flex-1">
+      <div class="flex gap-8 justify-center mb-6">
+        <div class="text-center">
+          <div class="text-3xl font-bold text-primary">1,250</div>
+          <div class="text-sm text-slate-500">XP</div>
+        </div>
+        <div class="text-center">
+          <div class="text-3xl font-bold text-amber-500">🥈 Bạc</div>
+          <div class="text-sm text-slate-500">Cấp độ</div>
+        </div>
+      </div>
+      <div class="space-y-3 mb-6">
+        <div *ngFor="let badge of ['Lần đầu hoàn thành', 'Đạt 8.0+', 'Đạt B2', 'Độ dài 45 phút']" class="flex items-center gap-3 p-3 bg-slate-50 rounded-xl">
+          <span class="text-2xl">🏅</span>
+          <div>
+            <div class="font-semibold text-slate-700">{{ badge }}</div>
+            <div class="text-sm text-emerald-600">Đã đạt được</div>
+          </div>
+        </div>
+      </div>
+      <h4 class="font-semibold text-slate-700 mb-3">🚀 Thành tích tiếp theo</h4>
+      <div class="space-y-3">
+        <div class="flex items-center gap-3 p-3 bg-slate-50 rounded-xl opacity-60">
+          <span class="text-2xl">🔒</span>
+          <div>
+            <div class="text-slate-700">Hoàn thành 25 bài tập</div>
+            <div class="text-sm text-slate-500">Tiến độ: 12/25 (48%)</div>
+          </div>
+        </div>
+        <div class="flex items-center gap-3 p-3 bg-slate-50 rounded-xl opacity-60">
+          <span class="text-2xl">🔒</span>
+          <div>
+            <div class="text-slate-700">Đạt 8.0 Reading</div>
+            <div class="text-sm text-slate-500">Tiến độ: 4.5/8.0 (56%)</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="p-6 border-t border-slate-200">
+      <button class="w-full px-6 py-2 bg-slate-200 text-slate-700 rounded-lg font-medium hover:bg-slate-300 transition" (click)="closeAchievementModal()">Đóng</button>
     </div>
   </div>
 </div>

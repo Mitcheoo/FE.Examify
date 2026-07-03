@@ -5,6 +5,6 @@
     "outDir": "./out-tsc/app",
     "types": ["node"]
   },
-  "include": ["src/**/*.ts"],
+  "include": ["src/**/*.ts", "src/app/pages/admin/pages/user-detail/user-detail.componentts"],
   "exclude": ["src/**/*.spec.ts"]
 }

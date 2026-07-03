@@ -1,4 +1,4 @@
-﻿// app.routes.ts
+﻿// 📁 src/app/app.routes.ts
 
 import { Routes } from '@angular/router';
 import { HomeComponent } from './pages/home/home.component';
@@ -12,26 +12,31 @@ import { ExamListeningComponent } from './pages/exam-listening/exam-listening.co
 import { ExamWritingComponent } from './pages/exam-writing/exam-writing.component';
 import { ExamSpeakingComponent } from './pages/exam-speaking/exam-speaking.component';
 import { UserDetailComponent } from './pages/admin/pages/user-detail/user-detail.component';
-
-// ✅ THÊM IMPORTS CHO TRANG DANH SÁCH THEO KỸ NĂNG
 import { ReadingComponent } from './pages/reading/reading.component';
-// import { ListeningComponent } from './pages/listening/listening.component';
-// import { WritingComponent } from './pages/writing/writing.component';
-// import { SpeakingComponent } from './pages/speaking/speaking.component';
+import { ResultReadingComponent } from './pages/result-reading/result-reading.component';
+import { FulltestResultComponent } from './pages/fulltest-result/fulltest-result.component';
 
-// Admin
+// Admin Layout
 import { AdminDashboardLayoutComponent } from './pages/admin/layout/dashboard-layout/dashboard-layout.component';
 import { AdminDashboardPageComponent } from './pages/admin/pages/dashboard/dashboard.component';
-import { ManageExamsPageComponent } from './pages/admin/pages/manage-exams/manage-exams.component';
-import { CreateExamComponent } from './pages/admin/pages/manage-exams/create-exam/create-exam.component';
 import { SubmissionsComponent } from './pages/admin/pages/submissions/submissions.component';
 import { UsersComponent } from './pages/admin/pages/users/users.component';
 import { PaymentsComponent } from './pages/admin/pages/payments/payments.component';
-import { ResultReadingComponent } from './pages/result-reading/result-reading.component';
 
+// Manage Exams
+import { ManageExamsPageComponent } from './pages/admin/pages/manage-exams/manage-exams.component';
+import { CreateExamComponent } from './pages/admin/pages/manage-exams/create-exam/create-exam.component';
+import { CreateFullTestComponent } from './pages/admin/pages/manage-exams/create-fulltest/create-fulltest.component';
+
+// ✅ Import VocabularyComponent
+import { VocabularyComponent } from './pages/vocabulary/vocabulary.component';
+import { GrammarComponent } from './pages/grammar/grammar.component';
+import { MySubmissionsComponent } from './pages/my-submissions/my-submissions.component';
+import { SubmissionDetailComponent } from './pages/submission-detail/submission-detail.component'; 
+
+// Guards
 import { authGuard } from './guards/auth.guard';
 import { adminGuard } from './guards/admin.guard';
-import { FulltestResultComponent } from './pages/fulltest-result/fulltest-result.component';
 
 export const routes: Routes = [
   // ============================================================
@@ -48,14 +53,11 @@ export const routes: Routes = [
   { path: 'exam-list', component: ExamListComponent, canActivate: [authGuard] },
   
   // ============================================================
-  // TRANG EXERCISES THEO KỸ NĂNG ✅ THÊM MỚI
+  // TRANG EXERCISES THEO KỸ NĂNG
   // ============================================================
   { path: 'reading', component: ReadingComponent, canActivate: [authGuard] },
-    { path: 'result/reading/:id', component: ResultReadingComponent, canActivate: [authGuard] },
-      { path: 'result/reading', component: ResultReadingComponent, canActivate: [authGuard] },
-  // { path: 'listening', component: ListeningComponent, canActivate: [authGuard] },
-  // { path: 'writing', component: WritingComponent, canActivate: [authGuard] },
-  // { path: 'speaking', component: SpeakingComponent, canActivate: [authGuard] },
+  { path: 'result/reading/:id', component: ResultReadingComponent, canActivate: [authGuard] },
+  { path: 'result/reading', component: ResultReadingComponent, canActivate: [authGuard] },
   
   // ============================================================
   // TRANG EXERCISES TỔNG HỢP
@@ -77,6 +79,16 @@ export const routes: Routes = [
   { path: 'fulltest/:id/result', component: FulltestResultComponent, canActivate: [authGuard] },
   
   // ============================================================
+  // ✅ THÊM VOCABULARY (ĐƯA RA NGOÀI ADMIN)
+  // ============================================================
+  { path: 'vocabulary', component: VocabularyComponent, canActivate: [authGuard] },
+ { path: 'my-submissions', component: MySubmissionsComponent, canActivate: [authGuard] },
+{ path: 'submission/:id', component: SubmissionDetailComponent, canActivate: [authGuard] },
+{ path: 'grammar', 
+  component: GrammarComponent, 
+  canActivate: [authGuard] 
+},
+  // ============================================================
   // ADMIN ROUTES
   // ============================================================
   {
@@ -84,9 +96,17 @@ export const routes: Routes = [
     component: AdminDashboardLayoutComponent,
     canActivate: [authGuard, adminGuard],
     children: [
+      // Dashboard
       { path: '', component: AdminDashboardPageComponent, pathMatch: 'full' },
+      
+      // Manage Exams
       { path: 'manage-exams', component: ManageExamsPageComponent },
       { path: 'manage-exams/create', component: CreateExamComponent },
+      
+      // Full Test questions
+      { path: 'fulltest/:fullTestId/questions', component: CreateFullTestComponent },
+      
+      // Other admin pages
       { path: 'submissions', component: SubmissionsComponent },
       { path: 'users', component: UsersComponent },
       { path: 'user/:id', component: UserDetailComponent },
@@ -95,8 +115,12 @@ export const routes: Routes = [
   },
   
   // ============================================================
-  // REDIRECT 404
+  // REDIRECT
   // ============================================================
   { path: 'dashboard', redirectTo: 'admin', pathMatch: 'full' },
+  
+  // ============================================================
+  // 404 - NOT FOUND
+  // ============================================================
   { path: '**', redirectTo: '' }
 ];

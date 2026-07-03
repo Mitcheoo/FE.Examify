@@ -1,37 +1,67 @@
-<!-- src/app/pages/admin/pages/manage-exams/manage-exams.component.html -->
+<!-- 📁 src/app/pages/admin/pages/manage-exams/manage-exams.component.html -->
+
 <div class="space-y-6">
   <!-- Header -->
   <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
     <div>
-      <h1 class="text-3xl font-bold text-gray-900">Manage Exams</h1>
-      <p class="mt-1 text-gray-600">Create, edit, and publish exam content from the admin dashboard.</p>
+      <h1 class="text-3xl font-bold text-gray-900">📚 Quản lý bài thi</h1>
+      <p class="mt-1 text-gray-600">Tạo, chỉnh sửa và quản lý tất cả bài thi</p>
     </div>
     <div class="flex flex-wrap gap-3">
       <button 
         (click)="refresh()" 
         class="inline-flex items-center justify-center rounded-3xl bg-gray-600 px-5 py-3 text-white shadow-sm hover:bg-gray-700 transition">
-        🔄 Refresh
+        🔄 Làm mới
       </button>
-      <a routerLink="/exam-list" class="inline-flex items-center justify-center rounded-3xl bg-gray-600 px-5 py-3 text-white shadow-sm hover:bg-gray-700 transition">
-        View Exam Library
-      </a>
       <a routerLink="/admin/manage-exams/create" class="inline-flex items-center justify-center rounded-3xl bg-emerald-600 px-5 py-3 text-white shadow-sm hover:bg-emerald-700 transition">
-        + New Exam
+        ➕ Tạo bài thi mới
       </a>
     </div>
   </div>
 
-  <!-- Debug: Hiển thị trạng thái -->
-  <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-3 text-sm text-yellow-800">
+  <!-- Filter & Search -->
+  <div class="flex flex-wrap items-center gap-4 bg-white p-4 rounded-2xl shadow-card">
+    <div class="flex-1 min-w-[200px]">
+      <input 
+        type="text" 
+        [(ngModel)]="searchKeyword" 
+        (input)="onSearch()"
+        placeholder="🔍 Tìm kiếm bài thi..." 
+        class="w-full px-4 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-vstep focus:border-transparent">
+    </div>
+    <div class="flex items-center gap-2">
+      <select 
+        [(ngModel)]="selectedSkill" 
+        (change)="onSearch()"
+        class="px-4 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-vstep focus:border-transparent">
+        <option value="">📚 Tất cả kỹ năng</option>
+        <option value="0">📖 Reading</option>
+        <option value="1">🎧 Listening</option>
+        <option value="2">✍️ Writing</option>
+        <option value="3">🎙️ Speaking</option>
+        <option value="4">📚 Full Test</option>
+      </select>
+    </div>
+    <button 
+      (click)="resetFilters()"
+      class="px-4 py-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-xl transition">
+      ✕ Xóa lọc
+    </button>
+  </div>
+
+  <!-- Debug -->
+  <div class="bg-yellow-50 border border-yellow-200 rounded-2xl p-3 text-sm text-yellow-800" *ngIf="!isLoading">
     <strong>🔍 Debug:</strong> 
     isLoading = {{ isLoading }}, 
     exams = {{ exams.length }}, 
-    error = {{ errorMessage || 'null' }}
+    total = {{ totalItems }}, 
+    page = {{ currentPage }}/{{ totalPages }}
+    <span *ngIf="errorMessage" class="text-red-500 ml-4">❌ {{ errorMessage }}</span>
   </div>
 
   <!-- Loading -->
   <div *ngIf="isLoading" class="flex flex-col items-center justify-center py-12">
-    <div class="w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
+    <div class="w-12 h-12 border-4 border-blue-200 border-t-vstep rounded-full animate-spin"></div>
     <p class="mt-4 text-gray-500">Đang tải danh sách bài thi...</p>
   </div>
 
@@ -42,7 +72,7 @@
       <div>
         <p class="font-semibold text-red-800">Lỗi tải dữ liệu</p>
         <p class="text-red-600">{{ errorMessage }}</p>
-        <button (click)="refresh()" class="mt-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition">
+        <button (click)="refresh()" class="mt-2 px-4 py-2 bg-red-600 text-white rounded-xl hover:bg-red-700 transition">
           Thử lại
         </button>
       </div>
@@ -50,11 +80,12 @@
   </div>
 
   <!-- Table -->
-  <div *ngIf="!isLoading && !errorMessage" class="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+  <div *ngIf="!isLoading && !errorMessage" class="rounded-3xl border border-slate-200 bg-white p-6 shadow-card">
+    <!-- Stats -->
     <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
       <div>
         <p class="text-sm text-gray-500">Tổng số bài thi</p>
-        <p class="text-3xl font-semibold text-blue-600">{{ exams.length }}</p>
+        <p class="text-3xl font-semibold text-vstep">{{ totalItems }}</p>
       </div>
       <div class="flex flex-wrap gap-4 text-sm text-gray-500">
         <span class="flex items-center gap-1">
@@ -72,6 +103,7 @@
       </div>
     </div>
 
+    <!-- Table Wrapper -->
     <div class="overflow-x-auto">
       <table class="min-w-full text-left text-sm text-gray-700">
         <thead class="border-b border-slate-200 bg-slate-50">
@@ -79,17 +111,20 @@
             <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-slate-500">Loại</th>
             <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-slate-500">Bài thi</th>
             <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-slate-500">Kỹ năng</th>
-            <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-slate-500">Status</th>
+            <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-slate-500">Trạng thái</th>
             <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-slate-500 text-center">Câu hỏi</th>
             <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-slate-500 text-center">Thời gian</th>
             <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-slate-500">Ngày tạo</th>
-            <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-slate-500 text-center">Actions</th>
+            <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-slate-500 text-center">Thao tác</th>
           </tr>
         </thead>
         <tbody class="divide-y divide-slate-200">
           <tr *ngFor="let exam of exams" class="hover:bg-slate-50 transition">
             <td class="px-4 py-4">
-              <span class="text-sm">{{ getExamType(exam) }}</span>
+              <span class="inline-block px-3 py-1 text-xs font-semibold rounded-full" 
+                    [class]="exam.isFullTest ? 'bg-purple-100 text-purple-700' : 'bg-slate-100 text-slate-700'">
+                {{ exam.isFullTest ? '📚 Full Test' : '📝 Exercise' }}
+              </span>
             </td>
             <td class="px-4 py-4 font-medium text-gray-900">
               {{ exam.title }}
@@ -109,24 +144,31 @@
               </span>
             </td>
             <td class="px-4 py-4 text-center">
-              <span class="font-semibold text-blue-600">{{ exam.totalQuestions }}</span>
+              <span class="font-semibold text-vstep">{{ exam.totalQuestions }}</span>
             </td>
             <td class="px-4 py-4 text-center text-gray-500 text-sm">
               {{ formatTime(exam.timeLimitSeconds) }}
             </td>
             <td class="px-4 py-4 text-gray-500 text-sm">
-              {{ exam.created }}
+              {{ exam.created || 'N/A' }}
             </td>
             <td class="px-4 py-4">
               <div class="flex items-center justify-center gap-2">
+                <!-- Nút thêm câu hỏi cho Full Test -->
+                <button *ngIf="exam.isFullTest" 
+                        class="inline-flex items-center px-3 py-1.5 text-sm text-purple-600 hover:bg-purple-50 rounded-xl transition"
+                        (click)="navigateToFullTestQuestions(exam.id)"
+                        title="Thêm câu hỏi cho Full Test">
+                  ✏️
+                </button>
                 <a [routerLink]="['/exam', exam.id]" 
-                   class="inline-flex items-center px-3 py-1.5 text-sm text-blue-600 hover:bg-blue-50 rounded-lg transition">
-                  👁️ View
+                   class="inline-flex items-center px-3 py-1.5 text-sm text-blue-600 hover:bg-blue-50 rounded-xl transition">
+                  👁️ Xem
                 </a>
                 <button 
-                  class="inline-flex items-center px-3 py-1.5 text-sm text-red-600 hover:bg-red-50 rounded-lg transition"
+                  class="inline-flex items-center px-3 py-1.5 text-sm text-red-600 hover:bg-red-50 rounded-xl transition"
                   (click)="deleteExam(exam.id)">
-                  🗑️ Delete
+                  🗑️ Xóa
                 </button>
               </div>
             </td>
@@ -139,7 +181,55 @@
     <div *ngIf="exams.length === 0" class="text-center py-12">
       <div class="text-6xl mb-4">📭</div>
       <p class="text-gray-500 text-lg">Chưa có bài thi nào</p>
-      <p class="text-gray-400 text-sm mt-1">Nhấn "New Exam" để tạo bài thi đầu tiên</p>
+      <p class="text-gray-400 text-sm mt-1">Nhấn "Tạo bài thi mới" để bắt đầu</p>
+    </div>
+
+    <!-- Pagination -->
+    <div *ngIf="totalPages > 0" class="flex flex-col sm:flex-row justify-between items-center gap-4 pt-4 border-t border-slate-200 mt-4">
+      <div class="text-sm text-gray-500">
+        Hiển thị 
+        <span class="font-medium">{{ (currentPage - 1) * pageSize + 1 }}</span> 
+        - 
+        <span class="font-medium">{{ currentPage * pageSize > totalItems ? totalItems : currentPage * pageSize }}</span> 
+        trên <span class="font-medium">{{ totalItems }}</span> bài thi
+      </div>
+      
+      <div class="flex items-center gap-2">
+        <!-- Previous -->
+        <button 
+          class="w-9 h-9 flex items-center justify-center border border-slate-200 rounded-xl hover:bg-slate-50 transition disabled:opacity-50 disabled:cursor-not-allowed"
+          (click)="goToPage(currentPage - 1)" 
+          [disabled]="currentPage === 1">
+          ◀
+        </button>
+        
+        <!-- Page numbers -->
+        <button *ngFor="let page of getPageNumbers()" 
+                class="w-9 h-9 flex items-center justify-center border rounded-xl transition font-medium"
+                [class]="page === currentPage ? 'bg-vstep text-white border-vstep' : 'border-slate-200 hover:bg-slate-50'"
+                (click)="goToPage(page)">
+          {{ page }}
+        </button>
+        
+        <!-- Next -->
+        <button 
+          class="w-9 h-9 flex items-center justify-center border border-slate-200 rounded-xl hover:bg-slate-50 transition disabled:opacity-50 disabled:cursor-not-allowed"
+          (click)="goToPage(currentPage + 1)" 
+          [disabled]="currentPage === totalPages">
+          ▶
+        </button>
+      </div>
+      
+      <!-- Page size -->
+      <div class="flex items-center gap-2 text-sm text-gray-500">
+        <label>Hiển thị:</label>
+        <select [(ngModel)]="pageSize" (change)="onPageSizeChange()" class="px-2 py-1 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-vstep">
+          <option [value]="5">5</option>
+          <option [value]="10">10</option>
+          <option [value]="20">20</option>
+          <option [value]="50">50</option>
+        </select>
+      </div>
     </div>
   </div>
 </div>

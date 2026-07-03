@@ -1,25 +1,86 @@
-﻿/* Dashboard styles - using Tailwind CSS */
+﻿// 📁 src/app/pages/admin/layout/dashboard-layout/dashboard-layout.component.scss
 
+// ============================================================
+// CUSTOM SCROLLBAR
+// ============================================================
 
-.btn-primary:hover, .btn-secondary:hover {
-  transform: translateY(-2px);
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
 }
 
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #0EACD8;
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #0A8BB0;
+}
+
+// ============================================================
+// SIDEBAR TRANSITIONS
+// ============================================================
+
+aside {
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  
+  .group {
+    position: relative;
+  }
+}
+
+// ============================================================
+// ACTIVE LINK
+// ============================================================
+
+.router-link-active {
+  background: rgba(255, 255, 255, 0.2);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+// ============================================================
+// RESPONSIVE
+// ============================================================
+
 @media (max-width: 768px) {
-  .dashboard-container {
-    padding: 1rem;
-    margin-top: 70px;
+  aside {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    z-index: 50;
+    height: 100vh;
+    
+    &:not(.w-64) {
+      width: 0 !important;
+      overflow: hidden;
+    }
   }
   
-  .stats-grid, .skills-grid {
-    grid-template-columns: 1fr;
+  .main-content {
+    margin-left: 0 !important;
   }
-  
-  .action-buttons {
-    flex-direction: column;
-  }
-  
-  .btn-primary, .btn-secondary {
-    text-align: center;
-  }
+}
+
+// ============================================================
+// HEADER
+// ============================================================
+
+header {
+  background: white;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+// ============================================================
+// MAIN CONTENT
+// ============================================================
+
+main {
+  background: #f8fafc;
 }

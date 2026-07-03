@@ -48,7 +48,7 @@ import { Component } from '@angular/core';
         </div>
         
         <div class="footer-bottom">
-          <p>&copy; 2024 Examify. Tất cả các quyền được bảo lưu.</p>
+          <p>&copy; 2026 Examify. Tất cả các quyền được bảo lưu.</p>
         </div>
       </div>
     </footer>

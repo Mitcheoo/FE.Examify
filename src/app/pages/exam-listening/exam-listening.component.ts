@@ -101,47 +101,77 @@ export class ExamListeningComponent implements OnInit, OnDestroy {
     });
   }
 
-  loadSavedAnswers() {
-    const localKey = 'listening_answers_' + this.examId + '_' + this.userId;
-    const localData = localStorage.getItem(localKey);
-    if (localData) {
-      try {
-        this.answers = JSON.parse(localData);
-        console.log('📦 Loaded from localStorage:', Object.keys(this.answers).length);
-      } catch(e) {
-        console.error('Error loading local answers:', e);
-      }
-    }
-
-    if (this.sessionId) {
-      this.examService.getDraftAnswers(this.sessionId).subscribe({
-        next: (data: any) => {
-          if (data && data.length > 0) {
-            const serverAnswers: Record<string, string> = {};
-            data.forEach((item: any) => {
-              serverAnswers[item.questionId] = item.userAnswer || '';
-            });
-            
-            let mergedCount = 0;
-            Object.keys(serverAnswers).forEach(key => {
-              if (!this.answers[key] || serverAnswers[key] !== this.answers[key]) {
-                this.answers[key] = serverAnswers[key];
-                mergedCount++;
-              }
-            });
-            
-            console.log('📦 Merged from server:', mergedCount, 'answers');
-            console.log('📦 Total answers:', Object.keys(this.answers).length);
-            this.cdr.detectChanges();
-          }
-        },
-        error: (err) => {
-          console.error('Error loading server answers:', err);
-        }
-      });
+  // ========== LOAD SAVED ANSWERS ==========
+loadSavedAnswers() {
+  const localKey = 'listening_answers_' + this.examId + '_' + this.userId;
+  
+  // ✅ THÊM: KIỂM TRA SESSION MỚI
+  // Kiểm tra xem session này có phải là session mới không
+  const isNewSession = localStorage.getItem(`new_session_${this.sessionId}`) === 'true';
+  
+  if (isNewSession) {
+    // Xóa draft cũ trong localStorage
+    localStorage.removeItem(localKey);
+    console.log('🗑️ Cleared old listening draft answers for new session');
+    // Xóa flag sau khi đã xử lý
+    localStorage.removeItem(`new_session_${this.sessionId}`);
+  }
+  
+  // Load từ localStorage
+  const localData = localStorage.getItem(localKey);
+  if (localData) {
+    try {
+      this.answers = JSON.parse(localData);
+      console.log('📦 Loaded from localStorage:', Object.keys(this.answers).length);
+    } catch(e) {
+      console.error('Error loading local answers:', e);
     }
   }
 
+  // Load từ server (SessionAnswers)
+  if (this.sessionId) {
+    this.examService.getDraftAnswers(this.sessionId).subscribe({
+      next: (data: any) => {
+        if (data && data.length > 0) {
+          const serverAnswers: Record<string, string> = {};
+          data.forEach((item: any) => {
+            serverAnswers[item.questionId] = item.userAnswer || '';
+          });
+          
+          let mergedCount = 0;
+          Object.keys(serverAnswers).forEach(key => {
+            if (!this.answers[key] || serverAnswers[key] !== this.answers[key]) {
+              this.answers[key] = serverAnswers[key];
+              mergedCount++;
+            }
+          });
+          
+          console.log('📦 Merged from server:', mergedCount, 'answers');
+          console.log('📦 Total answers:', Object.keys(this.answers).length);
+          this.cdr.detectChanges();
+        }
+      },
+      error: (err) => {
+        console.error('Error loading server answers:', err);
+      }
+    });
+  }
+}
+// ========== CLEAR DRAFT FOR NEW SESSION ==========
+clearDraftForNewSession() {
+  // Kiểm tra xem session này có phải là session mới không
+  const isNewSession = localStorage.getItem(`new_session_${this.sessionId}`) === 'true';
+  
+  if (isNewSession) {
+    // Xóa draft answers
+    const draftKey = 'listening_answers_' + this.examId + '_' + this.userId;
+    localStorage.removeItem(draftKey);
+    console.log('🗑️ Cleared listening draft for new session');
+    
+    // Xóa flag
+    localStorage.removeItem(`new_session_${this.sessionId}`);
+  }
+}
   saveToLocal() {
     const key = 'listening_answers_' + this.examId + '_' + this.userId;
     localStorage.setItem(key, JSON.stringify(this.answers));

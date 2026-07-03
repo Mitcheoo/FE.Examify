@@ -43,6 +43,8 @@ export class ExamReadingComponent implements OnInit, OnDestroy {
   private router = inject(Router);
   private cdr = inject(ChangeDetectorRef);
   private authService = inject(AuthService);
+  private syncTimeout: any = null;
+private isSyncing: boolean = false;
 
   // ✅ SỬA: Khai báo với kiểu dữ liệu
   exam: ExamData | null = null;
@@ -57,94 +59,100 @@ export class ExamReadingComponent implements OnInit, OnDestroy {
   private userId: string = '';
   private sessionId: string = '';
   
-  private syncTimeout: any = null;
-  private isSyncing: boolean = false;
+  // private syncTimeout: any = null;
+  // private isSyncing: boolean = false;
   private hasUnsavedChanges: boolean = false;
 
-  ngOnInit() {
-    this.userId = this.authService.getCurrentUser()?.id || 'anonymous';
-    
-    const savedNavState = localStorage.getItem('reading_show_navigator');
-    if (savedNavState !== null) {
-      this.showNavigator = savedNavState === 'true';
+ngOnInit() {
+  this.userId = this.authService.getCurrentUser()?.id || 'anonymous';
+  
+  // ✅ LẤY SESSION ID TỪ URL
+  this.route.queryParams.subscribe(params => {
+    if (params['sessionId']) {
+      this.sessionId = params['sessionId'];
+      console.log('📌 Reading sessionId from URL:', this.sessionId);
     }
-    
-    this.route.queryParams.subscribe(params => {
-      if (params['sessionId']) {
-        this.sessionId = params['sessionId'];
-        console.log('📌 Reading sessionId:', this.sessionId);
-      }
-      if (params['fullTestId']) {
-        this.fullTestId = params['fullTestId'];
-      }
-    });
-    
-    const navigation = this.router.getCurrentNavigation();
-    const state = navigation?.extras?.state as { fullTestId?: string; sessionId?: string };
-    if (state?.sessionId && !this.sessionId) {
-      this.sessionId = state.sessionId;
+    if (params['fullTestId']) {
+      this.fullTestId = params['fullTestId'];
     }
-    if (state?.fullTestId && !this.fullTestId) {
-      this.fullTestId = state.fullTestId;
-    }
+  });
+  
+  // ✅ KIỂM TRA SESSION ID CÓ HỢP LỆ KHÔNG
+  this.route.params.subscribe(params => {
+    this.examId = params['id'];
+    console.log('📌 Reading Exam ID:', this.examId);
+    this.loadExam();
     
-    if (!this.fullTestId && history.state?.fullTestId) {
-      this.fullTestId = history.state.fullTestId;
-    }
-    
-    this.route.params.subscribe(params => {
-      this.examId = params['id'];
-      console.log('📌 Reading Exam ID:', this.examId);
-      this.loadExam();
+    // ✅ CHỈ LOAD SAVED ANSWERS NẾU CÓ SESSION ID
+    if (this.sessionId && this.sessionId !== 'null' && this.sessionId !== '') {
       this.loadSavedAnswers();
-    });
+    } else {
+      console.log('⚠️ No sessionId found, skipping loadSavedAnswers');
+    }
+  });
 
-    window.addEventListener('beforeunload', () => {
-      this.syncToServer();
-    });
-  }
+  window.addEventListener('beforeunload', () => {
+    this.syncToServer();
+  });
+}
 
   // ========== LOAD SAVED ANSWERS ==========
-  loadSavedAnswers() {
-    const localKey = 'reading_answers_' + this.examId + '_' + this.userId;
-    const localData = localStorage.getItem(localKey);
-    if (localData) {
-      try {
-        this.answers = JSON.parse(localData);
-        console.log('📦 Loaded from localStorage:', Object.keys(this.answers).length);
-      } catch(e) {
-        console.error('Error loading local answers:', e);
-      }
-    }
-
-    if (this.sessionId) {
-      this.examService.getDraftAnswers(this.sessionId).subscribe({
-        next: (data: any) => {
-          if (data && data.length > 0) {
-            const serverAnswers: Record<string, string> = {};
-            data.forEach((item: any) => {
-              serverAnswers[item.questionId] = item.userAnswer;
-            });
-            
-            let mergedCount = 0;
-            Object.keys(serverAnswers).forEach(key => {
-              if (!this.answers[key] || serverAnswers[key] !== this.answers[key]) {
-                this.answers[key] = serverAnswers[key];
-                mergedCount++;
-              }
-            });
-            
-            console.log('📦 Merged from server:', mergedCount, 'answers');
-            console.log('📦 Total answers:', Object.keys(this.answers).length);
-            this.cdr.detectChanges();
-          }
-        },
-        error: (err) => {
-          console.error('Error loading server answers:', err);
-        }
-      });
+  // ========== LOAD SAVED ANSWERS ==========
+loadSavedAnswers() {
+  const localKey = 'reading_answers_' + this.examId + '_' + this.userId;
+  
+  // ✅ THÊM: KIỂM TRA SESSION MỚI
+  // Kiểm tra xem session này có phải là session mới không
+  const isNewSession = localStorage.getItem(`new_session_${this.sessionId}`) === 'true';
+  
+  if (isNewSession) {
+    // Xóa draft cũ trong localStorage
+    localStorage.removeItem(localKey);
+    console.log('🗑️ Cleared old draft answers for new session');
+    // Xóa flag sau khi đã xử lý
+    localStorage.removeItem(`new_session_${this.sessionId}`);
+  }
+  
+  // Load từ localStorage
+  const localData = localStorage.getItem(localKey);
+  if (localData) {
+    try {
+      this.answers = JSON.parse(localData);
+      console.log('📦 Loaded from localStorage:', Object.keys(this.answers).length);
+    } catch(e) {
+      console.error('Error loading local answers:', e);
     }
   }
+
+  // Load từ server (SessionAnswers)
+  if (this.sessionId) {
+    this.examService.getDraftAnswers(this.sessionId).subscribe({
+      next: (data: any) => {
+        if (data && data.length > 0) {
+          const serverAnswers: Record<string, string> = {};
+          data.forEach((item: any) => {
+            serverAnswers[item.questionId] = item.userAnswer;
+          });
+          
+          let mergedCount = 0;
+          Object.keys(serverAnswers).forEach(key => {
+            if (!this.answers[key] || serverAnswers[key] !== this.answers[key]) {
+              this.answers[key] = serverAnswers[key];
+              mergedCount++;
+            }
+          });
+          
+          console.log('📦 Merged from server:', mergedCount, 'answers');
+          console.log('📦 Total answers:', Object.keys(this.answers).length);
+          this.cdr.detectChanges();
+        }
+      },
+      error: (err) => {
+        console.error('Error loading server answers:', err);
+      }
+    });
+  }
+}
 
   // ========== AUTO-SAVE TO LOCAL ==========
   saveToLocal() {
@@ -154,49 +162,42 @@ export class ExamReadingComponent implements OnInit, OnDestroy {
   }
 
   // ========== SYNC TO SERVER ==========
-  syncToServer() {
+syncToServer() {
+    // ✅ KHÔNG GỌI NẾU ĐANG SYNC
     if (this.isSyncing || !this.sessionId) return;
     
     if (this.syncTimeout) {
-      clearTimeout(this.syncTimeout);
+        clearTimeout(this.syncTimeout);
     }
 
     this.syncTimeout = setTimeout(() => {
-      if (Object.keys(this.answers).length === 0) return;
-      
-      this.isSyncing = true;
-      
-      const answerList = Object.entries(this.answers).map(([questionId, userAnswer]) => ({
-        questionId: questionId,
-        skillType: 0,
-        userAnswer: userAnswer || ''
-      }));
+        const answerList = Object.entries(this.answers)
+            .filter(([_, answer]) => answer && answer.trim().length > 0)
+            .map(([questionId, userAnswer]) => ({
+                questionId: questionId,
+                skillType: 0,
+                userAnswer: userAnswer || ''
+            }));
 
-      if (answerList.length === 0) {
-        this.isSyncing = false;
-        return;
-      }
+        if (answerList.length === 0) return;
 
-      const payload = {
-        sessionId: this.sessionId,
-        answers: answerList
-      };
+        this.isSyncing = true;
 
-      console.log('📤 Syncing to server:', answerList.length, 'answers');
-      
-      this.examService.saveDraftAnswers(payload).subscribe({
-        next: () => {
-          console.log('✅ Synced to server successfully');
-          this.hasUnsavedChanges = false;
-          this.isSyncing = false;
-        },
-        error: (err) => {
-          console.error('❌ Sync failed:', err);
-          this.isSyncing = false;
-        }
-      });
+        this.examService.saveDraftAnswers({
+            sessionId: this.sessionId,
+            answers: answerList
+        }).subscribe({
+            next: () => {
+                console.log('✅ Synced to server');
+                this.isSyncing = false;
+            },
+            error: (err) => {
+                console.error('❌ Sync failed:', err);
+                this.isSyncing = false;
+            }
+        });
     }, 3000);
-  }
+}
 
   // ========== FORCE SYNC ==========
   forceSyncToServer(): Promise<void> {

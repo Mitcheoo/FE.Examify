@@ -27,40 +27,43 @@ import { UserProfileDto } from '../../models/auth/auth.model';
 
       <!-- Navigation Menu -->
       <nav class="hidden lg:flex items-center gap-5 ml-4">
-        <!-- Nghe -->
+        <!-- Listening -->
         <a routerLink="/listening" class="flex items-center gap-2 text-sm font-medium text-text-dark hover:text-vstep transition-colors group">
           <span class="text-xl group-hover:scale-110 transition-transform">🎧</span>
           <span class="text-vstep group-hover:text-vstep-dark transition-all">Nghe</span>
         </a>
 
-        <!-- Đọc -->
+        <!-- Reading -->
         <a routerLink="/reading" class="flex items-center gap-2 text-sm font-medium text-text-dark hover:text-vstep transition-colors group">
           <span class="text-xl group-hover:scale-110 transition-transform">📖</span>
           <span class="text-vstep group-hover:text-vstep-dark transition-all">Đọc</span>
         </a>
 
-        <!-- Viết -->
+        <!-- Writing -->
         <a routerLink="/writing" class="flex items-center gap-2 text-sm font-medium text-text-dark hover:text-vstep transition-colors group">
           <span class="text-xl group-hover:scale-110 transition-transform">✍️</span>
           <span class="text-vstep group-hover:text-vstep-dark transition-all">Viết</span>
         </a>
 
-        <!-- Từ vựng -->
+        <!-- Speaking -->
+       
+
+        <!-- Full Test -->
+        <a routerLink="/exam-list" class="flex items-center gap-2 text-sm font-medium text-text-dark hover:text-vstep transition-colors group">
+          <span class="text-xl group-hover:scale-110 transition-transform">📋</span>
+          <span class="text-vstep group-hover:text-vstep-dark transition-all">Full Test</span>
+        </a>
+
+        <!-- Vocabulary -->
         <a routerLink="/vocabulary" class="flex items-center gap-2 text-sm font-medium text-text-dark hover:text-vstep transition-colors group">
           <span class="text-xl group-hover:scale-110 transition-transform">📝</span>
           <span class="text-vstep group-hover:text-vstep-dark transition-all">Từ vựng</span>
         </a>
 
-        <!-- Đề thi -->
-        <a routerLink="/exam-list" class="flex items-center gap-2 text-sm font-medium text-text-dark hover:text-vstep transition-colors group">
-          <span class="text-xl group-hover:scale-110 transition-transform">📋</span>
-          <span class="text-vstep group-hover:text-vstep-dark transition-all">Đề thi</span>
-        </a>
-
-        <!-- Blog -->
-        <a routerLink="/blog" class="flex items-center gap-2 text-sm font-medium text-text-dark hover:text-vstep transition-colors group">
-          <span class="text-xl group-hover:scale-110 transition-transform">✍️</span>
-          <span class="text-vstep group-hover:text-vstep-dark transition-all">Blog</span>
+        <!-- Grammar -->
+        <a routerLink="/grammar" class="flex items-center gap-2 text-sm font-medium text-text-dark hover:text-vstep transition-colors group">
+          <span class="text-xl group-hover:scale-110 transition-transform">📚</span>
+          <span class="text-vstep group-hover:text-vstep-dark transition-all">Ngữ pháp</span>
         </a>
         
         <!-- More Dropdown -->
@@ -77,14 +80,17 @@ import { UserProfileDto } from '../../models/auth/auth.model';
             <a routerLink="/practice" class="flex items-center gap-3 px-4 py-2.5 text-sm text-text-dark hover:bg-vstep-lighter transition-colors no-underline" (click)="closeMoreMenu()">
               <span class="text-lg">🎯</span> Luyện tập
             </a>
-            <a routerLink="/practice" class="flex items-center gap-3 px-4 py-2.5 text-sm text-text-dark hover:bg-vstep-lighter transition-colors no-underline" (click)="closeMoreMenu()">
+            <a routerLink="/guidelines" class="flex items-center gap-3 px-4 py-2.5 text-sm text-text-dark hover:bg-vstep-lighter transition-colors no-underline" (click)="closeMoreMenu()">
               <span class="text-lg">📖</span> Hướng dẫn
             </a>
-            <a routerLink="/practice" class="flex items-center gap-3 px-4 py-2.5 text-sm text-text-dark hover:bg-vstep-lighter transition-colors no-underline" (click)="closeMoreMenu()">
-              <span class="text-lg">🎮</span> Trò chơi
+            <a routerLink="/leaderboard" class="flex items-center gap-3 px-4 py-2.5 text-sm text-text-dark hover:bg-vstep-lighter transition-colors no-underline" (click)="closeMoreMenu()">
+              <span class="text-lg">🏆</span> Bảng xếp hạng
             </a>
-            <a routerLink="/practice" class="flex items-center gap-3 px-4 py-2.5 text-sm text-text-dark hover:bg-vstep-lighter transition-colors no-underline" (click)="closeMoreMenu()">
+            <a routerLink="/contact" class="flex items-center gap-3 px-4 py-2.5 text-sm text-text-dark hover:bg-vstep-lighter transition-colors no-underline" (click)="closeMoreMenu()">
               <span class="text-lg">💬</span> Liên hệ
+            </a>
+            <a routerLink="/about" class="flex items-center gap-3 px-4 py-2.5 text-sm text-text-dark hover:bg-vstep-lighter transition-colors no-underline" (click)="closeMoreMenu()">
+              <span class="text-lg">ℹ️</span> Giới thiệu
             </a>
           </div>
         </div>
@@ -125,6 +131,9 @@ import { UserProfileDto } from '../../models/auth/auth.model';
               <a routerLink="/my-submissions" class="flex items-center gap-3 px-4 py-2.5 text-sm text-text-dark hover:bg-vstep-lighter transition-colors no-underline" (click)="closeDropdown()">
                 <span class="text-lg">📝</span> Lịch sử làm bài
               </a>
+              <a routerLink="/wallet" class="flex items-center gap-3 px-4 py-2.5 text-sm text-text-dark hover:bg-vstep-lighter transition-colors no-underline" (click)="closeDropdown()">
+                <span class="text-lg">💰</span> Ví của tôi
+              </a>
               <hr class="my-1 border-gray-100">
               <button class="flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors w-full text-left" (click)="logout()">
                 <span class="text-lg">🚪</span> Đăng xuất
@@ -145,32 +154,30 @@ import { UserProfileDto } from '../../models/auth/auth.model';
     <!-- Mobile Menu -->
     <div *ngIf="mobileOpen" class="lg:hidden border-t border-gray-100 py-3 space-y-1">
       <a routerLink="/listening" class="flex items-center gap-2 px-3 py-2 text-sm text-text-dark hover:bg-vstep-lighter rounded-lg no-underline" (click)="closeMobile()">
-        <span class="text-lg">🎧</span>
-        Nghe
+        <span class="text-lg">🎧</span> Nghe
       </a>
       <a routerLink="/reading" class="flex items-center gap-2 px-3 py-2 text-sm text-text-dark hover:bg-vstep-lighter rounded-lg no-underline" (click)="closeMobile()">
-        <span class="text-lg">📖</span>
-        Đọc
+        <span class="text-lg">📖</span> Đọc
       </a>
       <a routerLink="/writing" class="flex items-center gap-2 px-3 py-2 text-sm text-text-dark hover:bg-vstep-lighter rounded-lg no-underline" (click)="closeMobile()">
-        <span class="text-lg">✍️</span>
-        Viết
+        <span class="text-lg">✍️</span> Viết
+      </a>
+    
+      <a routerLink="/full-test" class="flex items-center gap-2 px-3 py-2 text-sm text-text-dark hover:bg-vstep-lighter rounded-lg no-underline" (click)="closeMobile()">
+        <span class="text-lg">📋</span> Full Test
       </a>
       <a routerLink="/vocabulary" class="flex items-center gap-2 px-3 py-2 text-sm text-text-dark hover:bg-vstep-lighter rounded-lg no-underline" (click)="closeMobile()">
-        <span class="text-lg">📝</span>
-        Từ vựng
+        <span class="text-lg">📝</span> Từ vựng
       </a>
-      <a routerLink="/exam-list" class="flex items-center gap-2 px-3 py-2 text-sm text-text-dark hover:bg-vstep-lighter rounded-lg no-underline" (click)="closeMobile()">
-        <span class="text-lg">📋</span>
-        Đề thi
-      </a>
-      <a routerLink="/blog" class="flex items-center gap-2 px-3 py-2 text-sm text-text-dark hover:bg-vstep-lighter rounded-lg no-underline" (click)="closeMobile()">
-        <span class="text-lg">✍️</span>
-        Blog
+      <a routerLink="/grammar" class="flex items-center gap-2 px-3 py-2 text-sm text-text-dark hover:bg-vstep-lighter rounded-lg no-underline" (click)="closeMobile()">
+        <span class="text-lg">📚</span> Ngữ pháp
       </a>
       <hr class="my-2 border-gray-100">
       <a routerLink="/practice" class="block px-3 py-2 text-sm text-text-dark hover:bg-vstep-lighter rounded-lg no-underline" (click)="closeMobile()">🎯 Luyện tập</a>
-      <a routerLink="/practice" class="block px-3 py-2 text-sm text-text-dark hover:bg-vstep-lighter rounded-lg no-underline" (click)="closeMobile()">📖 Hướng dẫn</a>
+      <a routerLink="/guidelines" class="block px-3 py-2 text-sm text-text-dark hover:bg-vstep-lighter rounded-lg no-underline" (click)="closeMobile()">📖 Hướng dẫn</a>
+      <a routerLink="/leaderboard" class="block px-3 py-2 text-sm text-text-dark hover:bg-vstep-lighter rounded-lg no-underline" (click)="closeMobile()">🏆 Bảng xếp hạng</a>
+      <a routerLink="/contact" class="block px-3 py-2 text-sm text-text-dark hover:bg-vstep-lighter rounded-lg no-underline" (click)="closeMobile()">💬 Liên hệ</a>
+      <a routerLink="/about" class="block px-3 py-2 text-sm text-text-dark hover:bg-vstep-lighter rounded-lg no-underline" (click)="closeMobile()">ℹ️ Giới thiệu</a>
       
       <hr class="my-2 border-gray-100">
       
@@ -182,6 +189,8 @@ import { UserProfileDto } from '../../models/auth/auth.model';
       <ng-container *ngIf="(isAuthenticated$ | async)">
         <a routerLink="/profile" class="block px-3 py-2 text-sm text-text-dark hover:bg-vstep-lighter rounded-lg no-underline" (click)="closeMobile()">👤 Hồ sơ</a>
         <a routerLink="/dashboard" class="block px-3 py-2 text-sm text-text-dark hover:bg-vstep-lighter rounded-lg no-underline" (click)="closeMobile()">📊 Dashboard</a>
+        <a routerLink="/my-submissions" class="block px-3 py-2 text-sm text-text-dark hover:bg-vstep-lighter rounded-lg no-underline" (click)="closeMobile()">📝 Lịch sử</a>
+        <a routerLink="/wallet" class="block px-3 py-2 text-sm text-text-dark hover:bg-vstep-lighter rounded-lg no-underline" (click)="closeMobile()">💰 Ví</a>
         <button class="block w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg" (click)="logout()">🚪 Đăng xuất</button>
       </ng-container>
     </div>

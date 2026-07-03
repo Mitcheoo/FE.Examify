@@ -29,12 +29,34 @@ export class AdminExamService {
     return this.http.get(this.apiUrl + '/admin/exercises?skill=' + skill, { headers: this.getAuthHeaders() });
   }
 
-  // ============ READING QUESTIONS ============
-  createReadingQuestions(exerciseId: string, questions: any[]): Observable<any> {
-    return this.http.post(this.apiUrl + '/admin/exercises/' + exerciseId + '/reading-questions/batch',
-      { questions }, { headers: this.getAuthHeaders() });
+  // ✅ THÊM: Lấy chi tiết Exercise theo ID
+  getExerciseById(exerciseId: string): Observable<any> {
+    return this.http.get(this.apiUrl + '/exercises/' + exerciseId, { headers: this.getAuthHeaders() });
   }
+deleteExercise(exerciseId: string): Observable<any> {
+  return this.http.delete(this.apiUrl + '/admin/exercises/' + exerciseId, { headers: this.getAuthHeaders() });
+}
+  // ============ READING QUESTIONS ============
+// 📁 admin-exam.service.ts
 
+createReadingQuestions(exerciseId: string, questions: any[]): Observable<any> {
+    // ✅ LOG KIỂM TRA TRƯỚC KHI GỬI
+    console.log('📤 Sending Reading Questions:', JSON.stringify({ questions }, null, 2));
+    
+    return this.http.post(
+        this.apiUrl + '/admin/exercises/' + exerciseId + '/reading-questions/batch',
+        { questions }, 
+        { headers: this.getAuthHeaders() }
+    );
+}
+  uploadAudio(formData: FormData): Observable<any> {
+    const token = this.authService.getToken();
+    const headers = new HttpHeaders({
+      'Authorization': token ? 'Bearer ' + token : ''
+    });
+    // KHÔNG set Content-Type cho FormData
+    return this.http.post(this.apiUrl + '/admin/upload/audio', formData, { headers });
+  }
   // ============ LISTENING QUESTIONS ============
   createListeningQuestions(exerciseId: string, questions: any[]): Observable<any> {
     return this.http.post(this.apiUrl + '/admin/exercises/' + exerciseId + '/listening-questions/batch',
@@ -60,6 +82,11 @@ export class AdminExamService {
 
   updateFullTest(fullTestId: string, data: any): Observable<any> {
     return this.http.put(this.apiUrl + '/admin/full-tests/' + fullTestId, data, { headers: this.getAuthHeaders() });
+  }
+
+  // ✅ THÊM: Lấy chi tiết Full Test (bao gồm child exercises)
+  getFullTestById(fullTestId: string): Observable<any> {
+    return this.http.get(this.apiUrl + '/exercises/' + fullTestId, { headers: this.getAuthHeaders() });
   }
 
   // ============ GET EXERCISES ============

@@ -1,4 +1,5 @@
-// src/app/pages/admin/pages/manage-exams/create-exam/create-exam.component.ts
+// 📁 src/app/pages/admin/pages/manage-exams/create-exam/create-exam.component.ts
+
 import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -78,7 +79,6 @@ export class CreateExamComponent implements OnInit {
   difficultyLabels = ['Dễ', 'Trung bình', 'Khó'];
   correctAnswerOptions = ['A', 'B', 'C', 'D'];
 
-  // New question template
   newQuestion: Question = {
     id: '',
     partNumber: 1,
@@ -162,13 +162,11 @@ export class CreateExamComponent implements OnInit {
     }
 
     if (this.editingQuestion) {
-      // Update existing
       const index = this.questions.findIndex(q => q.id === this.editingQuestion!.id);
       if (index !== -1) {
         this.questions[index] = { ...this.newQuestion, id: this.editingQuestion.id };
       }
     } else {
-      // Add new
       this.newQuestion.id = 'q_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
       this.newQuestion.orderNumber = this.questions.length + 1;
       this.questions.push({ ...this.newQuestion });
@@ -204,55 +202,41 @@ export class CreateExamComponent implements OnInit {
   deleteQuestion(index: number): void {
     if (confirm('Bạn có chắc muốn xóa câu hỏi này?')) {
       this.questions.splice(index, 1);
-      // Update order numbers
       this.questions.forEach((q, i) => q.orderNumber = i + 1);
     }
   }
 
-  // ============ GET QUESTION COUNT ============
   getQuestionCount(): number {
     return this.questions.length;
   }
 
   // ============ VALIDATION ============
-  validateForm(): boolean {
-    this.validationErrors = [];
-    let isValid = true;
+// ============ VALIDATION ============
+validateForm(): boolean {
+  this.validationErrors = [];
+  let isValid = true;
 
-    if (!this.examData.title.trim()) {
-      this.validationErrors.push('Vui lòng nhập tiêu đề bài thi');
-      isValid = false;
-    }
-
-    if (this.mode === 'exercise') {
-      if (this.questions.length === 0) {
-        this.validationErrors.push('Vui lòng thêm ít nhất 1 câu hỏi');
-        isValid = false;
-      }
-    }
-
-    if (this.mode === 'fulltest') {
-      if (!this.fullTestData.readingExerciseId) {
-        this.validationErrors.push('Vui lòng chọn bài Reading');
-        isValid = false;
-      }
-      if (!this.fullTestData.listeningExerciseId) {
-        this.validationErrors.push('Vui lòng chọn bài Listening');
-        isValid = false;
-      }
-      if (!this.fullTestData.writingExerciseId) {
-        this.validationErrors.push('Vui lòng chọn bài Writing');
-        isValid = false;
-      }
-      if (!this.fullTestData.speakingExerciseId) {
-        this.validationErrors.push('Vui lòng chọn bài Speaking');
-        isValid = false;
-      }
-    }
-
-    return isValid;
+  // 1. Kiểm tra tiêu đề
+  if (!this.examData.title.trim()) {
+    this.validationErrors.push('Vui lòng nhập tiêu đề bài thi');
+    isValid = false;
   }
 
+  // 2. Kiểm tra theo mode
+  if (this.mode === 'exercise') {
+    // Exercise: Cần có ít nhất 1 câu hỏi
+    if (this.questions.length === 0) {
+      this.validationErrors.push('Vui lòng thêm ít nhất 1 câu hỏi');
+      isValid = false;
+    }
+  }
+
+  // 3. Full Test: KHÔNG BẮT BUỘC CHỌN BÀI
+  // (sẽ tự động tạo 4 exercise con)
+  // Chỉ kiểm tra tiêu đề là đủ
+
+  return isValid;
+}
   // ============ CREATE EXAM ============
   createExam(): void {
     this.errorMessage = '';
@@ -293,7 +277,6 @@ export class CreateExamComponent implements OnInit {
         console.log('✅ Exercise created:', result);
         const exerciseId = result.id;
         
-        // Tạo câu hỏi
         this.createQuestions(exerciseId, () => {
           this.successMessage = `✅ Tạo bài thi "${this.examData.title}" thành công! (${this.questions.length} câu hỏi)`;
           this.isCreating = false;
@@ -401,52 +384,63 @@ export class CreateExamComponent implements OnInit {
     }
   }
 
-  // ============ CREATE FULL TEST ============
-  async createFullTest(): Promise<void> {
-    this.isCreating = true;
-    this.isLoading = true;
+  // ============================================================
+  // ✅ CREATE FULL TEST - SỬA LẠI ĐỂ CHUYỂN ĐẾN TRANG THÊM CÂU HỎI
+  // ============================================================
 
-    try {
-      // Bước 1: Tạo Full Test
-      const fullTestData = {
-        title: this.examData.title.trim(),
-        description: this.examData.description.trim(),
-        timeLimitSeconds: this.examData.timeLimitSeconds,
-        difficulty: this.examData.difficulty
-      };
+// 📁 create-exam.component.ts
 
-      const fullTest: any = await this.adminExamService.createFullTest(fullTestData).toPromise();
-      const fullTestId = fullTest.id;
+createFullTest(): void {
+  this.isCreating = true;
+  this.isLoading = true;
 
-      // Bước 2: Cập nhật Full Test
-      const updateData = {
-        title: this.examData.title.trim(),
-        description: this.examData.description.trim(),
-        timeLimitSeconds: this.examData.timeLimitSeconds,
-        difficulty: this.examData.difficulty,
-        readingExerciseId: this.fullTestData.readingExerciseId,
-        listeningExerciseId: this.fullTestData.listeningExerciseId,
-        writingExerciseId: this.fullTestData.writingExerciseId,
-        speakingExerciseId: this.fullTestData.speakingExerciseId
-      };
+  const data = {
+    title: this.examData.title.trim(),
+    description: this.examData.description.trim(),
+    timeLimitSeconds: this.examData.timeLimitSeconds,
+    difficulty: this.examData.difficulty,
+    readingExerciseId: this.fullTestData.readingExerciseId || null,
+    listeningExerciseId: this.fullTestData.listeningExerciseId || null,
+    writingExerciseId: this.fullTestData.writingExerciseId || null,
+    speakingExerciseId: this.fullTestData.speakingExerciseId || null
+  };
 
-      await this.adminExamService.updateFullTest(fullTestId, updateData).toPromise();
+  console.log('📤 Creating Full Test:', data);
 
-      this.successMessage = `✅ Tạo Full Test "${this.examData.title}" thành công!`;
+  this.adminExamService.createFullTest(data).subscribe({
+    next: (result: any) => {
+      console.log('✅ Full Test created:', result);
+      
+      const fullTestId = result.id;
+      
+      const readingId = result.readingExerciseId || '';
+      const listeningId = result.listeningExerciseId || '';
+      const writingId = result.writingExerciseId || '';
+      const speakingId = result.speakingExerciseId || '';
+
+      console.log('📌 Child Exercise IDs:', { readingId, listeningId, writingId, speakingId });
+
       this.isCreating = false;
       this.isLoading = false;
 
-      setTimeout(() => {
-        this.router.navigate(['/admin/manage-exams']);
-      }, 2000);
-
-    } catch (error: any) {
-      console.error('❌ Create full test error:', error);
-      this.errorMessage = error.error?.message || 'Có lỗi xảy ra khi tạo Full Test';
+      // ✅ ĐIỀU HƯỚNG ĐÚNG
+      this.router.navigate(['/admin/fulltest', fullTestId, 'questions'], {
+        queryParams: {
+          readingId: readingId,
+          listeningId: listeningId,
+          writingId: writingId,
+          speakingId: speakingId
+        }
+      });
+    },
+    error: (err: any) => {
+      console.error('❌ Create full test error:', err);
+      this.errorMessage = err.error?.message || 'Có lỗi xảy ra khi tạo Full Test';
       this.isCreating = false;
       this.isLoading = false;
     }
-  }
+  });
+}
 
   // ============ CANCEL ============
   cancel(): void {
