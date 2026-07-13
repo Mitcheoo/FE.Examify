@@ -2,13 +2,33 @@
 
 <div class="create-exam-container">
   <div class="create-exam-card">
-    <!-- Header -->
+    <!-- ============================================================ -->
+    <!-- HEADER -->
+    <!-- ============================================================ -->
     <div class="create-exam-header">
       <h2>✨ Tạo Bài Thi Mới</h2>
       <button class="btn-close" (click)="cancel()">✕</button>
     </div>
 
-    <!-- Error / Success -->
+    <!-- ============================================================ -->
+    <!-- NOTIFICATION -->
+    <!-- ============================================================ -->
+    <div *ngIf="showNotificationFlag" 
+         class="notification" 
+         [class.notification-success]="notificationType === 'success'"
+         [class.notification-error]="notificationType === 'error'">
+      <div class="notification-content">
+        <span class="notification-icon">
+          {{ notificationType === 'success' ? '✅' : '❌' }}
+        </span>
+        <span class="notification-message">{{ notificationMessage }}</span>
+        <button class="notification-close" (click)="hideNotification()">✕</button>
+      </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- ALERTS -->
+    <!-- ============================================================ -->
     <div *ngIf="errorMessage" class="alert alert-error">
       <div class="alert-icon">❌</div>
       <div class="alert-content">
@@ -23,7 +43,9 @@
       <span>✅</span> {{ successMessage }}
     </div>
 
-    <!-- Mode Selection -->
+    <!-- ============================================================ -->
+    <!-- MODE SELECTION -->
+    <!-- ============================================================ -->
     <div class="mode-selection">
       <button class="mode-btn" [class.active]="mode === 'exercise'" (click)="switchMode('exercise')">
         📝 Tạo Exercise
@@ -33,183 +55,199 @@
       </button>
     </div>
 
-    <!-- Thông tin chung -->
-    <div class="form-section">
-      <h3>📋 Thông tin chung</h3>
+    <!-- ============================================================ -->
+    <!-- EXERCISE MODE - GIỮ NGUYÊN, KHÔNG SỬA -->
+    <!-- ============================================================ -->
+    <div *ngIf="mode === 'exercise'" class="form-section">
+      <h3>📌 Thông tin bài thi</h3>
       
+      <!-- Tiêu đề -->
       <div class="form-group">
         <label>Tiêu đề *</label>
-        <input type="text" [(ngModel)]="examData.title" placeholder="Nhập tiêu đề bài thi..." class="form-input">
+        <input type="text" [(ngModel)]="examData.title" 
+               placeholder="Nhập tiêu đề bài thi..." class="form-input">
       </div>
 
+      <!-- Mô tả -->
       <div class="form-group">
         <label>Mô tả</label>
-        <textarea [(ngModel)]="examData.description" placeholder="Nhập mô tả..." class="form-textarea" rows="2"></textarea>
+        <textarea [(ngModel)]="examData.description" 
+                  placeholder="Nhập mô tả..." class="form-textarea" rows="2"></textarea>
       </div>
 
       <div class="form-row">
+        <!-- Thời gian (GIỮ NGUYÊN) -->
         <div class="form-group">
-          <label>Thời gian (phút)</label>
+          <label>Thời gian (phút) *</label>
           <input type="number" [value]="examData.timeLimitSeconds / 60" 
                  (change)="examData.timeLimitSeconds = $any($event.target).value * 60" 
-                 class="form-input" min="1">
+                 class="form-input" min="1" step="5">
+          <small class="hint">💡 Thời gian sẽ tự động điều chỉnh theo kỹ năng</small>
         </div>
+
+        <!-- Độ khó -->
         <div class="form-group">
           <label>Độ khó</label>
           <select [(ngModel)]="examData.difficulty" class="form-select">
-            <option [value]="1">Dễ</option>
-            <option [value]="2">Trung bình</option>
-            <option [value]="3">Khó</option>
+            <option [value]="1">🟢 Dễ</option>
+            <option [value]="2">🟡 Trung bình</option>
+            <option [value]="3">🔴 Khó</option>
           </select>
         </div>
       </div>
-    </div>
 
-    <!-- Exercise Mode -->
-    <div *ngIf="mode === 'exercise'" class="form-section">
-      <h3>📌 Cấu hình Exercise</h3>
-      
+      <!-- Chọn kỹ năng -->
       <div class="form-group">
-        <label>Kỹ năng</label>
-        <select [(ngModel)]="exerciseData.skill" class="form-select">
-          <option [value]="0">📖 Reading</option>
-          <option [value]="1">🎧 Listening</option>
-          <option [value]="2">✍️ Writing</option>
-          <option [value]="3">🎙️ Speaking</option>
+        <label>Kỹ năng *</label>
+        <select [(ngModel)]="exerciseData.skill" class="form-select" (change)="onSkillChange()">
+          <option [value]="0">📖 Reading (3 Parts - 30 câu)</option>
+          <option [value]="1">🎧 Listening (3 Parts - 35 câu)</option>
+          <option [value]="2">✍️ Writing (2 Tasks - 2 câu)</option>
         </select>
       </div>
 
-      <div class="form-row">
-        <div class="form-group">
-          <label>Số Parts</label>
-          <input type="number" [(ngModel)]="exerciseData.totalParts" class="form-input" min="1">
-        </div>
-        <div class="form-group">
-          <label>Số câu hỏi</label>
-          <span class="question-count-badge">{{ getQuestionCount() }}</span>
+      <!-- Hiển thị thông tin barem -->
+      <div class="info-box" *ngIf="exerciseData.skill !== undefined">
+        <div class="info-box-title">📊 Thông tin cấu trúc bài thi</div>
+        <div class="info-box-content">
+          <div class="info-item">
+            <span class="label">Kỹ năng</span>
+            <span class="value">{{ getSkillName(exerciseData.skill) }}</span>
+          </div>
+          <div class="info-item">
+            <span class="label">Số Parts</span>
+            <span class="value">{{ getSkillInfo(exerciseData.skill).parts }}</span>
+          </div>
+          <div class="info-item">
+            <span class="label">Số câu hỏi</span>
+            <span class="value">{{ getSkillInfo(exerciseData.skill).questions }}</span>
+          </div>
+          <div class="info-item">
+            <span class="label">Thời gian mặc định</span>
+            <span class="value">{{ getSkillInfo(exerciseData.skill).defaultTime / 60 }} phút</span>
+          </div>
         </div>
       </div>
 
-      <!-- Questions Management -->
-      <div class="questions-section">
-        <div class="questions-header">
-          <h4>📝 Danh sách câu hỏi</h4>
-          <button class="btn-add-question" (click)="addQuestion()">➕ Thêm câu hỏi</button>
-        </div>
-
-        <!-- Question Form -->
-        <div *ngIf="showQuestionForm" class="question-form">
-          <div class="form-row">
-            <div class="form-group">
-              <label>Part</label>
-              <input type="number" [(ngModel)]="newQuestion.partNumber" class="form-input" min="1">
-            </div>
-            <div class="form-group">
-              <label>Số thứ tự</label>
-              <input type="number" [(ngModel)]="newQuestion.orderNumber" class="form-input" min="1">
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label>Nội dung câu hỏi *</label>
-            <textarea [(ngModel)]="newQuestion.questionText" placeholder="Nhập nội dung câu hỏi..." class="form-textarea" rows="2"></textarea>
-          </div>
-
-          <div class="form-row options-row">
-            <div class="form-group">
-              <label>A.</label>
-              <input type="text" [(ngModel)]="newQuestion.optionA" placeholder="Đáp án A" class="form-input">
-            </div>
-            <div class="form-group">
-              <label>B.</label>
-              <input type="text" [(ngModel)]="newQuestion.optionB" placeholder="Đáp án B" class="form-input">
-            </div>
-          </div>
-          <div class="form-row options-row">
-            <div class="form-group">
-              <label>C.</label>
-              <input type="text" [(ngModel)]="newQuestion.optionC" placeholder="Đáp án C" class="form-input">
-            </div>
-            <div class="form-group">
-              <label>D.</label>
-              <input type="text" [(ngModel)]="newQuestion.optionD" placeholder="Đáp án D" class="form-input">
-            </div>
-          </div>
-
-          <div class="form-row">
-            <div class="form-group">
-              <label>Đáp án đúng</label>
-              <select [(ngModel)]="newQuestion.correctAnswer" class="form-select">
-                <option *ngFor="let opt of correctAnswerOptions" [value]="opt">{{ opt }}</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label>Giải thích</label>
-              <input type="text" [(ngModel)]="newQuestion.explanation" placeholder="Giải thích (tùy chọn)" class="form-input">
-            </div>
-          </div>
-
-          <div class="question-form-actions">
-            <button class="btn-cancel-form" (click)="cancelQuestionForm()">Hủy</button>
-            <button class="btn-save-question" (click)="saveQuestion()">
-              {{ editingQuestion ? 'Cập nhật' : 'Thêm câu hỏi' }}
-            </button>
-          </div>
-        </div>
-
-        <!-- Questions List -->
-        <div class="questions-list" *ngIf="questions.length > 0">
-          <div *ngFor="let q of questions; let i = index" class="question-item">
-            <div class="question-info">
-              <span class="q-number">{{ q.orderNumber }}.</span>
-              <span class="q-text">{{ q.questionText || 'Chưa nhập nội dung' }}</span>
-              <span class="q-answer">✅ {{ q.correctAnswer }}</span>
-            </div>
-            <div class="question-actions">
-              <button class="btn-edit" (click)="editQuestion(i)">✏️</button>
-              <button class="btn-delete" (click)="deleteQuestion(i)">🗑️</button>
-            </div>
-          </div>
-        </div>
-
-        <div *ngIf="questions.length === 0 && !showQuestionForm" class="empty-questions">
-          <p>📭 Chưa có câu hỏi nào. Nhấn "Thêm câu hỏi" để bắt đầu.</p>
-        </div>
+      <!-- Lưu ý -->
+      <div class="note-box">
+        <p>💡 <strong>Lưu ý:</strong> Sau khi tạo, bạn sẽ được chuyển đến trang thêm câu hỏi cho bài thi.</p>
+        <p>📌 Mỗi kỹ năng có cấu trúc cố định theo chuẩn VSTEP.</p>
       </div>
     </div>
 
-    <!-- Full Test Mode -->
-<!-- 📁 create-exam.component.html -->
+    <!-- ============================================================ -->
+    <!-- FULL TEST MODE - SỬA: XÓA THỜI GIAN + THÊM GIÁ TIỀN -->
+    <!-- ============================================================ -->
+    <div *ngIf="mode === 'fulltest'" class="form-section">
+      <h3>📌 Cấu hình Full Test</h3>
+      
+      <p class="hint">
+        💡 <strong>Không cần chọn bài có sẵn.</strong> Hệ thống sẽ tự động tạo 4 bài thi kỹ năng mới.
+        <br>Bạn có thể chọn bài có sẵn nếu muốn sử dụng lại.
+      </p>
 
-<!-- Full Test Mode -->
-<div *ngIf="mode === 'fulltest'" class="form-section">
-  <h3>📌 Cấu hình Full Test</h3>
-  <p class="hint">
-    💡 <strong>Không cần chọn bài có sẵn.</strong> Hệ thống sẽ tự động tạo 4 bài thi kỹ năng mới.
-    <br>Bạn có thể chọn bài có sẵn nếu muốn sử dụng lại.
-  </p>
+      <!-- Tiêu đề -->
+      <div class="form-group">
+        <label>Tiêu đề *</label>
+        <input type="text" [(ngModel)]="examData.title" 
+               placeholder="Nhập tiêu đề Full Test..." class="form-input">
+      </div>
 
-  <div class="skill-selector" *ngFor="let skill of [0, 1, 2, 3]">
-    <div class="skill-label">{{ getSkillName(skill) }}</div>
-    <div class="skill-controls">
-      <select [(ngModel)]="fullTestData[['reading', 'listening', 'writing', 'speaking'][skill] + 'ExerciseId']" 
-              class="form-select skill-select">
-        <option value="">-- Tự động tạo mới --</option>
-        <option *ngFor="let ex of getAvailableExercises(['reading', 'listening', 'writing', 'speaking'][skill])" 
-                [value]="ex.id">
-          {{ ex.title }}
-        </option>
-      </select>
+      <!-- Mô tả -->
+      <div class="form-group">
+        <label>Mô tả</label>
+        <textarea [(ngModel)]="examData.description" 
+                  placeholder="Nhập mô tả..." class="form-textarea" rows="2"></textarea>
+      </div>
+
+      <!-- ❌ ĐÃ XÓA: Thời gian (phút) -->
+
+      <!-- ✅ THÊM: GIÁ TIỀN -->
+      <div class="price-section">
+        <div class="price-header">
+          <span class="price-title">💰 Giá bán</span>
+          <div class="price-toggle">
+            <label class="toggle-switch">
+              <input type="checkbox" [(ngModel)]="fullTestPriceData.isFree" (change)="onFullTestFreeChange()">
+              <span class="toggle-slider"></span>
+            </label>
+            <span class="toggle-label">{{ fullTestPriceData.isFree ? ' Miễn phí' : ' Trả phí' }}</span>
+          </div>
+        </div>
+        
+        <div class="price-body" *ngIf="!fullTestPriceData.isFree">
+          <div class="price-input-group">
+            <label class="price-label">Giá (VND)</label>
+            <div class="price-input-wrapper">
+              <span class="price-currency">₫</span>
+            <input 
+  type="number" 
+  [(ngModel)]="fullTestPriceData.price"
+  (ngModelChange)="onFullTestPriceChange()"
+  placeholder="Nhập giá bán..."
+  class="price-input"
+  min="0"
+  step="1000"
+/>
+            </div>
+            
+          </div>
+          
+          <div class="price-preview" *ngIf="fullTestPriceData.price > 0">
+            <span class="preview-label">Giá hiển thị:</span>
+            <span class="preview-value">{{ fullTestPriceData.price | number:'1.0-0' }} ₫</span>
+          </div>
+        </div>
+        
+        <div class="price-body" *ngIf="fullTestPriceData.isFree">
+          <div class="free-badge">
+            
+            <span class="free-text">Bài thi được miễn phí cho tất cả các người dùng</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Độ khó -->
+      <div class="form-group">
+        <label>Độ khó</label>
+        <select [(ngModel)]="examData.difficulty" class="form-select">
+          <option [value]="1">🟢 Dễ</option>
+          <option [value]="2">🟡 Trung bình</option>
+          <option [value]="3">🔴 Khó</option>
+        </select>
+      </div>
+
+      <!-- Chọn bài có sẵn -->
+      <div class="skill-selector" *ngFor="let skill of [0, 1, 2, 3]">
+        <div class="skill-label">{{ getSkillName(skill) }}</div>
+        <div class="skill-controls">
+          <select [(ngModel)]="fullTestData[['reading', 'listening', 'writing', 'speaking'][skill] + 'ExerciseId']" 
+                  class="form-select skill-select">
+            <option value="">-- Tự động tạo mới --</option>
+            <option *ngFor="let ex of getAvailableExercises(['reading', 'listening', 'writing', 'speaking'][skill])" 
+                    [value]="ex.id">
+              {{ ex.title }}
+            </option>
+          </select>
+        </div>
+      </div>
+
+      <div class="note-box">
+        <p>💡 <strong>Lưu ý:</strong> Để trống tất cả để hệ thống tự tạo 4 bài thi kỹ năng mới.</p>
+        <p>📌 Chọn bài có sẵn nếu bạn muốn sử dụng lại bài thi đã có.</p>
+        <p *ngIf="!fullTestPriceData.isFree && fullTestPriceData.price > 0">
+          💰 <strong>Giá bán:</strong> {{ fullTestPriceData.price | number:'1.0-0' }} ₫
+        </p>
+        <p *ngIf="fullTestPriceData.isFree">
+          💰 <strong>Giá bán:</strong> 🆓 Miễn phí
+        </p>
+      </div>
     </div>
-  </div>
 
-  <div class="note-box">
-    <p>💡 <strong>Lưu ý:</strong> Để trống tất cả để hệ thống tự tạo 4 bài thi kỹ năng mới.</p>
-    <p>📌 Chọn bài có sẵn nếu bạn muốn sử dụng lại bài thi đã có.</p>
-  </div>
-</div>
-
-    <!-- Actions -->
+    <!-- ============================================================ -->
+    <!-- ACTIONS -->
+    <!-- ============================================================ -->
     <div class="form-actions">
       <button class="btn-cancel" (click)="cancel()">❌ Hủy</button>
       <button class="btn-create" (click)="createExam()" [disabled]="isCreating || isLoading">

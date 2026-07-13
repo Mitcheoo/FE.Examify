@@ -1,0 +1,111 @@
+<!-- src/app/pages/admin/pages/manage-exams/add-questions/add-questions.component.html -->
+
+<div class="add-questions-container">
+  <div class="add-questions-card">
+    <!-- ============================================================ -->
+    <!-- HEADER -->
+    <!-- ============================================================ -->
+    <div class="add-questions-header">
+      <div>
+        <h2>📝 Thêm câu hỏi cho bài thi</h2>
+        <p class="subtitle" *ngIf="exercise">
+          <span class="badge" [class]="'badge-' + skillName.toLowerCase()">
+            {{ getSkillEmoji(skill) }} {{ skillName }}
+          </span>
+          {{ exercise.title }}
+        </p>
+      </div>
+      <button class="btn-close" (click)="cancel()">✕</button>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- LOADING -->
+    <!-- ============================================================ -->
+    <div *ngIf="isLoading" class="loading-state">
+      <div class="spinner"></div>
+      <p>Đang tải dữ liệu...</p>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- ALERTS -->
+    <!-- ============================================================ -->
+    <div *ngIf="errorMessage" class="alert alert-error">
+      <div class="alert-icon">❌</div>
+      <div class="alert-content">
+        <div class="alert-title">{{ errorMessage }}</div>
+        <ul *ngIf="validationErrors.length > 0" class="error-list">
+          <li *ngFor="let err of validationErrors">{{ err }}</li>
+        </ul>
+      </div>
+    </div>
+
+    <div *ngIf="successMessage" class="alert alert-success">
+      <span>✅</span> {{ successMessage }}
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- EXERCISE INFO -->
+    <!-- ============================================================ -->
+    <div *ngIf="exercise && !isLoading" class="exercise-info">
+      <div class="info-grid">
+        <div class="info-item">
+          <span class="label">📌 ID</span>
+          <span class="value">{{ exercise.id }}</span>
+        </div>
+        <div class="info-item">
+          <span class="label">📝 Tiêu đề</span>
+          <span class="value">{{ exercise.title }}</span>
+        </div>
+        <div class="info-item">
+          <span class="label">🎯 Kỹ năng</span>
+          <span class="value">{{ getSkillEmoji(skill) }} {{ skillName }}</span>
+        </div>
+        <div class="info-item">
+          <span class="label">📊 Số câu hỏi</span>
+          <span class="value">{{ questions.length }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- COMPONENT CON THEO SKILL -->
+    <!-- ============================================================ -->
+    <div *ngIf="!isLoading" class="questions-wrapper">
+      
+      <!-- Reading -->
+      <app-reading-questions 
+        *ngIf="skill === 0"
+        [exerciseId]="exerciseId"
+        [questions]="questions"
+        (questionsChange)="onQuestionsChange($event)">
+      </app-reading-questions>
+
+      <!-- Listening -->
+      <app-listening-questions 
+        *ngIf="skill === 1"
+        [exerciseId]="exerciseId"
+        [questions]="questions"
+        (questionsChange)="onQuestionsChange($event)">
+      </app-listening-questions>
+
+      <!-- Writing -->
+      <app-writing-questions 
+        *ngIf="skill === 2"
+        [exerciseId]="exerciseId"
+        [questions]="questions"
+        (questionsChange)="onQuestionsChange($event)">
+      </app-writing-questions>
+
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- FORM ACTIONS -->
+    <!-- ============================================================ -->
+    <div class="form-actions">
+      <button class="btn-cancel" (click)="cancel()">❌ Hủy</button>
+      <button class="btn-save-all" (click)="saveToServer()" [disabled]="isSaving || questions.length === 0">
+        {{ isSaving ? '⏳ Đang lưu...' : '💾 Lưu tất cả' }}
+      </button>
+    </div>
+  </div>
+</div>

@@ -6,19 +6,6 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AdminExamService } from '../../../../../services/admin-exam.service';
 
-interface Question {
-  id: string;
-  partNumber: number;
-  orderNumber: number;
-  questionText: string;
-  optionA: string;
-  optionB: string;
-  optionC: string;
-  optionD: string;
-  correctAnswer: string;
-  explanation: string;
-}
-
 @Component({
   selector: 'app-create-exam',
   standalone: true,
@@ -41,17 +28,17 @@ export class CreateExamComponent implements OnInit {
     difficulty: 2
   };
 
-  // ============ EXERCISE DATA ============
-  exerciseData = {
-    skill: 0,
-    totalParts: 3,
-    totalQuestions: 15
+  // ✅ THÊM: Dữ liệu giá tiền cho Full Test
+  fullTestPriceData = {
+    isFree: true,
+    price: 0,
+    priceDisplay: ''
   };
 
-  // ============ QUESTIONS ============
-  questions: Question[] = [];
-  editingQuestion: Question | null = null;
-  showQuestionForm = false;
+  // ============ EXERCISE DATA ============
+  exerciseData = {
+    skill: 0
+  };
 
   // ============ FULL TEST DATA ============
   fullTestData: any = {
@@ -75,22 +62,15 @@ export class CreateExamComponent implements OnInit {
   successMessage = '';
   validationErrors: string[] = [];
 
-  skillLabels = ['📖 Reading', '🎧 Listening', '✍️ Writing', '🎙️ Speaking'];
-  difficultyLabels = ['Dễ', 'Trung bình', 'Khó'];
-  correctAnswerOptions = ['A', 'B', 'C', 'D'];
-
-  newQuestion: Question = {
-    id: '',
-    partNumber: 1,
-    orderNumber: 1,
-    questionText: '',
-    optionA: '',
-    optionB: '',
-    optionC: '',
-    optionD: '',
-    correctAnswer: 'A',
-    explanation: ''
+  // ============ BAREM CỐ ĐỊNH ============
+  readonly skillBarem = {
+    0: { name: 'Reading', parts: 3, questions: 30, defaultTime: 3600 },
+    1: { name: 'Listening', parts: 3, questions: 35, defaultTime: 2400 },
+    2: { name: 'Writing', parts: 2, questions: 2, defaultTime: 3600 }
   };
+
+  skillLabels = ['📖 Reading', '🎧 Listening', '✍️ Writing'];
+  difficultyLabels = ['Dễ', 'Trung bình', 'Khó'];
 
   ngOnInit(): void {
     this.loadAvailableExercises();
@@ -131,112 +111,67 @@ export class CreateExamComponent implements OnInit {
     return this.skillLabels[skill] || 'Unknown';
   }
 
-  // ============ QUESTION MANAGEMENT ============
-  addQuestion(): void {
-    this.showQuestionForm = true;
-    this.editingQuestion = null;
-    this.newQuestion = {
-      id: '',
-      partNumber: 1,
-      orderNumber: this.questions.length + 1,
-      questionText: '',
-      optionA: '',
-      optionB: '',
-      optionC: '',
-      optionD: '',
-      correctAnswer: 'A',
-      explanation: ''
+  getSkillEmoji(skill: number): string {
+    const emojis: { [key: number]: string } = {
+      0: '📖',
+      1: '🎧',
+      2: '✍️'
     };
+    return emojis[skill] || '📝';
   }
 
-  editQuestion(index: number): void {
-    this.showQuestionForm = true;
-    this.editingQuestion = { ...this.questions[index] };
-    this.newQuestion = { ...this.questions[index] };
+  getSkillInfo(skill: number): { parts: number; questions: number; defaultTime: number } {
+    return this.skillBarem[skill as keyof typeof this.skillBarem] || { parts: 3, questions: 30, defaultTime: 3600 };
   }
 
-  saveQuestion(): void {
-    if (!this.newQuestion.questionText.trim()) {
-      this.errorMessage = 'Vui lòng nhập nội dung câu hỏi';
-      return;
+  // ============ ON SKILL CHANGE ============
+  onSkillChange(): void {
+    const info = this.getSkillInfo(this.exerciseData.skill);
+    this.examData.timeLimitSeconds = info.defaultTime;
+  }
+
+  // ✅ THÊM: HÀM XỬ LÝ GIÁ TIỀN CHO FULL TEST
+  onFullTestFreeChange(): void {
+    if (this.fullTestPriceData.isFree) {
+      this.fullTestPriceData.price = 0;
+      this.fullTestPriceData.priceDisplay = '';
     }
+  }
 
-    if (this.editingQuestion) {
-      const index = this.questions.findIndex(q => q.id === this.editingQuestion!.id);
-      if (index !== -1) {
-        this.questions[index] = { ...this.newQuestion, id: this.editingQuestion.id };
-      }
+  formatPrice(value: number): string {
+    return value ? value.toLocaleString('vi-VN') : '';
+  }
+
+  onFullTestPriceInput(value: string): void {
+    const cleanValue = value.replace(/,/g, '');
+    const numValue = parseInt(cleanValue);
+    if (!isNaN(numValue) && numValue > 0) {
+      this.fullTestPriceData.price = numValue;
+      this.fullTestPriceData.priceDisplay = this.formatPrice(numValue);
     } else {
-      this.newQuestion.id = 'q_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
-      this.newQuestion.orderNumber = this.questions.length + 1;
-      this.questions.push({ ...this.newQuestion });
+      this.fullTestPriceData.price = 0;
+      this.fullTestPriceData.priceDisplay = '';
     }
-
-    this.showQuestionForm = false;
-    this.editingQuestion = null;
-    this.errorMessage = '';
-    this.resetNewQuestion();
-  }
-
-  resetNewQuestion(): void {
-    this.newQuestion = {
-      id: '',
-      partNumber: 1,
-      orderNumber: this.questions.length + 1,
-      questionText: '',
-      optionA: '',
-      optionB: '',
-      optionC: '',
-      optionD: '',
-      correctAnswer: 'A',
-      explanation: ''
-    };
-  }
-
-  cancelQuestionForm(): void {
-    this.showQuestionForm = false;
-    this.editingQuestion = null;
-    this.errorMessage = '';
-  }
-
-  deleteQuestion(index: number): void {
-    if (confirm('Bạn có chắc muốn xóa câu hỏi này?')) {
-      this.questions.splice(index, 1);
-      this.questions.forEach((q, i) => q.orderNumber = i + 1);
-    }
-  }
-
-  getQuestionCount(): number {
-    return this.questions.length;
   }
 
   // ============ VALIDATION ============
-// ============ VALIDATION ============
-validateForm(): boolean {
-  this.validationErrors = [];
-  let isValid = true;
+  validateForm(): boolean {
+    this.validationErrors = [];
+    let isValid = true;
 
-  // 1. Kiểm tra tiêu đề
-  if (!this.examData.title.trim()) {
-    this.validationErrors.push('Vui lòng nhập tiêu đề bài thi');
-    isValid = false;
-  }
-
-  // 2. Kiểm tra theo mode
-  if (this.mode === 'exercise') {
-    // Exercise: Cần có ít nhất 1 câu hỏi
-    if (this.questions.length === 0) {
-      this.validationErrors.push('Vui lòng thêm ít nhất 1 câu hỏi');
+    if (!this.examData.title.trim()) {
+      this.validationErrors.push('Vui lòng nhập tiêu đề bài thi');
       isValid = false;
     }
+
+    if (this.mode === 'exercise' && this.exerciseData.skill === undefined) {
+      this.validationErrors.push('Vui lòng chọn kỹ năng');
+      isValid = false;
+    }
+
+    return isValid;
   }
 
-  // 3. Full Test: KHÔNG BẮT BUỘC CHỌN BÀI
-  // (sẽ tự động tạo 4 exercise con)
-  // Chỉ kiểm tra tiêu đề là đủ
-
-  return isValid;
-}
   // ============ CREATE EXAM ============
   createExam(): void {
     this.errorMessage = '';
@@ -255,17 +190,21 @@ validateForm(): boolean {
     }
   }
 
-  // ============ CREATE EXERCISE ============
+  // ============ CREATE EXERCISE (GIỮ NGUYÊN) ============
   createExercise(): void {
     this.isCreating = true;
     this.isLoading = true;
 
+    const skill = this.exerciseData.skill;
+    const info = this.getSkillInfo(skill);
+    const skillName = this.getSkillName(skill);
+
     const data = {
       title: this.examData.title.trim(),
       description: this.examData.description.trim(),
-      skill: this.exerciseData.skill,
-      totalParts: this.exerciseData.totalParts,
-      totalQuestions: this.questions.length,
+      skill: skill,
+      totalParts: info.parts,
+      totalQuestions: info.questions,
       timeLimitSeconds: this.examData.timeLimitSeconds,
       difficulty: this.examData.difficulty
     };
@@ -277,170 +216,132 @@ validateForm(): boolean {
         console.log('✅ Exercise created:', result);
         const exerciseId = result.id;
         
-        this.createQuestions(exerciseId, () => {
-          this.successMessage = `✅ Tạo bài thi "${this.examData.title}" thành công! (${this.questions.length} câu hỏi)`;
-          this.isCreating = false;
-          this.isLoading = false;
-          
-          setTimeout(() => {
-            this.router.navigate(['/admin/manage-exams']);
-          }, 2000);
-        });
+        this.isCreating = false;
+        this.isLoading = false;
+
+        const message = `✅ Tạo bài thi "${this.examData.title}" thành công!\n` +
+                       `📌 Kỹ năng: ${skillName}\n` +
+                       `📊 Số Parts: ${info.parts}\n` +
+                       `📊 Số câu hỏi: ${info.questions}`;
+        
+        this.successMessage = message;
+        this.showNotification(message, 'success');
+
+        localStorage.setItem('exam_created_notification', message);
+        localStorage.setItem('exam_created_notification_type', 'success');
+
+        setTimeout(() => {
+          this.router.navigate(['/admin/exercises', exerciseId, 'add-questions'], {
+            queryParams: { skill: skill }
+          });
+        }, 1500);
       },
       error: (err: any) => {
         console.error('❌ Create exercise error:', err);
-        this.errorMessage = err.error?.message || 'Có lỗi xảy ra khi tạo bài thi';
+        const errorMsg = err.error?.message || 'Có lỗi xảy ra khi tạo bài thi';
+        this.errorMessage = errorMsg;
+        this.showNotification('❌ ' + errorMsg, 'error');
         this.isCreating = false;
         this.isLoading = false;
       }
     });
   }
 
-  createQuestions(exerciseId: string, callback: () => void): void {
-    const skill = this.exerciseData.skill;
-    let questionsToCreate: any[] = [];
+  // ============ CREATE FULL TEST (SỬA: XÓA THỜI GIAN + THÊM GIÁ) ============
+  createFullTest(): void {
+    this.isCreating = true;
+    this.isLoading = true;
 
-    switch (skill) {
-      case 0: // Reading
-        questionsToCreate = this.questions.map(q => ({
-          partNumber: q.partNumber,
-          orderNumber: q.orderNumber,
-          questionType: 'multiple_choice',
-          questionText: q.questionText,
-          options: {
-            'A': q.optionA,
-            'B': q.optionB,
-            'C': q.optionC,
-            'D': q.optionD
-          },
-          correctAnswer: q.correctAnswer,
-          explanation: q.explanation
-        }));
-        this.adminExamService.createReadingQuestions(exerciseId, questionsToCreate).subscribe({
-          next: () => { callback(); },
-          error: (err) => {
-            console.error('Error creating reading questions:', err);
-            callback();
-          }
-        });
-        break;
-      case 1: // Listening
-        questionsToCreate = this.questions.map(q => ({
-          partNumber: q.partNumber,
-          orderNumber: q.orderNumber,
-          questionText: q.questionText,
-          optionA: q.optionA,
-          optionB: q.optionB,
-          optionC: q.optionC,
-          optionD: q.optionD,
-          correctAnswer: q.correctAnswer,
-          explanation: q.explanation,
-          audioUrl: '/uploads/audio/TESTEXAMIFY.mp3'
-        }));
-        this.adminExamService.createListeningQuestions(exerciseId, questionsToCreate).subscribe({
-          next: () => { callback(); },
-          error: (err) => {
-            console.error('Error creating listening questions:', err);
-            callback();
-          }
-        });
-        break;
-      case 2: // Writing
-        questionsToCreate = this.questions.map(q => ({
-          taskType: q.partNumber,
-          orderNumber: q.orderNumber,
-          promptText: q.questionText,
-          minWords: 150,
-          maxWords: 300,
-          recommendedTimeMinutes: 20
-        }));
-        this.adminExamService.createWritingQuestions(exerciseId, questionsToCreate).subscribe({
-          next: () => { callback(); },
-          error: (err) => {
-            console.error('Error creating writing questions:', err);
-            callback();
-          }
-        });
-        break;
-      case 3: // Speaking
-        questionsToCreate = this.questions.map(q => ({
-          partNumber: q.partNumber,
-          orderNumber: q.orderNumber,
-          questionText: q.questionText,
-          preparationTime: 30,
-          speakingTime: 60,
-          sampleAnswer: q.explanation || ''
-        }));
-        this.adminExamService.createSpeakingQuestions(exerciseId, questionsToCreate).subscribe({
-          next: () => { callback(); },
-          error: (err) => {
-            console.error('Error creating speaking questions:', err);
-            callback();
-          }
-        });
-        break;
-      default:
-        callback();
-    }
+    const data = {
+      title: this.examData.title.trim(),
+      description: this.examData.description.trim(),
+      timeLimitSeconds: 7200, // ✅ Mặc định cố định, không lấy từ UI
+      difficulty: this.examData.difficulty,
+      // ✅ THÊM: Giá tiền
+      isFree: this.fullTestPriceData.isFree,
+      price: this.fullTestPriceData.price,
+      readingExerciseId: this.fullTestData.readingExerciseId || null,
+      listeningExerciseId: this.fullTestData.listeningExerciseId || null,
+      writingExerciseId: this.fullTestData.writingExerciseId || null,
+      speakingExerciseId: this.fullTestData.speakingExerciseId || null
+    };
+
+    console.log('📤 Creating Full Test:', data);
+
+    this.adminExamService.createFullTest(data).subscribe({
+      next: (result: any) => {
+        console.log('✅ Full Test created:', result);
+        
+        const fullTestId = result.id;
+        const readingId = result.readingExerciseId || '';
+        const listeningId = result.listeningExerciseId || '';
+        const writingId = result.writingExerciseId || '';
+        const speakingId = result.speakingExerciseId || '';
+
+        this.isCreating = false;
+        this.isLoading = false;
+
+        const priceText = this.fullTestPriceData.isFree 
+          ? '🆓 Miễn phí' 
+          : this.formatPrice(this.fullTestPriceData.price) + ' ₫';
+        
+        const message = `✅ Tạo Full Test "${this.examData.title}" thành công!\n` +
+                       `💰 Giá: ${priceText}`;
+        this.successMessage = message;
+        this.showNotification(message, 'success');
+
+        localStorage.setItem('exam_created_notification', message);
+        localStorage.setItem('exam_created_notification_type', 'success');
+
+        setTimeout(() => {
+          this.router.navigate(['/admin/fulltest', fullTestId, 'questions'], {
+            queryParams: {
+              readingId: readingId,
+              listeningId: listeningId,
+              writingId: writingId,
+              speakingId: speakingId
+            }
+          });
+        }, 1500);
+      },
+      error: (err: any) => {
+        console.error('❌ Create full test error:', err);
+        const errorMsg = err.error?.message || 'Có lỗi xảy ra khi tạo Full Test';
+        this.errorMessage = errorMsg;
+        this.showNotification('❌ ' + errorMsg, 'error');
+        this.isCreating = false;
+        this.isLoading = false;
+      }
+    });
+  }
+  onFullTestPriceChange(): void {
+  // Format để hiển thị preview
+  if (this.fullTestPriceData.price > 0) {
+    this.fullTestPriceData.priceDisplay = this.formatPrice(this.fullTestPriceData.price);
+  } else {
+    this.fullTestPriceData.priceDisplay = '';
+  }
+}
+
+  // ============ NOTIFICATION ============
+  notificationMessage: string = '';
+  notificationType: 'success' | 'error' = 'success';
+  showNotificationFlag: boolean = false;
+
+  showNotification(message: string, type: 'success' | 'error' = 'success'): void {
+    this.notificationMessage = message;
+    this.notificationType = type;
+    this.showNotificationFlag = true;
+
+    setTimeout(() => {
+      this.hideNotification();
+    }, 5000);
   }
 
-  // ============================================================
-  // ✅ CREATE FULL TEST - SỬA LẠI ĐỂ CHUYỂN ĐẾN TRANG THÊM CÂU HỎI
-  // ============================================================
-
-// 📁 create-exam.component.ts
-
-createFullTest(): void {
-  this.isCreating = true;
-  this.isLoading = true;
-
-  const data = {
-    title: this.examData.title.trim(),
-    description: this.examData.description.trim(),
-    timeLimitSeconds: this.examData.timeLimitSeconds,
-    difficulty: this.examData.difficulty,
-    readingExerciseId: this.fullTestData.readingExerciseId || null,
-    listeningExerciseId: this.fullTestData.listeningExerciseId || null,
-    writingExerciseId: this.fullTestData.writingExerciseId || null,
-    speakingExerciseId: this.fullTestData.speakingExerciseId || null
-  };
-
-  console.log('📤 Creating Full Test:', data);
-
-  this.adminExamService.createFullTest(data).subscribe({
-    next: (result: any) => {
-      console.log('✅ Full Test created:', result);
-      
-      const fullTestId = result.id;
-      
-      const readingId = result.readingExerciseId || '';
-      const listeningId = result.listeningExerciseId || '';
-      const writingId = result.writingExerciseId || '';
-      const speakingId = result.speakingExerciseId || '';
-
-      console.log('📌 Child Exercise IDs:', { readingId, listeningId, writingId, speakingId });
-
-      this.isCreating = false;
-      this.isLoading = false;
-
-      // ✅ ĐIỀU HƯỚNG ĐÚNG
-      this.router.navigate(['/admin/fulltest', fullTestId, 'questions'], {
-        queryParams: {
-          readingId: readingId,
-          listeningId: listeningId,
-          writingId: writingId,
-          speakingId: speakingId
-        }
-      });
-    },
-    error: (err: any) => {
-      console.error('❌ Create full test error:', err);
-      this.errorMessage = err.error?.message || 'Có lỗi xảy ra khi tạo Full Test';
-      this.isCreating = false;
-      this.isLoading = false;
-    }
-  });
-}
+  hideNotification(): void {
+    this.showNotificationFlag = false;
+    this.notificationMessage = '';
+  }
 
   // ============ CANCEL ============
   cancel(): void {

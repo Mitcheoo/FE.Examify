@@ -217,8 +217,8 @@
         </div>
 
         <div class="navigator-stats">
-          <div class="stat-item"><span class="stat-label">✅ Đã làm:</span><span class="stat-value">{{ answeredCount }}</span></div>
-          <div class="stat-item"><span class="stat-label">⏳ Chưa làm:</span><span class="stat-value">{{ (exam?.totalQuestions || 0) - answeredCount }}</span></div>
+          <div class="stat-item"><span class="stat-label">Chưa làm:</span><span class="stat-value">{{ answeredCount }}</span></div>
+          <div class="stat-item"><span class="stat-label"> Đã làm:</span><span class="stat-value">{{ (exam?.totalQuestions || 0) - answeredCount }}</span></div>
         </div>
       </div>
     </div>
@@ -232,7 +232,7 @@
     </div>
 
     <div class="footer-info">
-      <span class="footer-answered">📝 Đã trả lời: <strong>{{ answeredCount }}</strong>/{{ exam?.totalQuestions || 0 }}</span>
+      <span class="footer-answered">📝 Đã trả lời: <strong>{{ answeredCount }}</strong>/35</span>
       <span *ngIf="(exam?.totalQuestions || 0) - answeredCount > 0" class="footer-remaining">
         ⏳ Còn <strong>{{ (exam?.totalQuestions || 0) - answeredCount }}</strong> câu
       </span>

@@ -4,11 +4,12 @@ import { RouterLink, Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { Subscription } from 'rxjs';
 import { UserProfileDto } from '../../models/auth/auth.model';
+import { WalletBalanceComponent } from '../wallet-balance/wallet-balance.component';
 
 @Component({
   selector: 'app-header',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, WalletBalanceComponent],
   template: `
 <header class="bg-white shadow-sm fixed top-0 left-0 right-0 z-50">
   <div class="max-w-full mx-auto px-2 sm:px-4 lg:px-6">
@@ -107,40 +108,47 @@ import { UserProfileDto } from '../../models/auth/auth.model';
           </button>
         </ng-container>
 
-        <ng-container *ngIf="(isAuthenticated$ | async)">
-          <div class="relative" (click)="toggleMenu()">
-            <div class="flex items-center gap-2 cursor-pointer bg-gray-50 hover:bg-vstep-lighter rounded-full px-3 py-1.5 transition-colors">
-              <div class="w-8 h-8 rounded-full bg-vstep flex items-center justify-center text-white text-sm font-bold overflow-hidden">
-                <img *ngIf="avatarUrl" [src]="avatarUrl" alt="Avatar" class="w-full h-full object-cover">
-                <span *ngIf="!avatarUrl">{{ userInitial }}</span>
-              </div>
-              <span class="text-sm font-medium text-text-dark max-w-[100px] truncate">{{ userFullName || 'User' }}</span>
-              <svg class="w-4 h-4 text-text-dark opacity-60 transition-transform duration-200" [class.rotate-180]="showMenu" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-              </svg>
-            </div>
+ <ng-container *ngIf="(isAuthenticated$ | async)">
+  <div class="flex items-center gap-3">
+    <!-- ✅ Wallet Balance - THÊM VÀO ĐÂY -->
+    <app-wallet-balance></app-wallet-balance>
 
-            <!-- Dropdown Menu -->
-            <div *ngIf="showMenu" class="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-lg border border-gray-100 py-1 z-50 overflow-hidden">
-              <a routerLink="/profile" class="flex items-center gap-3 px-4 py-2.5 text-sm text-text-dark hover:bg-vstep-lighter transition-colors no-underline" (click)="closeDropdown()">
-                <span class="text-lg">👤</span> Hồ sơ cá nhân
-              </a>
-              <a routerLink="/dashboard" class="flex items-center gap-3 px-4 py-2.5 text-sm text-text-dark hover:bg-vstep-lighter transition-colors no-underline" (click)="closeDropdown()">
-                <span class="text-lg">📊</span> Dashboard
-              </a>
-              <a routerLink="/my-submissions" class="flex items-center gap-3 px-4 py-2.5 text-sm text-text-dark hover:bg-vstep-lighter transition-colors no-underline" (click)="closeDropdown()">
-                <span class="text-lg">📝</span> Lịch sử làm bài
-              </a>
-              <a routerLink="/wallet" class="flex items-center gap-3 px-4 py-2.5 text-sm text-text-dark hover:bg-vstep-lighter transition-colors no-underline" (click)="closeDropdown()">
-                <span class="text-lg">💰</span> Ví của tôi
-              </a>
-              <hr class="my-1 border-gray-100">
-              <button class="flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors w-full text-left" (click)="logout()">
-                <span class="text-lg">🚪</span> Đăng xuất
-              </button>
-            </div>
-          </div>
-        </ng-container>
+    <!-- User Menu Dropdown -->
+    <div class="relative" (click)="toggleMenu()">
+      <div class="flex items-center gap-2 cursor-pointer bg-gray-50 hover:bg-vstep-lighter rounded-full px-3 py-1.5 transition-colors">
+        <div class="w-8 h-8 rounded-full bg-vstep flex items-center justify-center text-white text-sm font-bold overflow-hidden">
+          <img *ngIf="avatarUrl" [src]="avatarUrl" alt="Avatar" class="w-full h-full object-cover">
+          <span *ngIf="!avatarUrl">{{ userInitial }}</span>
+        </div>
+        <span class="text-sm font-medium text-text-dark max-w-[100px] truncate">{{ userFullName || 'User' }}</span>
+        
+        <svg class="w-4 h-4 text-text-dark opacity-60 transition-transform duration-200" [class.rotate-180]="showMenu" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+        </svg>
+      </div>
+
+      <!-- Dropdown Menu -->
+      <div *ngIf="showMenu" class="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-lg border border-gray-100 py-1 z-50 overflow-hidden">
+        <a routerLink="/profile" class="flex items-center gap-3 px-4 py-2.5 text-sm text-text-dark hover:bg-vstep-lighter transition-colors no-underline" (click)="closeDropdown()">
+          <span class="text-lg">👤</span> Hồ sơ cá nhân
+        </a>
+        <a routerLink="/dashboard" class="flex items-center gap-3 px-4 py-2.5 text-sm text-text-dark hover:bg-vstep-lighter transition-colors no-underline" (click)="closeDropdown()">
+          <span class="text-lg">📊</span> Dashboard
+        </a>
+        <a routerLink="/my-submissions" class="flex items-center gap-3 px-4 py-2.5 text-sm text-text-dark hover:bg-vstep-lighter transition-colors no-underline" (click)="closeDropdown()">
+          <span class="text-lg">📝</span> Lịch sử làm bài
+        </a>
+        <a routerLink="/wallet" class="flex items-center gap-3 px-4 py-2.5 text-sm text-text-dark hover:bg-vstep-lighter transition-colors no-underline" (click)="closeDropdown()">
+          <span class="text-lg">💰</span> Ví của tôi
+        </a>
+        <hr class="my-1 border-gray-100">
+        <button class="flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors w-full text-left" (click)="logout()">
+          <span class="text-lg">🚪</span> Đăng xuất
+        </button>
+      </div>
+    </div>
+  </div>
+</ng-container>
 
         <!-- Mobile Menu Button -->
         <button class="lg:hidden p-2 rounded-lg hover:bg-vstep-lighter transition-colors" (click)="toggleMobile()">

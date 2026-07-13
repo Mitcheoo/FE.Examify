@@ -1,0 +1,260 @@
+<!-- src/app/pages/admin/pages/submissions/submissions.component.html -->
+
+<div class="submissions-container">
+  
+  <!-- ============================================================
+  TOAST
+  ============================================================ -->
+  <div *ngIf="showToast" 
+       class="toast-notification"
+       [class.toast-success]="toastType === 'success'"
+       [class.toast-error]="toastType === 'error'"
+       [class.toast-info]="toastType === 'info'">
+    <span>{{ toastMessage }}</span>
+    <button class="toast-close" (click)="closeToast()">✕</button>
+  </div>
+
+  <!-- ============================================================
+  HEADER
+  ============================================================ -->
+  <div class="submissions-header">
+    <div>
+      <h1 class="page-title">📊 Quản lý bài nộp</h1>
+      <p class="page-subtitle">Quản lý tất cả bài nộp của người dùng</p>
+    </div>
+    <div class="header-actions">
+      <button (click)="exportData()" class="btn btn-secondary">
+        📥 Xuất dữ liệu
+      </button>
+      <button (click)="refreshData()" class="btn btn-primary" [disabled]="isLoading">
+        <span *ngIf="!isLoading">🔄 Làm mới</span>
+        <span *ngIf="isLoading">⏳ Đang tải...</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ============================================================
+  STATS CARDS
+  ============================================================ -->
+  <div class="stats-grid">
+    <div class="stat-card stat-card-total">
+      <div class="stat-icon">📚</div>
+      <div class="stat-info">
+        <p class="stat-label">Tổng bài nộp</p>
+        <p class="stat-value">{{ stats?.totalSubmissions || 0 }}</p>
+      </div>
+    </div>
+    <div class="stat-card stat-card-passed">
+      <div class="stat-icon">✅</div>
+      <div class="stat-info">
+        <p class="stat-label">Đã qua</p>
+        <p class="stat-value">{{ stats?.passedCount || 0 }}</p>
+      </div>
+    </div>
+    <div class="stat-card stat-card-failed">
+      <div class="stat-icon">❌</div>
+      <div class="stat-info">
+        <p class="stat-label">Trượt</p>
+        <p class="stat-value">{{ stats?.failedCount || 0 }}</p>
+      </div>
+    </div>
+    <div class="stat-card stat-card-inprogress">
+      <div class="stat-icon">⏳</div>
+      <div class="stat-info">
+        <p class="stat-label">Đang làm</p>
+        <p class="stat-value">{{ stats?.inProgressCount || 0 }}</p>
+      </div>
+    </div>
+    <div class="stat-card stat-card-average">
+      <div class="stat-icon">📈</div>
+      <div class="stat-info">
+        <p class="stat-label">Điểm trung bình</p>
+        <p class="stat-value">{{ stats?.averageScore || 0 }}/10</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+  FILTERS
+  ============================================================ -->
+  <div class="filters-bar">
+    <div class="filter-group filter-search">
+      <input 
+        type="text"
+        [(ngModel)]="searchTerm"
+        (ngModelChange)="applyFilters()"
+        placeholder="🔍 Tìm kiếm theo tên, email, bài thi..."
+        class="filter-input"
+      />
+    </div>
+    
+    <div class="filter-group">
+      <select 
+        [(ngModel)]="selectedSkill"
+        (ngModelChange)="applyFilters()"
+        class="filter-select"
+      >
+        <option *ngFor="let option of skillOptions" [value]="option.value">
+          {{ option.label }}
+        </option>
+      </select>
+    </div>
+
+    <div class="filter-group">
+      <select 
+        [(ngModel)]="selectedStatus"
+        (ngModelChange)="applyFilters()"
+        class="filter-select"
+      >
+        <option *ngFor="let option of statusOptions" [value]="option.value">
+          {{ option.label }}
+        </option>
+      </select>
+    </div>
+
+    <div class="filter-group filter-date">
+      <input 
+        type="date"
+        [(ngModel)]="fromDate"
+        (ngModelChange)="applyFilters()"
+        class="filter-input"
+        placeholder="Từ ngày"
+      />
+    </div>
+
+    <div class="filter-group filter-date">
+      <input 
+        type="date"
+        [(ngModel)]="toDate"
+        (ngModelChange)="applyFilters()"
+        class="filter-input"
+        placeholder="Đến ngày"
+      />
+    </div>
+
+    <button (click)="clearFilters()" class="btn btn-clear">
+      ❌ Xóa lọc
+    </button>
+  </div>
+
+  <!-- ============================================================
+  LOADING
+  ============================================================ -->
+  <div *ngIf="isLoading" class="loading-container">
+    <div class="spinner"></div>
+    <p>Đang tải dữ liệu...</p>
+  </div>
+
+  <!-- ============================================================
+  TABLE
+  ============================================================ -->
+  <div *ngIf="!isLoading" class="table-container">
+    <div class="table-wrapper">
+      <table class="submissions-table">
+        <thead>
+          <tr>
+            <th class="col-user">Người dùng</th>
+            <th class="col-exam">Bài thi</th>
+            <th class="col-skill">Kỹ năng</th>
+            <th class="col-score">Điểm</th>
+            <th class="col-time">Thời gian</th>
+            <th class="col-status">Trạng thái</th>
+            <th class="col-date">Ngày nộp</th>
+            <th class="col-actions">Hành động</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let sub of filteredSubmissions" class="table-row">
+            <td class="col-user">
+              <div class="user-info">
+                <p class="user-name">{{ sub.userName }}</p>
+                <p class="user-email">{{ sub.userEmail }}</p>
+              </div>
+            </td>
+            <td class="col-exam">
+              <p class="exam-title">{{ sub.exerciseTitle }}</p>
+            </td>
+            <td class="col-skill">
+              <span class="badge" [class]="getSkillBadge(sub.skillName)">
+                {{ sub.skillName }}
+              </span>
+            </td>
+            <td class="col-score">
+              <div class="score-info">
+                <span class="score-value" [class.score-passed]="sub.score >= 7" [class.score-failed]="sub.score < 7 && sub.isGraded">
+                  {{ sub.score }}/10
+                </span>
+                <span class="score-detail">
+                  ({{ sub.correctCount }}/{{ sub.totalQuestions }})
+                </span>
+              </div>
+            </td>
+            <td class="col-time">
+              <span class="time-value">{{ sub.timeSpentFormatted }}</span>
+            </td>
+            <td class="col-status">
+              <span class="badge" [class]="getStatusClass(sub.status)">
+                {{ getStatusIcon(sub.status) }} {{ sub.status }}
+              </span>
+            </td>
+            <td class="col-date">
+              <span class="date-value">{{ formatDate(sub.submittedAt) }}</span>
+            </td>
+            <td class="col-actions">
+              <button (click)="viewDetail(sub)" class="action-btn action-view" title="Xem chi tiết">
+                👁️
+              </button>
+            </td>
+          </tr>
+          <tr *ngIf="filteredSubmissions.length === 0">
+            <td colspan="8" class="empty-state">
+              <div class="empty-content">
+                <span class="empty-icon">📭</span>
+                <p>Không có bài nộp nào</p>
+                <span class="empty-hint">Thay đổi bộ lọc hoặc đợi người dùng nộp bài</span>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- ============================================================
+    PAGINATION
+    ============================================================ -->
+    <div *ngIf="totalCount > 0" class="table-footer">
+      <div class="pagination-info">
+        Hiển thị {{ startIndex }} - {{ endIndex }} / {{ totalCount }} bài
+      </div>
+      <div class="pagination-controls">
+        <button 
+          (click)="prevPage()"
+          [disabled]="currentPage === 1"
+          class="pagination-btn"
+        >
+          ←
+        </button>
+        
+        <button 
+          *ngFor="let page of pageNumbers"
+          class="pagination-btn"
+          [class.pagination-btn-active]="currentPage === page"
+          [class.pagination-btn-dots]="page === -1"
+          [disabled]="page === -1"
+          (click)="goToPage(page)"
+        >
+          <span *ngIf="page !== -1">{{ page }}</span>
+          <span *ngIf="page === -1">…</span>
+        </button>
+
+        <button 
+          (click)="nextPage()"
+          [disabled]="currentPage === totalPages"
+          class="pagination-btn"
+        >
+          →
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

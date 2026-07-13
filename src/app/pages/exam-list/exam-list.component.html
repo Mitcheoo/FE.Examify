@@ -1,10 +1,9 @@
-﻿<div class="min-h-screen bg-background-light">
-  <!-- Header -->
+﻿<!-- src/app/pages/exam-list/exam-list.component.html -->
+<div class="min-h-screen bg-background-light">
   <app-header></app-header>
 
   <!-- Page Header -->
   <div class="relative bg-gradient-to-r from-vstep to-vstep-dark text-white py-16 mt-20 overflow-hidden">
-    <!-- Decoration -->
     <div class="absolute inset-0 opacity-10">
       <div class="w-full h-full bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
     </div>
@@ -32,21 +31,67 @@
 
   <!-- Exam Grid -->
   <div class="container mx-auto px-4 py-12">
-    <!-- Filter / Stats -->
-    <div *ngIf="!isLoading && filteredExams.length > 0" class="flex justify-between items-center mb-8 flex-wrap gap-4">
+    <!-- HEADER WITH SEARCH & SORT - Chỉ hiển thị khi có dữ liệu và không có tìm kiếm, HOẶC có tìm kiếm và có kết quả -->
+    <div *ngIf="!isLoading && ((!searchKeyword && filteredExams.length > 0) || (searchKeyword && filteredExams.length > 0))" 
+         class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
       <div>
         <h2 class="text-2xl font-bold text-text-dark">
-          📋 Tất cả đề thi
-          <span class="text-sm font-normal text-text-medium ml-2">({{ filteredExams.length }} đề)</span>
+          <span *ngIf="!searchKeyword">📋 Tất cả đề thi</span>
+          <span *ngIf="searchKeyword">🔍 Kết quả tìm kiếm</span>
+          <span class="text-sm font-normal text-text-medium ml-2">({{ totalItems }} đề)</span>
         </h2>
       </div>
-      <div class="flex gap-2">
-        <button class="px-4 py-2 bg-vstep text-white text-sm font-medium rounded-lg hover:bg-vstep-dark transition-all duration-300 shadow-sm hover:shadow-md">
-          🔥 Mới nhất
-        </button>
-        <button class="px-4 py-2 bg-white text-text-dark text-sm font-medium rounded-lg border border-gray-200 hover:border-vstep hover:text-vstep transition-all duration-300">
-          ⭐ Phổ biến
-        </button>
+      
+      <!-- SEARCH BAR + SORT DROPDOWN -->
+      <div class="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+        <!-- Search -->
+        <div class="relative flex-1 md:min-w-[280px]">
+          <span class="absolute left-3 top-1/2 -translate-y-1/2 text-text-light">🔍</span>
+          <input 
+            type="text"
+            [(ngModel)]="searchKeyword"
+            (input)="onSearch()"
+            placeholder="Tìm kiếm đề thi..."
+            class="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:outline-none focus:border-vstep focus:ring-2 focus:ring-vstep/20 transition-all duration-200 text-sm"
+          />
+          <button 
+            *ngIf="searchKeyword"
+            (click)="clearSearch()"
+            class="absolute right-3 top-1/2 -translate-y-1/2 text-text-light hover:text-red-500 transition-colors text-sm"
+          >
+            ✕
+          </button>
+        </div>
+        
+        <!-- SORT DROPDOWN -->
+        <div class="relative">
+          <button 
+            (click)="showSortDropdown = !showSortDropdown"
+            class="px-4 py-2.5 bg-white border border-gray-200 rounded-xl hover:border-vstep hover:bg-vstep-light/10 transition-all duration-200 text-sm font-medium text-text-dark flex items-center gap-2 min-w-[140px] justify-between"
+          >
+            <span>
+              {{ getCurrentSortLabel() }}
+            </span>
+            <span class="text-text-light">▼</span>
+          </button>
+          
+          <!-- Dropdown menu -->
+          <div *ngIf="showSortDropdown" 
+               class="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-xl shadow-lg z-50 py-1 overflow-hidden">
+            <button 
+              *ngFor="let option of sortOptions"
+              (click)="changeSort(option.value); showSortDropdown = false"
+              class="w-full px-4 py-2.5 text-left text-sm hover:bg-vstep-light/10 transition-colors flex items-center gap-2"
+              [class.bg-vstep-light]="currentSort === option.value"
+              [class.text-vstep]="currentSort === option.value"
+              [class.text-text-dark]="currentSort !== option.value"
+            >
+              <span>{{ option.icon }}</span>
+              <span>{{ option.label }}</span>
+              <span *ngIf="currentSort === option.value" class="ml-auto text-vstep">✓</span>
+            </button>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -56,76 +101,158 @@
            class="bg-white rounded-2xl shadow-card hover:shadow-card-hover transition-all duration-300 cursor-pointer overflow-hidden group hover:-translate-y-2"
            (click)="onExamClick(exam)">
         
-        <!-- Colored top bar -->
         <div class="h-1.5 bg-gradient-to-r from-vstep to-vstep-dark"></div>
         
         <div class="p-6">
-          <!-- Badge và icon -->
           <div class="flex justify-between items-start mb-4">
-            <div class="flex gap-2">
+            <div class="flex gap-2 flex-wrap">
               <span class="px-3 py-1 bg-vstep-lighter text-vstep-dark text-xs font-semibold rounded-full">
                 📝 Full Test
               </span>
-              <!-- <span *ngIf="exam.level" class="px-3 py-1 bg-warning-light/10 text-warning-light text-xs font-semibold rounded-full">
-                {{ exam.level }}
-              </span> -->
+              <span *ngIf="isPurchased(exam.id)" class="px-3 py-1 bg-green-100 text-green-700 text-xs font-semibold rounded-full">
+                ✅ Đã mua
+              </span>
             </div>
             <span class="text-2xl opacity-30 group-hover:opacity-100 transition-opacity">
               📖
             </span>
           </div>
           
-          <!-- Title -->
           <h3 class="text-xl font-bold text-text-dark mb-2 group-hover:text-vstep transition-colors line-clamp-1">
             {{ exam.title }}
           </h3>
           
-          <!-- Description -->
           <p class="text-text-medium text-sm mb-4 line-clamp-2 leading-relaxed">
             {{ exam.description || 'Đề thi đầy đủ 4 kỹ năng Reading, Listening, Writing, Speaking theo chuẩn VSTEP' }}
           </p>
           
-          <!-- Meta Info -->
           <div class="flex items-center gap-4 text-text-light text-xs mb-4 pb-4 border-b border-gray-100">
-            <span class="flex items-center gap-1">⏱️ 120 phút</span>
+            <span class="flex items-center gap-1">⏱️ {{ Math.floor((exam.timeLimitSeconds || 7200) / 60) }} phút</span>
             <span class="w-px h-4 bg-gray-200"></span>
-            <span class="flex items-center gap-1">📝 100 câu</span>
+            <span class="flex items-center gap-1">📝 {{ exam.totalQuestions || 0 }} câu</span>
             <span class="w-px h-4 bg-gray-200"></span>
             <span class="flex items-center gap-1">📊 4 kỹ năng</span>
           </div>
           
-          <!-- Price & Button -->
           <div class="flex items-center justify-between">
             <div>
-              <span class="text-2xl font-bold text-vstep">
-                {{ (exam.price || 0).toLocaleString() }}đ
-              </span>
-              <span *ngIf="exam.price && exam.price > 0" class="text-xs text-text-light line-through ml-2">
-                {{ (exam.price * 1.2).toLocaleString() }}đ
-              </span>
-              <span *ngIf="!exam.price || exam.price === 0" class="text-sm font-medium text-success-light">
-                🎉 Miễn phí
-              </span>
+              <ng-container *ngIf="exam.isFree || exam.price === 0">
+                <span class="text-sm font-medium text-success-light">🎉 Miễn phí</span>
+              </ng-container>
+              <ng-container *ngIf="!exam.isFree && exam.price > 0">
+                <span class="text-2xl font-bold text-vstep">
+                  {{ (exam.price || 0).toLocaleString() }}đ
+                </span>
+                <span *ngIf="exam.price && exam.price > 0" class="text-xs text-text-light line-through ml-2">
+                  {{ (exam.price * 1.2).toLocaleString() }}đ
+                </span>
+              </ng-container>
             </div>
-            <button class="px-5 py-2 bg-gradient-to-r from-vstep to-vstep-dark text-white text-sm font-semibold rounded-full hover:shadow-lg hover:shadow-vstep/25 transition-all duration-300 hover:-translate-y-0.5">
-              Bắt đầu →
-            </button>
+            
+            <ng-container *ngIf="exam.isFree || exam.price === 0">
+              <button class="px-5 py-2 bg-gradient-to-r from-vstep to-vstep-dark text-white text-sm font-semibold rounded-full hover:shadow-lg hover:shadow-vstep/25 transition-all duration-300 hover:-translate-y-0.5"
+                      (click)="startExam(exam, $event)">
+                Bắt đầu →
+              </button>
+            </ng-container>
+            
+            <ng-container *ngIf="!exam.isFree && exam.price > 0">
+              <ng-container *ngIf="isPurchased(exam.id)">
+                <button class="px-5 py-2 bg-gradient-to-r from-green-500 to-green-600 text-white text-sm font-semibold rounded-full hover:shadow-lg hover:shadow-green-500/25 transition-all duration-300 hover:-translate-y-0.5"
+                        (click)="startExam(exam, $event)">
+                  📝 Làm bài
+                </button>
+              </ng-container>
+              <ng-container *ngIf="!isPurchased(exam.id)">
+                <button class="px-5 py-2 bg-gradient-to-r from-yellow-500 to-yellow-600 text-white text-sm font-semibold rounded-full hover:shadow-lg hover:shadow-yellow-500/25 transition-all duration-300 hover:-translate-y-0.5"
+                        [disabled]="isProcessing(exam.id)"
+                        (click)="purchaseExam(exam, $event)">
+                  <span *ngIf="!isProcessing(exam.id)">💰 Mua bài</span>
+                  <span *ngIf="isProcessing(exam.id)" class="flex items-center gap-2">
+                    <span class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                    Đang xử lý...
+                  </span>
+                </button>
+              </ng-container>
+            </ng-container>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Empty State -->
-    <div *ngIf="!isLoading && filteredExams.length === 0" class="text-center py-20">
+    <!-- EMPTY STATE - Chỉ hiển thị khi không tìm kiếm và không có dữ liệu -->
+    <div *ngIf="!isLoading && !searchKeyword && filteredExams.length === 0" class="text-center py-20">
       <div class="text-7xl mb-4">📭</div>
       <h3 class="text-2xl font-bold text-text-dark mb-2">Chưa có đề thi</h3>
-      <p class="text-text-medium mb-6">Hiện tại chưa có đề thi nào phù hợp. Vui lòng quay lại sau!</p>
-      <button class="px-6 py-3 bg-vstep text-white text-sm font-semibold rounded-full hover:bg-vstep-dark transition-all duration-300 shadow-md hover:shadow-lg" (click)="loadExams()">
+      <p class="text-text-medium mb-6">Hiện tại chưa có đề thi nào. Vui lòng quay lại sau!</p>
+      <button class="px-6 py-3 bg-vstep text-white text-sm font-semibold rounded-full hover:bg-vstep-dark transition-all duration-300 shadow-md hover:shadow-lg" 
+              (click)="loadExams()">
         🔄 Làm mới
       </button>
     </div>
+
+    <!-- PAGINATION - Chỉ hiển thị khi không tìm kiếm và có nhiều trang -->
+    <div *ngIf="!isLoading && !searchKeyword && totalPages > 1" class="flex flex-col items-center gap-4 mt-10">
+      <div class="flex items-center gap-2 flex-wrap justify-center">
+        <!-- Previous -->
+        <button (click)="previousPage()" 
+                [disabled]="currentPage === 1"
+                class="px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200">
+          ←
+        </button>
+        
+        <!-- Page Numbers -->
+        <ng-container *ngFor="let page of getPageNumbers()">
+          <button *ngIf="page !== -1" 
+                  (click)="goToPage(page)"
+                  [class.bg-vstep]="currentPage === page"
+                  [class.text-white]="currentPage === page"
+                  [class.border-vstep]="currentPage === page"
+                  [class.hover:bg-gray-50]="currentPage !== page"
+                  class="px-4 py-2 rounded-lg border border-gray-300 transition-all duration-200 min-w-[40px]">
+            {{ page }}
+          </button>
+          <span *ngIf="page === -1" class="px-2 text-gray-400">...</span>
+        </ng-container>
+        
+        <!-- Next -->
+        <button (click)="nextPage()" 
+                [disabled]="currentPage === totalPages"
+                class="px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200">
+          →
+        </button>
+      </div>
+      
+      <!-- Info -->
+      <div class="text-sm text-text-medium">
+        Hiển thị 
+        <span class="font-semibold text-text-dark">
+          {{ (currentPage - 1) * pageSize + 1 }}
+        </span> 
+        - 
+        <span class="font-semibold text-text-dark">
+          {{ Math.min(currentPage * pageSize, totalItems) }}
+        </span> 
+        trên tổng số 
+        <span class="font-semibold text-text-dark">{{ totalItems }}</span> 
+        đề thi
+      </div>
+    </div>
   </div>
 
-  <!-- Footer -->
+  <!-- CONFIRMATION MODAL -->
+  <app-confirmation-modal
+    [isOpen]="showModal"
+    [title]="modalData.title"
+    [message]="modalData.message"
+    [icon]="modalData.icon"
+    [confirmText]="modalData.confirmText"
+    [showCancelButton]="modalData.showCancelButton"
+    [details]="modalData.details"
+    [isLoading]="isProcessingModal"
+    (onConfirmEvent)="onModalConfirm()"
+    (onCancelEvent)="onModalCancel()">
+  </app-confirmation-modal>
+
   <app-footer></app-footer>
 </div>

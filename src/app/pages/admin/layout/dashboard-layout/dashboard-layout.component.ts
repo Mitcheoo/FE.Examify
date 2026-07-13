@@ -26,10 +26,11 @@ export class AdminDashboardLayoutComponent implements OnInit, OnDestroy {
   userFullName = '';
   sidebarOpen = true;
   currentPageTitle = 'Dashboard';
+  isAdmin = false;
 
   private routerSubscription?: Subscription;
 
-  // ✅ MENU ITEMS
+  // ✅ THÊM MENU "QUẢN LÝ TỪ VỰNG"
   readonly menuItems: MenuItem[] = [
     {
       label: 'Dashboard',
@@ -39,6 +40,11 @@ export class AdminDashboardLayoutComponent implements OnInit, OnDestroy {
     {
       label: 'Quản lý đề thi',
       route: '/admin/manage-exams',
+      exact: false
+    },
+    {
+      label: 'Quản lý từ vựng', // ✅ THÊM MỚI
+      route: '/admin/vocabulary',
       exact: false
     },
     {
@@ -59,18 +65,39 @@ export class AdminDashboardLayoutComponent implements OnInit, OnDestroy {
   ];
 
   ngOnInit(): void {
+    this.checkAdminAccess();
+    
     const user = this.authService.getCurrentUser();
     this.userFullName = user?.fullName || 'Admin';
     
-    // Theo dõi route change để cập nhật title
     this.routerSubscription = this.router.events
       .pipe(filter(event => event instanceof NavigationEnd))
       .subscribe(() => {
         this.updatePageTitle();
       });
     
-    // Cập nhật title lần đầu
     this.updatePageTitle();
+  }
+
+  private checkAdminAccess(): void {
+    const user = this.authService.getCurrentUser();
+    const roles = user?.roles || [];
+    
+    const hasAdminRole = roles.some(role => 
+      role.toLowerCase() === 'admin' || 
+      role === 'Admin'
+    );
+    
+    console.log('🔐 [AdminLayout] User roles:', roles);
+    console.log('🔐 [AdminLayout] Is Admin:', hasAdminRole);
+    
+    if (!hasAdminRole) {
+      console.warn('⚠️ [AdminLayout] Non-admin user attempted to access admin area');
+      this.router.navigate(['/']);
+      return;
+    }
+    
+    this.isAdmin = true;
   }
 
   ngOnDestroy(): void {
@@ -86,11 +113,13 @@ export class AdminDashboardLayoutComponent implements OnInit, OnDestroy {
     this.router.navigate(['/login']);
   }
 
+  // ✅ THÊM ICON CHO "QUẢN LÝ TỪ VỰNG"
   getIcon(label: string): string {
     const icons: Record<string, string> = {
       'Dashboard': '📊',
       'Quản lý đề thi': '📚',
-      'Bài nộp': '📝',
+      'Quản lý từ vựng': '📝', // ✅ THÊM MỚI
+      'Bài nộp': '📋',
       'Người dùng': '👤',
       'Thanh toán': '💳'
     };
@@ -99,6 +128,12 @@ export class AdminDashboardLayoutComponent implements OnInit, OnDestroy {
 
   getPageTitle(): string {
     const currentRoute = this.router.url;
+    
+    // ✅ KIỂM TRA CHO VOCABULARY
+    if (currentRoute.includes('/admin/vocabulary')) {
+      return 'Quản lý từ vựng';
+    }
+    
     const menuItem = this.menuItems.find(item => currentRoute.includes(item.route));
     return menuItem?.label || 'Dashboard';
   }

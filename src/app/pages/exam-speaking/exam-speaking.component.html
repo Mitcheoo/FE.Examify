@@ -89,6 +89,7 @@
             </button>
           </div>
           
+          
           <div class="transcript-content" [class.poor]="!transcriptQuality[i] && transcriptStatus[i] === 'poor'">
             <ng-container [ngSwitch]="transcriptStatus[i]">
               <div *ngSwitchCase="'loading'" class="transcript-loading">

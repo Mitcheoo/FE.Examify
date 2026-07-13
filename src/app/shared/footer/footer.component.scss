@@ -1,0 +1,117 @@
+.footer {
+  background: #1a1a2e;
+  color: #fff;
+  padding: 2.5rem 0 1rem;
+  margin-top: 3rem;
+
+  .container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 1.5rem;
+  }
+
+  // Grid 4 cột
+  .footer-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1.5fr;
+    gap: 2rem;
+    padding-bottom: 2rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+
+    // Responsive tablet
+    @media (max-width: 768px) {
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+    }
+
+    // Responsive mobile
+    @media (max-width: 480px) {
+      grid-template-columns: 1fr;
+      gap: 1rem;
+    }
+  }
+
+  .footer-col {
+    h3.brand {
+      font-size: 1.3rem;
+      margin-bottom: 0.5rem;
+      
+      // Màu gradient cho brand
+      background: linear-gradient(135deg, #0FB0D1, #0DA2E7);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    h4 {
+      color: #0FB0D1;
+      font-size: 1rem;
+      margin-bottom: 0.75rem;
+      font-weight: 600;
+    }
+
+    p.desc {
+      color: rgba(255, 255, 255, 0.6);
+      font-size: 0.9rem;
+      line-height: 1.5;
+      margin-bottom: 0.75rem;
+    }
+
+    ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+
+      li {
+        margin-bottom: 0.4rem;
+        color: rgba(255, 255, 255, 0.6);
+        font-size: 0.9rem;
+
+        a {
+          color: rgba(255, 255, 255, 0.6);
+          text-decoration: none;
+          transition: color 0.2s;
+
+          &:hover {
+            color: #4FC3F7;
+          }
+        }
+      }
+    }
+  }
+
+  // Social links
+  .social {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+
+    .social-link {
+      display: inline-block;
+      padding: 0.2rem 0.6rem;
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 4px;
+      color: rgba(255, 255, 255, 0.7);
+      font-size: 0.8rem;
+      text-decoration: none;
+      transition: all 0.2s;
+
+      &:hover {
+        background: #0FB0D1;
+        color: #fff;
+      }
+    }
+  }
+
+  // Copyright
+  .footer-bottom {
+    text-align: center;
+    padding-top: 1rem;
+
+    p {
+      color: rgba(255, 255, 255, 0.35);
+      font-size: 0.8rem;
+      margin: 0;
+    }
+  }
+}

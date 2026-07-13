@@ -1,212 +1,314 @@
 // src/app/pages/admin/pages/payments/payments.component.ts
-import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { RouterLink } from '@angular/router';
 
-interface Payment {
+import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+
+import { AdminService, AdminTransactionDto } from '../../../../services/admin.service';
+import { AuthService } from '../../../../services/auth.service';
+
+export interface Payment {
   id: string;
   transactionId: string;
+  userId: string;
   userName: string;
   userEmail: string;
   amount: number;
   currency: string;
-  method: 'PayPal' | 'Credit Card' | 'Bank Transfer';
+  method: 'PayPal' | 'Credit Card' | 'Bank Transfer' | 'Wallet';
   status: 'Completed' | 'Pending' | 'Failed' | 'Refunded';
   description: string;
   paidAt: string;
+  balanceBefore?: number;
+  balanceAfter?: number;
+  type?: string;
+  walletBalance?: number;
 }
 
 @Component({
   selector: 'app-payments',
   standalone: true,
-  imports: [CommonModule ],  
-  template: `
-    <div class="space-y-6">
-      <!-- Header -->
-      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div>
-          <h1 class="text-3xl font-bold text-gray-900">💳 Payments</h1>
-          <p class="mt-1 text-gray-600">Manage all payment transactions.</p>
-        </div>
-        <div class="flex gap-3">
-          <button class="inline-flex items-center rounded-3xl bg-emerald-600 px-5 py-3 text-white shadow-sm hover:bg-emerald-700 transition">
-            📊 Reports
-          </button>
-          <button class="inline-flex items-center rounded-3xl bg-gray-600 px-5 py-3 text-white shadow-sm hover:bg-gray-700 transition">
-            📥 Export
-          </button>
-        </div>
-      </div>
-
-      <!-- Stats -->
-      <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200">
-          <p class="text-sm text-gray-500">Total Revenue</p>
-          <p class="text-2xl font-bold text-emerald-600">$12,450</p>
-        </div>
-        <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200">
-          <p class="text-sm text-gray-500">Total Transactions</p>
-          <p class="text-2xl font-bold text-blue-600">1,284</p>
-        </div>
-        <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200">
-          <p class="text-sm text-gray-500">This Month</p>
-          <p class="text-2xl font-bold text-purple-600">$1,230</p>
-        </div>
-        <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200">
-          <p class="text-sm text-gray-500">Pending</p>
-          <p class="text-2xl font-bold text-yellow-600">12</p>
-        </div>
-      </div>
-
-      <!-- Filter -->
-      <div class="flex flex-wrap gap-4">
-        <input type="text" placeholder="Search transactions..." 
-               class="flex-1 min-w-[200px] px-4 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500">
-        <select class="px-4 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500">
-          <option>All Status</option>
-          <option>Completed</option>
-          <option>Pending</option>
-          <option>Failed</option>
-          <option>Refunded</option>
-        </select>
-        <select class="px-4 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500">
-          <option>All Methods</option>
-          <option>PayPal</option>
-          <option>Credit Card</option>
-          <option>Bank Transfer</option>
-        </select>
-      </div>
-
-      <!-- Table -->
-      <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-        <div class="overflow-x-auto">
-          <table class="w-full text-left text-sm">
-            <thead class="bg-slate-50 border-b border-slate-200">
-              <tr>
-                <th class="px-4 py-3 text-xs font-semibold uppercase text-slate-500">Transaction</th>
-                <th class="px-4 py-3 text-xs font-semibold uppercase text-slate-500">User</th>
-                <th class="px-4 py-3 text-xs font-semibold uppercase text-slate-500">Amount</th>
-                <th class="px-4 py-3 text-xs font-semibold uppercase text-slate-500">Method</th>
-                <th class="px-4 py-3 text-xs font-semibold uppercase text-slate-500">Status</th>
-                <th class="px-4 py-3 text-xs font-semibold uppercase text-slate-500">Description</th>
-                <th class="px-4 py-3 text-xs font-semibold uppercase text-slate-500">Date</th>
-                <th class="px-4 py-3 text-xs font-semibold uppercase text-slate-500">Actions</th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-slate-200">
-              <tr *ngFor="let payment of payments" class="hover:bg-slate-50 transition">
-                <td class="px-4 py-4">
-                  <p class="font-mono text-xs text-gray-600">{{ payment.transactionId }}</p>
-                </td>
-                <td class="px-4 py-4">
-                  <div>
-                    <p class="font-medium text-gray-900">{{ payment.userName }}</p>
-                    <p class="text-xs text-gray-500">{{ payment.userEmail }}</p>
-                  </div>
-                </td>
-                <td class="px-4 py-4">
-                  <p class="font-semibold text-gray-900">{{ payment.amount }} {{ payment.currency }}</p>
-                </td>
-                <td class="px-4 py-4">
-                  <span class="inline-block px-2 py-1 text-xs font-semibold rounded-full"
-                        [class]="getMethodBadge(payment.method)">
-                    {{ payment.method }}
-                  </span>
-                </td>
-                <td class="px-4 py-4">
-                  <span class="inline-block px-3 py-1 text-xs font-semibold rounded-full"
-                        [class]="getStatusClass(payment.status)">
-                    {{ payment.status }}
-                  </span>
-                </td>
-                <td class="px-4 py-4 text-gray-600 text-sm">{{ payment.description }}</td>
-                <td class="px-4 py-4 text-gray-500 text-sm">{{ payment.paidAt }}</td>
-                <td class="px-4 py-4">
-                  <div class="flex gap-2">
-                    <button class="text-blue-600 hover:text-blue-800 text-sm">Details</button>
-                    <button *ngIf="payment.status === 'Pending'" class="text-emerald-600 hover:text-emerald-800 text-sm">Approve</button>
-                  </div>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-  `
+  imports: [CommonModule, FormsModule],
+  templateUrl: './payments.component.html',
+  styleUrls: ['./payments.component.scss']
 })
 export class PaymentsComponent implements OnInit {
+  private adminService = inject(AdminService);
+  private authService = inject(AuthService);
+  private cdr = inject(ChangeDetectorRef);
+
   payments: Payment[] = [];
+  filteredPayments: Payment[] = [];
+  isLoading = true;
+  isStatsLoading = true;
+  
+  searchTerm: string = '';
+  statusFilter: string = '';
+  typeFilter: string = '';
+  
+  currentPage: number = 1;
+  pageSize: number = 20;
+  totalCount: number = 0;
+  totalPages: number = 0;
+  Math = Math;
+  
+  totalRevenue: number = 0;
+  totalTransactions: number = 0;
+  thisMonthRevenue: number = 0;
+  pendingCount: number = 0;
+  completedCount: number = 0;
+  failedCount: number = 0;
 
   ngOnInit() {
-    this.payments = [
-      {
-        id: '1',
-        transactionId: 'TXN-2026-001',
-        userName: 'Nguyễn Văn A',
-        userEmail: 'vana@email.com',
-        amount: 15.00,
-        currency: 'USD',
-        method: 'PayPal',
-        status: 'Completed',
-        description: 'VSTEP Full Test 2',
-        paidAt: '2026-06-17 14:30'
-      },
-      {
-        id: '2',
-        transactionId: 'TXN-2026-002',
-        userName: 'Trần Thị B',
-        userEmail: 'thib@email.com',
-        amount: 10.00,
-        currency: 'USD',
-        method: 'Credit Card',
-        status: 'Pending',
-        description: 'Reading Test 1',
-        paidAt: '2026-06-17 13:15'
-      },
-      {
-        id: '3',
-        transactionId: 'TXN-2026-003',
-        userName: 'Lê Văn C',
-        userEmail: 'vanc@email.com',
-        amount: 15.00,
-        currency: 'USD',
-        method: 'Bank Transfer',
-        status: 'Failed',
-        description: 'Writing Test 2',
-        paidAt: '2026-06-17 11:00'
-      },
-      {
-        id: '4',
-        transactionId: 'TXN-2026-004',
-        userName: 'Phạm Thị D',
-        userEmail: 'thid@email.com',
-        amount: 20.00,
-        currency: 'USD',
-        method: 'PayPal',
-        status: 'Refunded',
-        description: 'Full Test Package',
-        paidAt: '2026-06-16 09:20'
-      }
-    ];
+    console.log('💰 [PaymentsComponent] Initialized');
+    this.loadStats();
+    this.loadTransactions();
   }
 
+  loadStats() {
+    this.isStatsLoading = true;
+    this.cdr.detectChanges();
+    
+    this.adminService.getPaymentStats().subscribe({
+      next: (stats: any) => {
+        console.log('✅ [PaymentsComponent] Stats loaded:', stats);
+        this.totalRevenue = stats.totalRevenue || 0;
+        this.totalTransactions = stats.totalTransactions || 0;
+        this.thisMonthRevenue = stats.thisMonthRevenue || 0;
+        
+        // ✅ TẤT CẢ ĐỀU LÀ COMPLETED, NÊN PENDING = 0
+        this.pendingCount = 0;
+        this.completedCount = stats.totalTransactions || 0;
+        this.failedCount = 0;
+        
+        this.isStatsLoading = false;
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        console.error('❌ [PaymentsComponent] Error loading stats:', err);
+        this.isStatsLoading = false;
+        this.cdr.detectChanges();
+        this.calculateStatsFromCurrentPage();
+      }
+    });
+  }
+
+  loadTransactions() {
+    this.isLoading = true;
+    this.cdr.detectChanges();
+    
+    this.adminService.getAllTransactions(
+      this.currentPage, 
+      this.pageSize,
+      this.statusFilter || undefined,
+      this.typeFilter || undefined,
+      this.searchTerm || undefined
+    ).subscribe({
+      next: (data: any) => {
+        console.log('✅ [PaymentsComponent] Transactions loaded:', data);
+        
+        this.payments = data.items.map((tx: any) => this.mapToPayment(tx));
+        this.filteredPayments = [...this.payments];
+        
+        this.totalCount = data.totalCount || 0;
+        this.totalPages = data.totalPages || Math.ceil(this.totalCount / this.pageSize);
+        
+        this.isLoading = false;
+        this.cdr.detectChanges();
+      },
+      error: (err: any) => {
+        console.error('❌ [PaymentsComponent] Error loading transactions:', err);
+        this.isLoading = false;
+        this.cdr.detectChanges();
+        
+        if (err.status === 401) {
+          this.authService.logout();
+        }
+      }
+    });
+  }
+
+  // ✅ MAP DTO → PAYMENT - LUÔN SET STATUS = 'Completed'
+  mapToPayment(tx: AdminTransactionDto): Payment {
+    // Xác định phương thức thanh toán
+    let method: 'PayPal' | 'Credit Card' | 'Bank Transfer' | 'Wallet' = 'Wallet';
+    if (tx.paymentMethod) {
+      const pm = tx.paymentMethod.toLowerCase();
+      if (pm.includes('paypal')) method = 'PayPal';
+      else if (pm.includes('credit')) method = 'Credit Card';
+      else if (pm.includes('bank')) method = 'Bank Transfer';
+    }
+    
+    // ✅ LUÔN LÀ 'Completed'
+    const status: 'Completed' | 'Pending' | 'Failed' | 'Refunded' = 'Completed';
+    
+    // Format thời gian
+    let formattedDate = '';
+    if (tx.createdAt) {
+      try {
+        const date = new Date(tx.createdAt);
+        if (!isNaN(date.getTime())) {
+          const vietnamTime = new Date(date.getTime() + 7 * 60 * 60 * 1000);
+          formattedDate = vietnamTime.toLocaleString('vi-VN', {
+            hour12: false,
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit'
+          });
+        } else {
+          formattedDate = tx.createdAt;
+        }
+      } catch (e) {
+        formattedDate = tx.createdAt;
+      }
+    }
+
+    return {
+      id: tx.id,
+      transactionId: tx.transactionId || tx.id.substring(0, 12).toUpperCase(),
+      userId: tx.userId,
+      userName: tx.userName || 'Unknown',
+      userEmail: tx.userEmail || 'unknown@email.com',
+      amount: Math.abs(tx.amount),
+      currency: 'VND',
+      method: method,
+      status: status, // ✅ LUÔN LÀ COMPLETED
+      description: tx.description || tx.type || 'Giao dịch',
+      paidAt: formattedDate,
+      balanceBefore: tx.balanceBefore,
+      balanceAfter: tx.balanceAfter,
+      type: tx.type,
+      walletBalance: tx.walletBalance
+    };
+  }
+
+  calculateStatsFromCurrentPage() {
+    let revenue = 0;
+    let transactions = this.payments.length;
+    let monthRevenue = 0;
+    let completed = 0;
+    
+    const now = new Date();
+    const thisMonth = now.getMonth();
+    const thisYear = now.getFullYear();
+    
+    this.payments.forEach(p => {
+      if (p.type === 'Deposit') {
+        revenue += p.amount;
+      }
+      
+      if (p.paidAt) {
+        try {
+          const paidDate = new Date(p.paidAt);
+          if (!isNaN(paidDate.getTime())) {
+            if (paidDate.getMonth() === thisMonth && paidDate.getFullYear() === thisYear) {
+              if (p.type === 'Deposit') {
+                monthRevenue += p.amount;
+              }
+            }
+          }
+        } catch (e) {}
+      }
+      
+      completed++; // ✅ TẤT CẢ ĐỀU COMPLETED
+    });
+    
+    this.totalRevenue = revenue;
+    this.totalTransactions = transactions;
+    this.thisMonthRevenue = monthRevenue;
+    this.pendingCount = 0;
+    this.completedCount = completed;
+    this.failedCount = 0;
+    this.cdr.detectChanges();
+  }
+
+  // ============================================================
+  // FILTERS
+  // ============================================================
+  applyFilters() {
+    this.currentPage = 1;
+    this.loadTransactions();
+  }
+
+  clearFilters() {
+    this.searchTerm = '';
+    this.statusFilter = '';
+    this.typeFilter = '';
+    this.currentPage = 1;
+    this.loadTransactions();
+  }
+
+  refreshData() {
+    this.loadStats();
+    this.loadTransactions();
+  }
+
+  // ============================================================
+  // PAGINATION
+  // ============================================================
+  prevPage() {
+    if (this.currentPage > 1) {
+      this.currentPage--;
+      this.loadTransactions();
+    }
+  }
+
+  nextPage() {
+    if (this.currentPage < this.totalPages) {
+      this.currentPage++;
+      this.loadTransactions();
+    }
+  }
+
+  // ============================================================
+  // ACTIONS
+  // ============================================================
+  viewDetail(payment: Payment) {
+    console.log('📋 View detail:', payment);
+    alert(`📋 Chi tiết giao dịch:\n` +
+          `ID: ${payment.transactionId}\n` +
+          `User: ${payment.userName}\n` +
+          `Email: ${payment.userEmail}\n` +
+          `Số tiền: ${payment.amount.toLocaleString()}đ\n` +
+          `Loại: ${payment.type || 'N/A'}\n` +
+          `Trạng thái: ${payment.status}\n` +
+          `Phương thức: ${payment.method}\n` +
+          `Mô tả: ${payment.description}\n` +
+          `Ngày: ${payment.paidAt}`);
+  }
+
+  exportData() {
+    console.log('📥 Exporting data...');
+    alert('📥 Đang xuất dữ liệu...');
+  }
+
+  // ============================================================
+  // BADGE CLASSES
+  // ============================================================
   getMethodBadge(method: string): string {
     const map: Record<string, string> = {
-      'PayPal': 'bg-blue-100 text-blue-700',
-      'Credit Card': 'bg-purple-100 text-purple-700',
-      'Bank Transfer': 'bg-orange-100 text-orange-700'
+      'PayPal': 'badge-paypal',
+      'Credit Card': 'badge-credit-card',
+      'Bank Transfer': 'badge-bank-transfer',
+      'Wallet': 'badge-wallet'
     };
-    return map[method] || 'bg-gray-100 text-gray-700';
+    return map[method] || 'badge-default';
   }
 
-  getStatusClass(status: string): string {
+  getTypeBadge(type: string): string {
     const map: Record<string, string> = {
-      'Completed': 'bg-emerald-100 text-emerald-700',
-      'Pending': 'bg-yellow-100 text-yellow-700',
-      'Failed': 'bg-red-100 text-red-700',
-      'Refunded': 'bg-gray-100 text-gray-700'
+      'Deposit': 'badge-deposit',
+      'Purchase': 'badge-purchase',
+      'Refund': 'badge-refund'
     };
-    return map[status] || 'bg-gray-100 text-gray-700';
+    return map[type] || 'badge-default';
+  }
+
+  // ✅ LUÔN TRẢ VỀ BADGE COMPLETED
+  getStatusClass(status: string): string {
+    return 'badge-completed';
   }
 }

@@ -41,15 +41,14 @@ export class ReadingQuestionsComponent implements OnInit {
   @Output() passagesChange = new EventEmitter<{ [key: number]: string }>();
 
   // ============================================================
-  // STATE - 4 PASSAGES
+  // STATE - 3 PASSAGES (Part 1, 2, 3)
   // ============================================================
 
-  // ✅ 4 ĐOẠN VĂN RIÊNG BIỆT
+  // ✅ 3 ĐOẠN VĂN RIÊNG BIỆT
   partPassages: { [key: number]: string } = {
     1: '',
     2: '',
-    3: '',
-    4: ''
+    3: ''
   };
 
   // ============================================================
@@ -58,7 +57,7 @@ export class ReadingQuestionsComponent implements OnInit {
 
   showQuestionForm: boolean = false;
   editingIndex: number | null = null;
-  partOptions: number[] = [1, 2, 3, 4];
+  partOptions: number[] = [1, 2, 3];  // ✅ CHỈ 3 PART
 
   newQuestion: ReadingQuestion = {
     id: '',

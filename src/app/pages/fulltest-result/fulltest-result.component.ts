@@ -6,6 +6,10 @@ import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { ExamService } from '../../services/exam.service';
 import { AuthService } from '../../services/auth.service';
 
+// ============================================================
+// EXISTING INTERFACES
+// ============================================================
+
 interface SkillResult {
   skillType: number;
   skillName: string;
@@ -57,12 +61,56 @@ interface FullTestResult {
   ranking: string;
 }
 
+// ============================================================
+// AI FEEDBACK INTERFACES - ĐÚNG VỚI DỮ LIỆU TỪ BE
+// ============================================================
+
+interface WritingDetailedFeedback {
+  issue: string;
+  sentence: string;
+  suggestion: string;
+}
+
+interface WritingAiResult {
+  TaskResponseScore: number;
+  CoherenceCohesionScore: number;
+  LexicalResourceScore: number;
+  GrammarRangeScore: number;
+  TotalScore: number;
+  Strengths: string;
+  Weaknesses: string;
+  Suggestions: string;
+  DetailedFeedback: WritingDetailedFeedback[];
+}
+
+interface SpeakingErrorAnalysis {
+  transcript: string;
+  issue: string;
+  correction: string;
+}
+
+interface SpeakingAiResult {
+  ContentScore: number;
+  OrganizationScore: number;
+  GrammarScore: number;
+  VocabularyScore: number;
+  TotalScore: number;
+  Strengths: string;
+  Weaknesses: string;
+  Suggestions: string;
+  ErrorAnalysis: SpeakingErrorAnalysis[];
+}
+
+// ============================================================
+// COMPONENT
+// ============================================================
+
 @Component({
   selector: 'app-fulltest-result',
   standalone: true,
   imports: [CommonModule, RouterModule],
   templateUrl: './fulltest-result.component.html',
-  styleUrls: []
+  styleUrls: ['./fulltest-result.component.scss']
 })
 export class FulltestResultComponent implements OnInit {
   private examService = inject(ExamService);
@@ -71,18 +119,38 @@ export class FulltestResultComponent implements OnInit {
   private authService = inject(AuthService);
   private cdr = inject(ChangeDetectorRef);
 
+  // ============================================================
+  // DATA PROPERTIES
+  // ============================================================
+
   result: FullTestResult | null = null;
   isLoading = true;
   errorMessage = '';
   fullTestId = '';
   userId = '';
-  
+
+  // ============================================================
+  // AI FEEDBACK PROPERTIES
+  // ============================================================
+
+  writingFeedback: WritingAiResult | null = null;
+  speakingFeedback: SpeakingAiResult | null = null;
+
+  // ============================================================
+  // MODAL PROPERTIES
+  // ============================================================
+
   showAnswerDetail = false;
+  showAiFeedbackModal = false;
   selectedSkill: SkillResult | null = null;
   showShareModal = false;
   showPdfModal = false;
   showAchievementModal = false;
   selectedRating = 0;
+
+  // ============================================================
+  // LIFECYCLE
+  // ============================================================
 
   ngOnInit() {
     this.userId = this.authService.getCurrentUser()?.id || 'anonymous';
@@ -93,6 +161,10 @@ export class FulltestResultComponent implements OnInit {
       this.loadFullTestResult();
     });
   }
+
+  // ============================================================
+  // LOAD DATA
+  // ============================================================
 
   loadFullTestResult() {
     this.isLoading = true;
@@ -135,7 +207,6 @@ export class FulltestResultComponent implements OnInit {
       };
     });
     
-    // ✅ ĐIỂM TỔNG = TỔNG ĐIỂM 4 KỸ NĂNG
     const completedSkills = formattedSkills.filter(s => s.status === 'completed');
     const totalScore = completedSkills.length > 0 
       ? Math.round(completedSkills.reduce((sum, s) => sum + s.score, 0) * 10) / 10
@@ -189,6 +260,108 @@ export class FulltestResultComponent implements OnInit {
     this.errorMessage = 'Không thể tải kết quả bài thi. Vui lòng thử lại!';
     this.isLoading = false;
     this.cdr.detectChanges();
+  }
+
+  // ============================================================
+  // AI FEEDBACK METHODS
+  // ============================================================
+
+  /**
+   * Lấy và parse AI Feedback cho Writing
+   */
+  getWritingFeedback(skill: SkillResult): WritingAiResult | null {
+    if (!skill.aiFeedback) {
+      return null;
+    }
+    
+    try {
+      const parsed = typeof skill.aiFeedback === 'string' 
+        ? JSON.parse(skill.aiFeedback) 
+        : skill.aiFeedback;
+      
+      const results = parsed.Results || parsed.results;
+      if (results && results.length > 0) {
+        const result = results[0];
+        if (!result.DetailedFeedback) {
+          result.DetailedFeedback = [];
+        }
+        return result;
+      }
+      
+      return parsed;
+    } catch (error) {
+      console.error('❌ Error parsing writing feedback:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Lấy và parse AI Feedback cho Speaking
+   */
+  getSpeakingFeedback(skill: SkillResult): SpeakingAiResult | null {
+    if (!skill.aiFeedback) {
+      return null;
+    }
+    
+    try {
+      const parsed = typeof skill.aiFeedback === 'string' 
+        ? JSON.parse(skill.aiFeedback) 
+        : skill.aiFeedback;
+      
+      const results = parsed.Results || parsed.results;
+      if (results && results.length > 0) {
+        const allErrors: SpeakingErrorAnalysis[] = [];
+        results.forEach((result: any) => {
+          if (result.ErrorAnalysis && result.ErrorAnalysis.length > 0) {
+            allErrors.push(...result.ErrorAnalysis);
+          }
+        });
+        
+        const firstResult = results[0];
+        firstResult.ErrorAnalysis = allErrors;
+        return firstResult;
+      }
+      
+      return parsed;
+    } catch (error) {
+      console.error('❌ Error parsing speaking feedback:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Mở modal AI Feedback
+   */
+  openAiFeedbackModal(skill: SkillResult) {
+    this.selectedSkill = skill;
+    
+    if (skill.skillName === 'Writing') {
+      this.writingFeedback = this.getWritingFeedback(skill);
+    } else if (skill.skillName === 'Speaking') {
+      this.speakingFeedback = this.getSpeakingFeedback(skill);
+    }
+    
+    this.showAiFeedbackModal = true;
+    document.body.style.overflow = 'hidden';
+  }
+
+  /**
+   * Đóng modal AI Feedback
+   */
+  closeAiFeedbackModal() {
+    this.showAiFeedbackModal = false;
+    this.selectedSkill = null;
+    this.writingFeedback = null;
+    this.speakingFeedback = null;
+    document.body.style.overflow = '';
+  }
+
+  // ============================================================
+  // TRACK BY - GIÚP ANGULAR CẬP NHẬT UI
+  // ============================================================
+
+  trackBySkillId(index: number, skill: SkillResult): string {
+    return skill.skillName + skill.submissionId + skill.score;
   }
 
   // ============================================================
@@ -334,7 +507,7 @@ export class FulltestResultComponent implements OnInit {
   }
 
   // ============================================================
-  // HELPER FUNCTIONS FOR TEMPLATE - AN TOÀN VỚI NULL/UNDEFINED
+  // HELPER FUNCTIONS FOR TEMPLATE
   // ============================================================
 
   hasSkill(index: number): boolean {

@@ -78,7 +78,6 @@ export class WritingQuestionsComponent implements OnInit {
 
   loadExistingQuestions(): void {
     if (this.questions.length > 0) {
-      // Tìm Task 1 và Task 2 từ danh sách
       const task1Data = this.questions.find(q => q.taskType === 1);
       const task2Data = this.questions.find(q => q.taskType === 2);
 
@@ -111,7 +110,6 @@ export class WritingQuestionsComponent implements OnInit {
       return;
     }
 
-    // Tìm và cập nhật hoặc thêm mới
     const existingIndex = this.questions.findIndex(q => q.taskType === 1);
     const taskData = { ...this.task1 };
 
@@ -143,7 +141,6 @@ export class WritingQuestionsComponent implements OnInit {
       return;
     }
 
-    // Tìm và cập nhật hoặc thêm mới
     const existingIndex = this.questions.findIndex(q => q.taskType === 2);
     const taskData = { ...this.task2 };
 
@@ -164,13 +161,11 @@ export class WritingQuestionsComponent implements OnInit {
   // ============================================================
 
   saveAll(): void {
-    // Kiểm tra Task 1
     if (!this.task1.promptText.trim()) {
       alert('⚠️ Vui lòng nhập đề bài cho Task 1 (Letter/Email)!');
       return;
     }
 
-    // Kiểm tra Task 2
     if (!this.task2.promptText.trim()) {
       alert('⚠️ Vui lòng nhập đề bài cho Task 2 (Essay)!');
       return;
@@ -209,5 +204,59 @@ export class WritingQuestionsComponent implements OnInit {
 
   getTaskTypeLabel(taskType: number): string {
     return taskType === 1 ? 'Letter/Email' : 'Essay';
+  }
+
+  // ============================================================
+  // ✅ THÊM MỚI: GET QUESTIONS DATA (CHO add-questions.component)
+  // ============================================================
+
+  getQuestionsData(): WritingQuestion[] {
+    const result: WritingQuestion[] = [];
+    
+    if (this.task1.promptText.trim()) {
+      result.push({ ...this.task1 });
+    }
+    
+    if (this.task2.promptText.trim()) {
+      result.push({ ...this.task2 });
+    }
+    
+    return result;
+  }
+
+  // ============================================================
+  // ✅ THÊM MỚI: RESET (CHO add-questions.component)
+  // ============================================================
+
+  resetQuestions(): void {
+    this.task1 = {
+      id: '',
+      orderNumber: 1,
+      taskType: 1,
+      promptText: '',
+      minWords: 150,
+      maxWords: 200,
+      recommendedTimeMinutes: 20,
+      sampleImageUrl: '',
+      modelAnswer: '',
+      rubricJson: ''
+    };
+
+    this.task2 = {
+      id: '',
+      orderNumber: 2,
+      taskType: 2,
+      promptText: '',
+      minWords: 250,
+      maxWords: 300,
+      recommendedTimeMinutes: 40,
+      sampleImageUrl: '',
+      modelAnswer: '',
+      rubricJson: ''
+    };
+    
+    this.questions = [];
+    this.questionsChange.emit(this.questions);
+    this.cdr.detectChanges();
   }
 }

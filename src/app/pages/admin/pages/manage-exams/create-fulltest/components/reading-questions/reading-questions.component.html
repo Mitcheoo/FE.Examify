@@ -13,7 +13,7 @@
   </div>
 
   <!-- ============================================================ -->
-  <!-- 4 PASSAGES -->
+  <!-- 3 PASSAGES (Part 1, 2, 3) -->
   <!-- ============================================================ -->
 
   <div class="passages-grid">
@@ -50,18 +50,6 @@
       <textarea [(ngModel)]="partPassages[3]" 
                 (ngModelChange)="onPassageChange(3)"
                 placeholder="Nhập đoạn văn cho Part 3..." 
-                class="passage-textarea" rows="4"></textarea>
-    </div>
-
-    <!-- Part 4 -->
-    <div class="passage-card">
-      <div class="passage-header">
-        <span class="part-badge part-4">Part 4</span>
-        <span class="question-count-inline">{{ questions.filter(q => q.partNumber === 4).length }} câu</span>
-      </div>
-      <textarea [(ngModel)]="partPassages[4]" 
-                (ngModelChange)="onPassageChange(4)"
-                placeholder="Nhập đoạn văn cho Part 4..." 
                 class="passage-textarea" rows="4"></textarea>
     </div>
   </div>
@@ -150,7 +138,7 @@
   </div>
 
   <!-- ============================================================ -->
-  <!-- QUESTIONS LIST (CHUNG) -->
+  <!-- QUESTIONS LIST -->
   <!-- ============================================================ -->
 
   <div class="questions-list" *ngIf="questions.length > 0">

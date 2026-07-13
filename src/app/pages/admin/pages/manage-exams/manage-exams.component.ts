@@ -132,6 +132,10 @@ export class ManageExamsPageComponent implements OnInit {
   navigateToFullTestQuestions(fullTestId: string): void {
     this.router.navigate(['/admin/fulltest', fullTestId, 'questions']);
   }
+  navigateToAddQuestions(exerciseId: string, skill: number): void {
+  this.router.navigate(['/admin/exercises', exerciseId, 'add-questions'], {
+    queryParams: { skill: skill }
+  });}
 
   // ============ DELETE ============
 

@@ -399,28 +399,38 @@ syncToServer() {
         this.isSubmitting = false;
         
         if (this.fullTestId) {
-          alert('🎉 Nộp bài Reading thành công!');
-          this.router.navigate(['/exam', this.fullTestId]);
-        } else {
-          alert('🎉 Nộp bài thành công!');
-          this.router.navigate(['/reading']);
-        }
-      },
-      error: (err) => {
-        console.error('❌ Submit error:', err);
-        this.isSubmitting = false;
-        
-        if (err.error?.errors) {
-          const errorMsg = Object.values(err.error.errors).flat().join('\n');
-          alert(`❌ Lỗi:\n${errorMsg}`);
-        } else if (err.error?.title) {
-          alert(`❌ ${err.error.title}`);
-        } else {
-          alert('❌ Nộp bài thất bại. Vui lòng thử lại!');
-        }
+        // 📌 FULL TEST: Quay lại trang Full Test
+        alert('🎉 Nộp bài Reading thành công!');
+        this.router.navigate(['/exam', this.fullTestId], {
+          queryParams: {
+            completedSkill: 'reading',
+            sessionId: this.sessionId
+          }
+        });
+      } else {
+        // 📌 STANDALONE: Chuyển đến trang kết quả
+        this.router.navigate(['/result/reading', result.id], {
+          queryParams: {
+            exerciseId: this.examId
+          }
+        });
       }
-    });
-  }
+    },
+    error: (err) => {
+      console.error('❌ Submit error:', err);
+      this.isSubmitting = false;
+      
+      if (err.error?.errors) {
+        const errorMsg = Object.values(err.error.errors).flat().join('\n');
+        alert(`❌ Lỗi:\n${errorMsg}`);
+      } else if (err.error?.title) {
+        alert(`❌ ${err.error.title}`);
+      } else {
+        alert('❌ Nộp bài thất bại. Vui lòng thử lại!');
+      }
+    }
+  });
+} //
 
   // ========== NAVIGATION HELPERS ==========
   toggleNavigator() {

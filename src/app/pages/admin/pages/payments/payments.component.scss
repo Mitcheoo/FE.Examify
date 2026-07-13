@@ -1,0 +1,514 @@
+// src/app/pages/admin/pages/payments/payments.component.scss
+
+.payments-container {
+  padding: 24px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+// ============================================================
+// HEADER
+// ============================================================
+
+.payments-header {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 24px;
+
+  @media (min-width: 768px) {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+}
+
+.page-title {
+  font-size: 28px;
+  font-weight: 700;
+  color: #111827;
+  margin: 0;
+}
+
+.page-subtitle {
+  color: #6b7280;
+  margin: 4px 0 0;
+}
+
+.header-actions {
+  display: flex;
+  gap: 12px;
+}
+
+// ============================================================
+// BUTTONS
+// ============================================================
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 24px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+}
+
+.btn-primary {
+  background: #2563eb;
+  color: white;
+
+  &:hover {
+    background: #1d4ed8;
+  }
+}
+
+.btn-secondary {
+  background: #4b5563;
+  color: white;
+
+  &:hover {
+    background: #374151;
+  }
+}
+
+.btn-filter {
+  background: #2563eb;
+  color: white;
+  padding: 8px 16px;
+  border-radius: 12px;
+  font-size: 14px;
+
+  &:hover {
+    background: #1d4ed8;
+  }
+}
+
+.btn-clear {
+  background: #e5e7eb;
+  color: #4b5563;
+  padding: 8px 16px;
+  border-radius: 12px;
+  font-size: 14px;
+
+  &:hover {
+    background: #d1d5db;
+  }
+}
+
+// ============================================================
+// STATS CARDS
+// ============================================================
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(1, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+
+  @media (min-width: 640px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  @media (min-width: 1024px) {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.stat-card {
+  background: white;
+  border-radius: 16px;
+  padding: 20px 24px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+
+  &:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  }
+}
+
+.stat-label {
+  font-size: 14px;
+  color: #6b7280;
+  margin: 0 0 8px;
+}
+
+.stat-value {
+  font-size: 28px;
+  font-weight: 700;
+  margin: 0;
+}
+
+.stat-revenue {
+  color: #059669;
+}
+
+.stat-transactions {
+  color: #2563eb;
+}
+
+.stat-month {
+  color: #7c3aed;
+}
+
+.stat-pending {
+  color: #d97706;
+}
+
+// ============================================================
+// FILTERS
+// ============================================================
+
+.filters-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 24px;
+  padding: 16px;
+  background: white;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+}
+
+.filter-input {
+  flex: 1;
+  min-width: 200px;
+  padding: 10px 16px;
+  border: 1px solid #d1d5db;
+  border-radius: 12px;
+  font-size: 14px;
+  outline: none;
+
+  &:focus {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+  }
+}
+
+.filter-select {
+  padding: 10px 16px;
+  border: 1px solid #d1d5db;
+  border-radius: 12px;
+  font-size: 14px;
+  background: white;
+  outline: none;
+  cursor: pointer;
+
+  &:focus {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+  }
+}
+
+// ============================================================
+// LOADING
+// ============================================================
+
+.loading-container {
+  display: flex;
+  justify-content: center;
+  padding: 48px 0;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #e5e7eb;
+  border-top-color: #2563eb;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+// ============================================================
+// TABLE
+// ============================================================
+
+.table-container {
+  background: white;
+  border-radius: 16px;
+  border: 1px solid #e2e8f0;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+.table-wrapper {
+  overflow-x: auto;
+}
+
+.payments-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+
+  thead {
+    background: #f8fafc;
+    border-bottom: 1px solid #e2e8f0;
+  }
+
+  th {
+    padding: 12px 16px;
+    text-align: left;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #6b7280;
+    white-space: nowrap;
+  }
+
+  td {
+    padding: 16px;
+    vertical-align: middle;
+    border-bottom: 1px solid #f1f5f9;
+  }
+}
+
+.table-row {
+  transition: background 0.15s;
+
+  &:hover {
+    background: #f8fafc;
+  }
+}
+
+// ============================================================
+// TABLE CELLS
+// ============================================================
+
+.transaction-id {
+  font-family: monospace;
+  font-size: 12px;
+  color: #4b5563;
+}
+
+.user-name {
+  font-weight: 500;
+  color: #111827;
+  margin: 0;
+}
+
+.user-email {
+  font-size: 12px;
+  color: #6b7280;
+  margin: 0;
+}
+
+.amount {
+  font-weight: 600;
+  margin: 0;
+}
+
+.amount-deposit {
+  color: #059669;
+}
+
+.amount-purchase {
+  color: #dc2626;
+}
+
+.balance-info {
+  font-size: 11px;
+  color: #9ca3af;
+  margin: 2px 0 0;
+}
+
+.description {
+  color: #4b5563;
+  max-width: 150px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.date {
+  color: #6b7280;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+// ============================================================
+// BADGES
+// ============================================================
+
+.badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 9999px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+// Method badges
+.badge-paypal {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.badge-credit-card {
+  background: #ede9fe;
+  color: #7c3aed;
+}
+
+.badge-bank-transfer {
+  background: #fffbeb;
+  color: #d97706;
+}
+
+.badge-wallet {
+  background: #d1fae5;
+  color: #059669;
+}
+
+// Type badges
+.badge-deposit {
+  background: #d1fae5;
+  color: #059669;
+}
+
+.badge-purchase {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.badge-refund {
+  background: #fef3c7;
+  color: #d97706;
+}
+
+// Status badges
+.badge-completed {
+  background: #d1fae5;
+  color: #059669;
+}
+
+.badge-pending {
+  background: #fef3c7;
+  color: #d97706;
+}
+
+.badge-failed {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.badge-refunded {
+  background: #f3f4f6;
+  color: #6b7280;
+}
+
+// ============================================================
+// ACTIONS
+// ============================================================
+
+.actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.action-btn {
+  padding: 4px 12px;
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.15s;
+
+  &:hover {
+    opacity: 0.8;
+  }
+}
+
+.action-detail {
+  background: transparent;
+  color: #2563eb;
+
+  &:hover {
+    background: #dbeafe;
+  }
+}
+
+.action-approve {
+  background: #d1fae5;
+  color: #059669;
+
+  &:hover {
+    background: #a7f3d0;
+  }
+}
+
+// ============================================================
+// EMPTY STATE
+// ============================================================
+
+.empty-state {
+  text-align: center;
+  padding: 48px 0;
+  color: #6b7280;
+  font-size: 16px;
+}
+
+// ============================================================
+// PAGINATION
+// ============================================================
+
+.pagination {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 24px;
+  border-top: 1px solid #e2e8f0;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.pagination-info {
+  font-size: 14px;
+  color: #6b7280;
+}
+
+.pagination-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pagination-btn {
+  padding: 6px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  background: white;
+  color: #4b5563;
+  cursor: pointer;
+  transition: all 0.15s;
+
+  &:hover:not(:disabled) {
+    background: #f3f4f6;
+    border-color: #9ca3af;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+.pagination-current {
+  padding: 0 8px;
+  font-size: 14px;
+  color: #4b5563;
+}

@@ -1,0 +1,292 @@
+<!-- 📁 src/app/pages/vocabulary/vocabulary.component.html -->
+
+<app-header></app-header>
+
+<div class="vocabulary-page">
+  <div class="container">
+    
+    <!-- ============================================================
+    HEADER
+    ============================================================ -->
+    <div class="page-header">
+      <h1 class="page-title">
+        📝 Từ Vựng VSTEP
+      </h1>
+      <p class="page-subtitle">Học từ vựng theo chủ đề và trình độ</p>
+    </div>
+
+    <!-- ============================================================
+    TOAST NOTIFICATION
+    ============================================================ -->
+    <div *ngIf="showToast" 
+         class="toast-notification"
+         [class.toast-success]="toastType === 'success'"
+         [class.toast-error]="toastType === 'error'"
+         [class.toast-info]="toastType === 'info'">
+      <span>{{ toastMessage }}</span>
+      <button class="toast-close" (click)="closeToast()">✕</button>
+    </div>
+
+    <!-- ============================================================
+    STATS CARDS
+    ============================================================ -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon">📚</div>
+        <div class="stat-value">{{ getTotalWords() }}</div>
+        <div class="stat-label">Tổng số từ</div>
+      </div>
+      <div class="stat-card stat-card-success">
+        <div class="stat-icon">✅</div>
+        <div class="stat-value">{{ getMasteredCount() }}</div>
+        <div class="stat-label">Đã thành thạo</div>
+      </div>
+      <div class="stat-card stat-card-warning">
+        <div class="stat-icon">📖</div>
+        <div class="stat-value">{{ getLearningCount() }}</div>
+        <div class="stat-label">Đang học</div>
+      </div>
+      <div class="stat-card stat-card-info">
+        <div class="stat-icon">📈</div>
+        <div class="stat-value">{{ getMasteryRate() }}%</div>
+        <div class="stat-label">Tỷ lệ thành thạo</div>
+      </div>
+      <div class="stat-card stat-card-danger">
+        <div class="stat-icon">🔄</div>
+        <div class="stat-value">{{ getNeedReviewCount() }}</div>
+        <div class="stat-label">Cần ôn tập</div>
+      </div>
+    </div>
+
+    <!-- ============================================================
+    FILTERS
+    ============================================================ -->
+    <div class="filters-card">
+      <div class="filters-grid">
+        <!-- Search -->
+        <div class="filter-group filter-search">
+          <input 
+            type="text"
+            [(ngModel)]="searchTerm"
+            (ngModelChange)="onFilterChange()"
+            placeholder="🔍 Tìm kiếm từ vựng..."
+            class="filter-input"
+          >
+        </div>
+        
+        <!-- Level Filter -->
+        <div class="filter-group">
+          <select 
+            [(ngModel)]="selectedLevel"
+            (ngModelChange)="onFilterChange()"
+            class="filter-select"
+          >
+            <option value="all">📊 Tất cả trình độ</option>
+            <option value="A1">A1 - Sơ cấp</option>
+            <option value="A2">A2 - Sơ trung cấp</option>
+            <option value="B1">B1 - Trung cấp</option>
+            <option value="B2">B2 - Trung cao cấp</option>
+            <option value="C1">C1 - Cao cấp</option>
+          </select>
+        </div>
+
+        <!-- Topic Filter -->
+        <div class="filter-group">
+          <select 
+            [(ngModel)]="selectedTopic"
+            (ngModelChange)="onFilterChange()"
+            class="filter-select"
+          >
+            <option value="all">📂 Tất cả chủ đề</option>
+            <option *ngFor="let topic of topics" [value]="topic">{{ topic }}</option>
+          </select>
+        </div>
+
+        <!-- Status Filter -->
+        <div class="filter-group">
+          <select 
+            [(ngModel)]="selectedStatus"
+            (ngModelChange)="onFilterChange()"
+            class="filter-select"
+          >
+            <option value="all">📋 Tất cả trạng thái</option>
+            <option value="mastered">✅ Đã thành thạo</option>
+            <option value="learning">📖 Đang học</option>
+            <option value="need_review">🔄 Cần ôn tập</option>
+          </select>
+        </div>
+
+        <!-- Refresh Button -->
+        <button class="btn-refresh" (click)="reloadData()" [disabled]="isLoading">
+          <span *ngIf="!isLoading">🔄 Làm mới</span>
+          <span *ngIf="isLoading">⏳ Đang tải...</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- ============================================================
+    VOCABULARY TABLE
+    ============================================================ -->
+    <div class="table-card">
+      <!-- Loading -->
+      <div *ngIf="isLoading" class="loading-overlay">
+        <div class="loading-spinner"></div>
+        <p>Đang tải từ vựng...</p>
+      </div>
+
+      <!-- Table -->
+      <div class="table-wrapper" [class.loading]="isLoading">
+        <table class="vocabulary-table">
+          <thead>
+            <tr>
+              <th class="col-word">Từ vựng</th>
+              <th class="col-meaning">Nghĩa</th>
+              <th class="col-pronunciation">Phiên âm</th>
+              <th class="col-level">Trình độ</th>
+              <th class="col-topic">Chủ đề</th>
+              <th class="col-status">Trạng thái</th>
+              <th class="col-actions">Hành động</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let word of paginatedWords" class="word-row">
+              <td class="col-word">
+                <div class="word-info">
+                  <span class="word-text">{{ word.word }}</span>
+                  <span class="word-pos">{{ word.partOfSpeech }}</span>
+                </div>
+              </td>
+              <td class="col-meaning">{{ word.meaning }}</td>
+              <td class="col-pronunciation">{{ word.pronunciation || 'N/A' }}</td>
+              <td class="col-level">
+                <span class="level-badge" [class]="getLevelColor(word.level)">
+                  {{ word.level }}
+                </span>
+              </td>
+              <td class="col-topic">
+                <span class="topic-badge">{{ word.topic || 'Chưa phân loại' }}</span>
+              </td>
+              <td class="col-status">
+                <div class="status-info">
+                  <span class="status-badge" [class.status-mastered]="word.isMastered" [class.status-learning]="!word.isMastered">
+                    {{ word.isMastered ? '✅ Thành thạo' : '📖 Đang học' }}
+                  </span>
+                  <div *ngIf="word.masteryPercentage !== undefined" class="mastery-bar">
+                    <div class="mastery-track">
+                      <div class="mastery-fill" 
+                           [style.width]="getMasteryWidth(word.masteryPercentage)"
+                           [class]="getMasteryColor(word.masteryPercentage)">
+                      </div>
+                    </div>
+                    <span class="mastery-text">{{ word.masteryPercentage }}%</span>
+                  </div>
+                  <span *ngIf="word.reviewCount > 0" class="review-count">
+                    🔄 {{ word.reviewCount }} lần
+                  </span>
+                </div>
+              </td>
+              <td class="col-actions">
+                <div class="action-buttons">
+                  <button 
+                    class="btn-mastered"
+                    [class.btn-mastered-true]="word.isMastered"
+                    (click)="toggleMastered(word)"
+                    [disabled]="isLoading"
+                  >
+                    {{ word.isMastered ? '🔄 Chưa thuộc' : '✅ Đã thuộc' }}
+                  </button>
+                  <button 
+                    class="btn-example"
+                    (click)="showExample(word)"
+                  >
+                    📖
+                  </button>
+                </div>
+              </td>
+            </tr>
+            <tr *ngIf="filteredWords.length === 0 && !isLoading">
+              <td colspan="7" class="empty-state">
+                <div class="empty-content">
+                  <span class="empty-icon">📭</span>
+                  <p>Không tìm thấy từ vựng nào</p>
+                  <span class="empty-hint">Vui lòng thử lại với bộ lọc khác</span>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- ============================================================
+      PAGINATION
+      ============================================================ -->
+      <div class="table-footer" *ngIf="filteredWords.length > 0">
+        <div class="pagination-info">
+          Hiển thị {{ startIndex }} - {{ endIndex }} / {{ filteredWords.length }} từ
+        </div>
+        <div class="pagination-controls">
+          <button 
+            class="pagination-btn"
+            [disabled]="currentPage === 1"
+            (click)="prevPage()"
+          >
+            ←
+          </button>
+          
+          <button 
+            *ngFor="let page of pageNumbers"
+            class="pagination-btn"
+            [class.pagination-btn-active]="currentPage === page"
+            [class.pagination-btn-dots]="page === -1"
+            [disabled]="page === -1"
+            (click)="goToPage(page)"
+          >
+            <span *ngIf="page !== -1">{{ page }}</span>
+            <span *ngIf="page === -1">…</span>
+          </button>
+          
+          <button 
+            class="pagination-btn"
+            [disabled]="currentPage === totalPagesCalc"
+            (click)="nextPage()"
+          >
+            →
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<app-footer></app-footer>
+
+<!-- ============================================================
+EXAMPLE MODAL
+============================================================ -->
+<div *ngIf="selectedWord" class="modal-overlay" (click)="closeModal()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>📖 Ví dụ</h3>
+      <button class="modal-close" (click)="closeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-word-info">
+        <span class="modal-word">{{ selectedWord.word }}</span>
+        <span class="modal-pos">{{ selectedWord.partOfSpeech }} - {{ selectedWord.pronunciation }}</span>
+      </div>
+      <div class="modal-example">
+        <div class="example-label">📝 Ví dụ:</div>
+        <div class="example-text">{{ selectedWord.example }}</div>
+        <div class="example-meaning">{{ selectedWord.meaning }}</div>
+      </div>
+      <div *ngIf="selectedWord.vietnameseExample" class="modal-vietnamese">
+        <div class="example-label">🇻🇳 Dịch:</div>
+        <div class="example-text">{{ selectedWord.vietnameseExample }}</div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-close-modal" (click)="closeModal()">Đóng</button>
+    </div>
+  </div>
+</div>

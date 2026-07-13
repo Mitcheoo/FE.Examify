@@ -1,96 +1,107 @@
 <!-- 📁 src/app/pages/admin/layout/dashboard-layout/dashboard-layout.component.html -->
 
-<div class="flex h-screen bg-slate-50">
-  
-  <!-- ============================================================
-  SIDEBAR
-  ============================================================ -->
-  <aside
-    class="flex flex-col bg-gradient-to-b from-vstep to-vstep-dark text-white transition-all duration-300 shadow-xl"
-    [class.w-64]="sidebarOpen"
-    [class.w-20]="!sidebarOpen"
-  >
-    <!-- Logo -->
-    <div class="flex h-20 items-center justify-between border-b border-white/10 px-4 flex-shrink-0">
-      <div class="flex items-center gap-2" *ngIf="sidebarOpen">
-        <span class="text-2xl font-bold tracking-tight">Examify</span>
-        <span class="text-xs bg-white/20 px-2 py-0.5 rounded-full">Admin</span>
-      </div>
-      <span *ngIf="!sidebarOpen" class="text-2xl font-bold">📚</span>
-    </div>
-
-    <!-- Navigation -->
-    <nav class="flex-1 overflow-y-auto py-4 px-3 space-y-1">
-      <a
-        *ngFor="let item of menuItems"
-        [routerLink]="item.route"
-        routerLinkActive="bg-white/20 shadow-lg"
-        [routerLinkActiveOptions]="{ exact: item.exact }"
-        class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 hover:bg-white/10 cursor-pointer group"
-        [class.justify-center]="!sidebarOpen"
-      >
-        <span class="text-xl flex-shrink-0">{{ getIcon(item.label) }}</span>
-        <span *ngIf="sidebarOpen" class="truncate text-sm font-medium">{{ item.label }}</span>
-        <span *ngIf="!sidebarOpen" class="absolute left-full ml-2 px-2 py-1 bg-slate-800 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50">
-          {{ item.label }}
-        </span>
-      </a>
-    </nav>
-
-    <!-- Bottom - Logout -->
-    <div class="border-t border-white/10 p-4 flex-shrink-0">
-      <button
-        (click)="logout()"
-        class="flex items-center gap-3 w-full px-4 py-3 rounded-xl text-white transition-all duration-200 hover:bg-red-500/30"
-        [class.justify-center]="!sidebarOpen"
-      >
-        <span class="text-xl flex-shrink-0">🚪</span>
-        <span *ngIf="sidebarOpen" class="truncate text-sm font-medium">Đăng xuất</span>
-      </button>
-    </div>
-  </aside>
-
-  <!-- ============================================================
-  MAIN CONTENT
-  ============================================================ -->
-  <div class="flex-1 flex flex-col overflow-hidden">
+<!-- ✅ CHỈ HIỂN THỊ NẾU LÀ ADMIN -->
+<ng-container *ngIf="isAdmin">
+  <div class="flex h-screen bg-slate-50">
     
-    <!-- Header -->
-    <header class="flex h-20 items-center justify-between px-6 bg-white border-b border-slate-200 shadow-sm flex-shrink-0">
-      <div class="flex items-center gap-4">
-        <!-- Toggle Sidebar -->
-        <button
-          (click)="toggleSidebar()"
-          class="p-2 rounded-lg hover:bg-slate-100 transition-colors duration-200"
-          aria-label="Toggle sidebar"
+    <!-- ============================================================
+    SIDEBAR
+    ============================================================ -->
+    <aside
+      class="flex flex-col bg-gradient-to-b from-vstep to-vstep-dark text-white transition-all duration-300 shadow-xl"
+      [class.w-64]="sidebarOpen"
+      [class.w-20]="!sidebarOpen"
+    >
+      <!-- Logo -->
+      <div class="flex h-20 items-center justify-between border-b border-white/10 px-4 flex-shrink-0">
+        <div class="flex items-center gap-2" *ngIf="sidebarOpen">
+          <span class="text-2xl font-bold tracking-tight">Examify</span>
+          <span class="text-xs bg-white/20 px-2 py-0.5 rounded-full">Admin</span>
+        </div>
+        <span *ngIf="!sidebarOpen" class="text-2xl font-bold">📚</span>
+      </div>
+
+      <!-- Navigation -->
+      <nav class="flex-1 overflow-y-auto py-4 px-3 space-y-1">
+        <a
+          *ngFor="let item of menuItems"
+          [routerLink]="item.route"
+          routerLinkActive="bg-white/20 shadow-lg"
+          [routerLinkActiveOptions]="{ exact: item.exact }"
+          class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 hover:bg-white/10 cursor-pointer group"
+          [class.justify-center]="!sidebarOpen"
         >
-          <svg class="w-6 h-6 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
-          </svg>
+          <span class="text-xl flex-shrink-0">{{ getIcon(item.label) }}</span>
+          <span *ngIf="sidebarOpen" class="truncate text-sm font-medium">{{ item.label }}</span>
+          <span *ngIf="!sidebarOpen" class="absolute left-full ml-2 px-2 py-1 bg-slate-800 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50">
+            {{ item.label }}
+          </span>
+        </a>
+      </nav>
+
+      <!-- Bottom - Logout -->
+      <div class="border-t border-white/10 p-4 flex-shrink-0">
+        <button
+          (click)="logout()"
+          class="flex items-center gap-3 w-full px-4 py-3 rounded-xl text-white transition-all duration-200 hover:bg-red-500/30"
+          [class.justify-center]="!sidebarOpen"
+        >
+          <span class="text-xl flex-shrink-0">🚪</span>
+          <span *ngIf="sidebarOpen" class="truncate text-sm font-medium">Đăng xuất</span>
         </button>
-        
-        <!-- Page Title -->
-        <h2 class="text-xl font-bold text-slate-800 hidden md:block">
-          {{ getPageTitle() }}
-        </h2>
       </div>
+    </aside>
 
-      <!-- User Info -->
-      <div class="flex items-center gap-4">
-        <div class="text-right hidden sm:block">
-          <p class="font-semibold text-slate-800 text-sm">{{ userFullName }}</p>
-          <p class="text-xs text-slate-500">Quản trị viên</p>
+    <!-- ============================================================
+    MAIN CONTENT
+    ============================================================ -->
+    <div class="flex-1 flex flex-col overflow-hidden">
+      
+      <!-- Header -->
+      <header class="flex h-20 items-center justify-between px-6 bg-white border-b border-slate-200 shadow-sm flex-shrink-0">
+        <div class="flex items-center gap-4">
+          <button
+            (click)="toggleSidebar()"
+            class="p-2 rounded-lg hover:bg-slate-100 transition-colors duration-200"
+            aria-label="Toggle sidebar"
+          >
+            <svg class="w-6 h-6 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+            </svg>
+          </button>
+          
+          <h2 class="text-xl font-bold text-slate-800 hidden md:block">
+            {{ currentPageTitle }}
+          </h2>
         </div>
-        <div class="w-10 h-10 rounded-full bg-gradient-to-r from-vstep to-vstep-dark flex items-center justify-center text-white font-bold text-sm shadow-md flex-shrink-0">
-          {{ userFullName.charAt(0).toUpperCase() }}
-        </div>
-      </div>
-    </header>
 
-    <!-- Main Content -->
-    <main class="flex-1 overflow-y-auto p-6 bg-slate-50/50">
-      <router-outlet></router-outlet>
-    </main>
+        <div class="flex items-center gap-4">
+          <div class="text-right hidden sm:block">
+            <p class="font-semibold text-slate-800 text-sm">{{ userFullName }}</p>
+            <p class="text-xs text-slate-500">Quản trị viên</p>
+          </div>
+          <div class="w-10 h-10 rounded-full bg-gradient-to-r from-vstep to-vstep-dark flex items-center justify-center text-white font-bold text-sm shadow-md flex-shrink-0">
+            {{ userFullName.charAt(0).toUpperCase() }}
+          </div>
+        </div>
+      </header>
+
+      <!-- Main Content -->
+      <main class="flex-1 overflow-y-auto p-6 bg-slate-50/50">
+        <router-outlet></router-outlet>
+      </main>
+
+    </div>
 
   </div>
-</div>
+</ng-container>
+
+<!-- ✅ HIỂN THỊ LOADING TRONG KHI KIỂM TRA QUYỀN -->
+<ng-container *ngIf="!isAdmin && !userFullName">
+  <div class="flex items-center justify-center h-screen bg-slate-50">
+    <div class="text-center">
+      <div class="w-12 h-12 border-4 border-vstep border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+      <p class="text-slate-500">Đang kiểm tra quyền truy cập...</p>
+    </div>
+  </div>
+</ng-container>

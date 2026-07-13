@@ -56,13 +56,18 @@ export interface SubmitListeningCommand {
   sessionId?: string;
 }
 
+// export interface SubmitWritingCommand {
+//   exerciseId: string;
+//   answers: { [key: string]: string };
+//   timeSpentSeconds: number;
+//   sessionId?: string;
+// }
 export interface SubmitWritingCommand {
   exerciseId: string;
-  answers: { [key: string]: string };
+  answers: Record<string, string>;
   timeSpentSeconds: number;
-  sessionId?: string;
+  sessionId?: string | null;  // Cho phép cả string, undefined và null
 }
-
 export interface SubmitSpeakingCommand {
   exerciseId: string;
   answers: { [key: string]: string };
@@ -190,13 +195,28 @@ getExercisesList(page: number = 1, pageSize: number = 50, skill?: number, search
     return this.http.get(`${this.apiUrl}/listening/exam/${id}`, { headers });
   }
 
-  submitListening(data: SubmitListeningCommand): Observable<any> {
-    console.log('📡 API CALL: POST /listening/submit');
-    console.log('📤 Data:', data);
-    const headers = this.getAuthHeaders();
-    return this.http.post(`${this.apiUrl}/listening/submit`, data, { headers });
-  }
+  // submitListening(data: SubmitListeningCommand): Observable<any> {
+  //   console.log('📡 API CALL: POST /listening/submit');
+  //   console.log('📤 Data:', data);
+  //   const headers = this.getAuthHeaders();
+  //   return this.http.post(`${this.apiUrl}/listening/submit`, data, { headers });
+  // }
 
+  submitListening(data: any): Observable<any> {
+  console.log('📡 API CALL: POST /listening/submit');
+  console.log('📤 Data:', JSON.stringify(data, null, 2));
+  const headers = this.getAuthHeaders();
+  
+  //  Đảm bảo dữ liệu gửi đi đúng format
+  const payload = {
+    exerciseId: data.exerciseId,
+    answers: data.answers || {},
+    timeSpentSeconds: data.timeSpentSeconds || 0,
+    sessionId: data.sessionId || null
+  };
+  
+  return this.http.post(`${this.apiUrl}/listening/submit`, payload, { headers });
+}
   // ============================================================
   // WRITING APIs
   // ============================================================
@@ -263,6 +283,22 @@ submitSpeaking(data: FormData): Observable<any> {
     return this.http.post(`${this.apiUrl}/fulltest/save-part`, { sessionId, skillType, submissionId }, { headers });
   }
   
+purchaseExercise(exerciseId: string): Observable<any> {
+  console.log('📡 API CALL: POST /payment/purchase');
+  console.log('📤 ExerciseId:', exerciseId);
+  
+  // ✅ LẤY TOKEN TỪ AUTH SERVICE
+  const token = this.authService.getToken();
+  console.log('🔑 Token exists:', !!token);
+  
+  // ✅ TẠO HEADERS VỚI TOKEN
+  const headers = new HttpHeaders({
+    'Authorization': token ? 'Bearer ' + token : '',
+    'Content-Type': 'application/json'
+  });
+  
+  return this.http.post(`${this.apiUrl}/payment/purchase`, { exerciseId }, { headers });
+}
 
   // ============================================================
   // FULL TEST APIs - MỚI ⭐

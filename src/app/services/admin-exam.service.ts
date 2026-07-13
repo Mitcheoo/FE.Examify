@@ -19,6 +19,13 @@ export class AdminExamService {
       'Content-Type': 'application/json'
     });
   }
+    private getHeaders(): HttpHeaders {
+    const token = this.authService.getToken();
+    return new HttpHeaders({
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    });
+  }
 
   // ============ EXERCISE ============
   createExercise(data: any): Observable<any> {
@@ -48,6 +55,13 @@ createReadingQuestions(exerciseId: string, questions: any[]): Observable<any> {
         { questions }, 
         { headers: this.getAuthHeaders() }
     );
+}
+createPart(exerciseId: string, partData: any): Observable<any> {
+  return this.http.post(
+    `${this.apiUrl}/admin/exercises/${exerciseId}/parts`, 
+    partData, 
+    { headers: this.getHeaders() }
+  );
 }
   uploadAudio(formData: FormData): Observable<any> {
     const token = this.authService.getToken();

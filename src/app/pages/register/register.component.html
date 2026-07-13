@@ -12,8 +12,19 @@
       <p>Bắt đầu hành trình chinh phục VSTEP của bạn</p>
     </div>
 
+    <!-- ✅ HIỂN THỊ LỖI TỔNG HỢP -->
+    <div class="alert alert-error" *ngIf="errorMessage">
+      <div *ngFor="let msg of errorMessage.split('\n')">
+        ❌ {{ msg }}
+      </div>
+    </div>
+
+    <div class="alert alert-success" *ngIf="successMessage">
+      ✅ {{ successMessage }}
+    </div>
+
     <!-- Form -->
-    <form [formGroup]="registerForm" (ngSubmit)="onSubmit()">
+    <form [formGroup]="registerForm" (ngSubmit)="onSubmit()" novalidate>
       
       <!-- Full Name -->
       <div class="form-group">
@@ -26,8 +37,7 @@
           [class.error]="registerForm.get('fullName')?.invalid && registerForm.get('fullName')?.touched"
         >
         <div class="error-message" *ngIf="registerForm.get('fullName')?.touched && registerForm.get('fullName')?.invalid">
-          <span *ngIf="registerForm.get('fullName')?.errors?.['required']">⚠️ Họ và tên không được để trống</span>
-          <span *ngIf="registerForm.get('fullName')?.errors?.['minlength']">⚠️ Họ và tên phải có ít nhất 3 ký tự</span>
+          {{ getErrorMessage('fullName') }}
         </div>
       </div>
 
@@ -42,8 +52,7 @@
           [class.error]="registerForm.get('userName')?.invalid && registerForm.get('userName')?.touched"
         >
         <div class="error-message" *ngIf="registerForm.get('userName')?.touched && registerForm.get('userName')?.invalid">
-          <span *ngIf="registerForm.get('userName')?.errors?.['required']">⚠️ Tên đăng nhập không được để trống</span>
-          <span *ngIf="registerForm.get('userName')?.errors?.['minlength']">⚠️ Tên đăng nhập phải có ít nhất 3 ký tự</span>
+          {{ getErrorMessage('userName') }}
         </div>
       </div>
 
@@ -58,8 +67,7 @@
           [class.error]="registerForm.get('email')?.invalid && registerForm.get('email')?.touched"
         >
         <div class="error-message" *ngIf="registerForm.get('email')?.touched && registerForm.get('email')?.invalid">
-          <span *ngIf="registerForm.get('email')?.errors?.['required']">⚠️ Email không được để trống</span>
-          <span *ngIf="registerForm.get('email')?.errors?.['email']">⚠️ Email không hợp lệ</span>
+          {{ getErrorMessage('email') }}
         </div>
       </div>
 
@@ -79,8 +87,7 @@
           </button>
         </div>
         <div class="error-message" *ngIf="registerForm.get('password')?.touched && registerForm.get('password')?.invalid">
-          <span *ngIf="registerForm.get('password')?.errors?.['required']">⚠️ Mật khẩu không được để trống</span>
-          <span *ngIf="registerForm.get('password')?.errors?.['minlength']">⚠️ Mật khẩu phải có ít nhất 6 ký tự</span>
+          {{ getErrorMessage('password') }}
         </div>
       </div>
 
@@ -100,8 +107,11 @@
           </button>
         </div>
         <div class="error-message" *ngIf="registerForm.get('confirmPassword')?.touched && registerForm.get('confirmPassword')?.invalid">
-          <span *ngIf="registerForm.get('confirmPassword')?.errors?.['required']">⚠️ Vui lòng xác nhận mật khẩu</span>
-          <span *ngIf="registerForm.get('confirmPassword')?.errors?.['mismatch']">⚠️ Mật khẩu xác nhận không khớp</span>
+          {{ getErrorMessage('confirmPassword') }}
+        </div>
+        <!-- ✅ HIỂN THỊ LỖI KHÔNG KHỚP -->
+        <div class="error-message" *ngIf="registerForm.errors?.['mismatch'] && registerForm.get('confirmPassword')?.touched">
+          ⚠️ Mật khẩu xác nhận không khớp
         </div>
       </div>
 
@@ -111,22 +121,26 @@
           <input type="checkbox" formControlName="agreeTerms">
           <span>Tôi đồng ý với <a href="#" class="terms-link">Điều khoản sử dụng</a></span>
         </label>
+        <div class="error-message" *ngIf="registerForm.get('agreeTerms')?.touched && registerForm.get('agreeTerms')?.invalid">
+          ⚠️ Bạn phải đồng ý với điều khoản sử dụng
+        </div>
       </div>
 
       <!-- Submit -->
-      <button type="submit" class="btn-register" [disabled]="registerForm.invalid || isLoading">
+      <button 
+        type="submit" 
+        class="btn-register" 
+        [disabled]="registerForm.invalid || isLoading"
+      >
         <span *ngIf="!isLoading">🚀 Đăng ký</span>
         <span *ngIf="isLoading" class="spinner"></span>
       </button>
 
-      <!-- Messages -->
-      <div class="alert alert-error" *ngIf="errorMessage">
-        ❌ {{ errorMessage }}
+      <!-- ✅ HIỂN THỊ TẤT CẢ LỖI FORM KHI KHÔNG THỂ SUBMIT -->
+      <div class="form-error-summary" *ngIf="registerForm.invalid && registerForm.touched">
+        <p>⚠️ Vui lòng điền đầy đủ thông tin hợp lệ</p>
       </div>
 
-      <div class="alert alert-success" *ngIf="successMessage">
-        ✅ {{ successMessage }}
-      </div>
     </form>
 
     <!-- Footer -->

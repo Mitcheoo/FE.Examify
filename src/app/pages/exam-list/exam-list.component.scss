@@ -1,4 +1,6 @@
-﻿// ============================================
+﻿// src/app/pages/exam-list/exam-list.component.scss
+
+// ============================================
 // EXAM LIST - PHONG CÁCH VSTEP
 // ============================================
 
@@ -6,30 +8,6 @@
 .container {
   max-width: 1200px;
   margin: 0 auto;
-}
-
-// ========== CARD HOVER EFFECT ==========
-.group {
-  &:hover {
-    .shadow-card-hover {
-      box-shadow: 0 8px 30px rgba(14, 172, 216, 0.12);
-    }
-  }
-}
-
-// ========== BUTTON FILTER ==========
-.filter-btn {
-  transition: all 0.3s ease;
-  
-  &:hover {
-    transform: translateY(-1px);
-  }
-  
-  &.active {
-    background: #0EACD8;
-    color: white;
-    border-color: #0EACD8;
-  }
 }
 
 // ========== LINE CLAMP ==========
@@ -45,4 +23,23 @@
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+}
+
+// ========== SEARCH BAR ==========
+input[type="text"] {
+  &::placeholder {
+    color: #9CA3AF;
+  }
+  
+  &:focus {
+    box-shadow: 0 0 0 3px rgba(14, 172, 216, 0.2);
+  }
+}
+
+// ========== RESPONSIVE ==========
+@media (max-width: 768px) {
+  .container {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
 }

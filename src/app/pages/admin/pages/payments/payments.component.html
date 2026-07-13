@@ -1,0 +1,182 @@
+<!-- src/app/pages/admin/pages/payments/payments.component.html -->
+
+<div class="payments-container">
+  <!-- Header -->
+  <div class="payments-header">
+    <div>
+      <h1 class="page-title">💳 Quản lý thanh toán</h1>
+      <p class="page-subtitle">Quản lý tất cả giao dịch thanh toán.</p>
+    </div>
+    <div class="header-actions">
+      <button (click)="refreshData()" class="btn btn-primary">
+        🔄 Làm mới
+      </button>
+      <button (click)="exportData()" class="btn btn-secondary">
+        📥 Xuất dữ liệu
+      </button>
+    </div>
+  </div>
+
+  <!-- Stats Cards -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <p class="stat-label">Tổng doanh thu</p>
+      <p class="stat-value stat-revenue">{{ totalRevenue | number:'1.0-0' }}đ</p>
+    </div>
+    <div class="stat-card">
+      <p class="stat-label">Tổng giao dịch</p>
+      <p class="stat-value stat-transactions">{{ totalTransactions }}</p>
+    </div>
+    <div class="stat-card">
+      <p class="stat-label">Tháng này</p>
+      <p class="stat-value stat-month">{{ thisMonthRevenue | number:'1.0-0' }}đ</p>
+    </div>
+    <div class="stat-card">
+      <p class="stat-label">Đang xử lý</p>
+      <p class="stat-value stat-pending">{{ pendingCount }}</p>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="filters-bar">
+    <input 
+      type="text" 
+      [(ngModel)]="searchTerm"
+      (ngModelChange)="applyFilters()"
+      placeholder="Tìm kiếm giao dịch..." 
+      class="filter-input"
+    />
+    <select 
+      [(ngModel)]="statusFilter"
+      (ngModelChange)="applyFilters()"
+      class="filter-select"
+    >
+      <option value="">Tất cả trạng thái</option>
+      <option value="Success">Thành công</option>
+      <option value="Pending">Đang xử lý</option>
+      <option value="Failed">Thất bại</option>
+    </select>
+    <select 
+      [(ngModel)]="typeFilter"
+      (ngModelChange)="applyFilters()"
+      class="filter-select"
+    >
+      <option value="">Tất cả loại</option>
+      <option value="Deposit">Nạp tiền</option>
+      <option value="Purchase">Mua bài</option>
+      <option value="Refund">Hoàn tiền</option>
+    </select>
+    <button (click)="applyFilters()" class="btn btn-filter">
+      🔍 Lọc
+    </button>
+    <button (click)="clearFilters()" class="btn btn-clear">
+      ❌ Xóa lọc
+    </button>
+  </div>
+
+  <!-- Loading -->
+  <div *ngIf="isLoading" class="loading-container">
+    <div class="spinner"></div>
+  </div>
+
+  <!-- Table -->
+  <div *ngIf="!isLoading" class="table-container">
+    <div class="table-wrapper">
+      <table class="payments-table">
+        <thead>
+          <tr>
+            <th>Giao dịch</th>
+            <th>Người dùng</th>
+            <th>Số tiền</th>
+            <th>Loại</th>
+            <th>Phương thức</th>
+            <th>Trạng thái</th>
+            <th>Mô tả</th>
+            <th>Ngày</th>
+            <th>Hành động</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let payment of filteredPayments" class="table-row">
+            <td>
+              <p class="transaction-id">{{ payment.transactionId }}</p>
+            </td>
+            <td>
+              <div>
+                <p class="user-name">{{ payment.userName }}</p>
+                <p class="user-email">{{ payment.userEmail }}</p>
+              </div>
+            </td>
+            <!-- + - -->
+                <td>
+        <p class="amount" 
+          [class.amount-deposit]="payment.type === 'Deposit'" 
+          [class.amount-purchase]="payment.type === 'Purchase'">
+          {{ payment.type === 'Deposit' ? '+' : (payment.type === 'Purchase' ? '-' : '') }}{{ payment.amount | number:'1.0-0' }}đ
+        </p>
+        <p *ngIf="payment.balanceBefore !== undefined" class="balance-info">
+          Số dư: {{ payment.balanceBefore | number:'1.0-0' }} → {{ payment.balanceAfter | number:'1.0-0' }}
+        </p>
+      </td>
+            <td>
+              <span class="badge" [class]="getTypeBadge(payment.type || '')">
+                {{ payment.type || 'N/A' }}
+              </span>
+            </td>
+            <td>
+              <span class="badge" [class]="getMethodBadge(payment.method)">
+                {{ payment.method }}
+              </span>
+            </td>
+            <td>
+              <span class="badge" [class]="getStatusClass(payment.status)">
+                {{ payment.status }}
+              </span>
+            </td>
+            <td class="description">{{ payment.description }}</td>
+            
+            <td class="date">{{ payment.paidAt }}</td>
+            <td>
+              <div class="actions">
+                <button (click)="viewDetail(payment)" class="action-btn action-detail">
+                  Chi tiết
+                </button>
+             
+              </div>
+            </td>
+          </tr>
+          <tr *ngIf="filteredPayments.length === 0">
+            <td colspan="9" class="empty-state">
+              📭 Không có giao dịch nào
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    
+    <!-- Pagination -->
+    <div *ngIf="totalPages > 1" class="pagination">
+      <div class="pagination-info">
+        Hiển thị {{ (currentPage - 1) * pageSize + 1 }} - 
+        {{ Math.min(currentPage * pageSize, totalCount) }} / {{ totalCount }}
+      </div>
+      <div class="pagination-controls">
+        <button 
+          (click)="prevPage()"
+          [disabled]="currentPage === 1"
+          class="pagination-btn"
+        >
+          ←
+        </button>
+        <span class="pagination-current">{{ currentPage }}/{{ totalPages }}</span>
+        <button 
+          (click)="nextPage()"
+          [disabled]="currentPage === totalPages"
+          class="pagination-btn"
+        >
+          →
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

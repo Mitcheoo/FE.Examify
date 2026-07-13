@@ -55,13 +55,17 @@ export class CreateFullTestComponent implements OnInit {
   writingQuestions: any[] = [];
   speakingQuestions: any[] = [];
 
-  // ✅ PASSAGE - LƯU CHO TỪNG PART
+  // ✅ 3 ĐOẠN VĂN (Part 1, 2, 3)
   readingPassages: { [key: number]: string } = {
     1: '',
     2: '',
-    3: '',
-    4: ''
+    3: ''
   };
+
+  // ✅ GIÁ TIỀN
+  isFree: boolean = true;
+  price: number = 0;
+  priceDisplay: string = '';
 
   activeTab: string = 'reading';
   isSaving: boolean = false;
@@ -106,6 +110,14 @@ export class CreateFullTestComponent implements OnInit {
     this.adminExamService.getExerciseById(this.fullTestId).subscribe({
       next: (data: any) => {
         this.fullTestTitle = data.title || 'Full Test';
+        // Load giá tiền nếu có
+        if (data.isFree !== undefined) {
+          this.isFree = data.isFree;
+        }
+        if (data.price !== undefined) {
+          this.price = data.price;
+          this.priceDisplay = this.formatPrice(data.price);
+        }
         this.cdr.detectChanges();
       },
       error: (err) => {
@@ -136,6 +148,33 @@ export class CreateFullTestComponent implements OnInit {
   }
 
   // ============================================================
+  // GIÁ TIỀN
+  // ============================================================
+
+  onFreeChange(): void {
+    if (this.isFree) {
+      this.price = 0;
+      this.priceDisplay = '';
+    }
+  }
+
+  formatPrice(value: number): string {
+    return value ? value.toLocaleString('vi-VN') : '';
+  }
+
+  onPriceInput(value: string): void {
+    const cleanValue = value.replace(/,/g, '');
+    const numValue = parseInt(cleanValue);
+    if (!isNaN(numValue) && numValue > 0) {
+      this.price = numValue;
+      this.priceDisplay = this.formatPrice(numValue);
+    } else {
+      this.price = 0;
+      this.priceDisplay = '';
+    }
+  }
+
+  // ============================================================
   // HANDLE QUESTIONS CHANGE
   // ============================================================
 
@@ -144,7 +183,6 @@ export class CreateFullTestComponent implements OnInit {
     console.log('📝 Reading questions updated:', questions.length);
   }
 
-  // ✅ HÀM NHẬN PASSAGES TỪ READING COMPONENT
   onReadingPassagesChange(passages: { [key: number]: string }): void {
     this.readingPassages = passages;
     console.log('📄 Reading passages updated:', passages);
@@ -166,26 +204,169 @@ export class CreateFullTestComponent implements OnInit {
   }
 
   // ============================================================
-  // SAVE DRAFT
+  // SAVE DRAFT - LƯU PARTS TRƯỚC, SAU ĐÓ LƯU CÂU HỎI
   // ============================================================
 
   saveDraft(): void {
     this.isSaving = true;
 
+    // ✅ NẾU CHƯA CÓ FULL TEST ID, TẠO MỚI
+    if (!this.fullTestId) {
+      this.createFullTestAndSave();
+      return;
+    }
+
+    // ✅ ĐÃ CÓ FULL TEST ID: LƯU PARTS + CÂU HỎI
+    this.saveAllParts()
+      .then(() => {
+        return this.saveAllQuestions();
+      })
+      .then(() => {
+        console.log('✅ All saved successfully!');
+        alert('💾 Đã lưu đoạn văn và câu hỏi thành công!');
+        this.isSaving = false;
+      })
+      .catch((error) => {
+        console.error('❌ Error saving:', error);
+        alert('❌ Có lỗi xảy ra khi lưu. Vui lòng thử lại!');
+        this.isSaving = false;
+      });
+  }
+
+  // ============================================================
+  // TẠO FULL TEST (NẾU CHƯA CÓ)
+  // ============================================================
+
+  createFullTestAndSave(): void {
+    const fullTestData = {
+      title: this.fullTestTitle || 'Full Test',
+      description: 'Full Test created from admin',
+      timeLimitSeconds: 7200,
+      difficulty: 2,
+      isFree: this.isFree,
+      price: this.price,
+      readingExerciseId: this.readingExerciseId || null,
+      listeningExerciseId: this.listeningExerciseId || null,
+      writingExerciseId: this.writingExerciseId || null,
+      speakingExerciseId: this.speakingExerciseId || null
+    };
+
+    this.adminExamService.createFullTest(fullTestData).subscribe({
+      next: (response: any) => {
+        this.fullTestId = response.id;
+        this.fullTestTitle = response.title;
+        
+        // Cập nhật các ID
+        this.readingExerciseId = response.readingExerciseId || this.readingExerciseId;
+        this.listeningExerciseId = response.listeningExerciseId || this.listeningExerciseId;
+        this.writingExerciseId = response.writingExerciseId || this.writingExerciseId;
+        this.speakingExerciseId = response.speakingExerciseId || this.speakingExerciseId;
+        
+        this.initTabs();
+        
+        console.log('✅ Full Test created with ID:', this.fullTestId);
+        
+        // ✅ TIẾP TỤC LƯU PARTS + CÂU HỎI
+        this.saveAllParts()
+          .then(() => {
+            return this.saveAllQuestions();
+          })
+          .then(() => {
+            console.log('✅ All saved successfully!');
+            alert('💾 Đã lưu Full Test, đoạn văn và câu hỏi thành công!');
+            this.isSaving = false;
+          })
+          .catch((error) => {
+            console.error('❌ Error saving:', error);
+            alert('❌ Có lỗi xảy ra khi lưu. Vui lòng thử lại!');
+            this.isSaving = false;
+          });
+      },
+      error: (err) => {
+        console.error('❌ Error creating full test:', err);
+        alert('❌ Có lỗi xảy ra khi tạo Full Test!');
+        this.isSaving = false;
+      }
+    });
+  }
+
+  // ============================================================
+  // LƯU TẤT CẢ PARTS (3 ĐOẠN VĂN) VÀO BẢNG Parts
+  // ============================================================
+
+ // create-fulltest.component.ts
+
+async saveAllParts(): Promise<void> {
+    if (!this.readingExerciseId) {
+        console.log('⚠️ No readingExerciseId, skip saving parts');
+        return;
+    }
+
+    console.log('📄 Current readingPassages:', this.readingPassages);
+
+    const results: { partNumber: number; success: boolean; error?: string }[] = [];
+
+    // ✅ CHỈ 3 PART (1, 2, 3)
+    for (let partNumber = 1; partNumber <= 3; partNumber++) {
+        const passage = this.readingPassages[partNumber];
+        console.log(`🔍 Checking Part ${partNumber}: passage = "${passage?.substring(0, 30)}..."`);
+        
+        if (passage && passage.trim()) {
+            const partData = {
+                partNumber: partNumber,
+                title: `Part ${partNumber}`,
+                passage: passage.trim(),
+                audioUrl: null
+            };
+
+            console.log(`📤 Saving Part ${partNumber}:`, partData);
+            
+            try {
+                const result = await this.adminExamService
+                    .createPart(this.readingExerciseId, partData)
+                    .toPromise();
+                results.push({ partNumber, success: true });
+                console.log(`✅ Part ${partNumber} saved successfully!`);
+            } catch (error: any) {
+                console.error(`❌ Part ${partNumber} failed:`, error?.message || error);
+                results.push({ partNumber, success: false, error: error?.message });
+            }
+        } else {
+            console.log(`⚠️ Part ${partNumber} has no passage, skipping`);
+            results.push({ partNumber, success: false, error: 'No passage' });
+        }
+    }
+
+    const successCount = results.filter(r => r.success).length;
+    const failCount = results.filter(r => !r.success).length;
+    
+    console.log(`📊 Parts saved: ${successCount} success, ${failCount} failed`);
+    
+    if (failCount > 0) {
+        console.log('❌ Failed parts:', results.filter(r => !r.success).map(r => r.partNumber));
+        throw new Error(`Failed to save ${failCount} parts`);
+    }
+}
+
+  // ============================================================
+  // LƯU CÂU HỎI (KHÔNG GỬI PASSAGE)
+  // ============================================================
+
+  async saveAllQuestions(): Promise<void> {
     const savePromises: Promise<any>[] = [];
 
-    // 1. READING
+    // 1. READING - KHÔNG GỬI PASSAGE (ĐÃ LƯU Ở PARTS)
     if (this.readingQuestions.length > 0 && this.readingExerciseId) {
       const formattedQuestions = this.readingQuestions.map(q => {
-        // ✅ LẤY PASSAGE THEO PART
-        const passage = this.readingPassages[q.partNumber] || '';
+        // ✅ ĐẢM BẢO PART NUMBER TỪ 1-3
+        const partNumber = Math.min(Math.max(q.partNumber || 1, 1), 3);
         
         return {
-          partNumber: q.partNumber || 1,
+          partNumber: partNumber,
           orderNumber: q.orderNumber || 1,
           questionType: q.questionType || 'multiple_choice',
           questionText: q.questionText,
-          passage: passage,
+          // ❌ KHÔNG GỬI PASSAGE (đã lưu ở Parts)
           options: {
             A: q.optionA || '',
             B: q.optionB || '',
@@ -197,7 +378,7 @@ export class CreateFullTestComponent implements OnInit {
         };
       });
 
-      console.log('📤 Reading questions with passages:', formattedQuestions.length);
+      console.log('📤 Reading questions:', formattedQuestions.length);
       savePromises.push(
         this.adminExamService.createReadingQuestions(
           this.readingExerciseId,
@@ -275,22 +456,12 @@ export class CreateFullTestComponent implements OnInit {
     }
 
     if (savePromises.length === 0) {
-      alert('⚠️ Chưa có câu hỏi nào để lưu!');
-      this.isSaving = false;
+      console.log('⚠️ No questions to save');
       return;
     }
 
-    Promise.all(savePromises)
-      .then(() => {
-        console.log('✅ All questions saved successfully!');
-        alert('💾 Đã lưu tất cả câu hỏi thành công!');
-        this.isSaving = false;
-      })
-      .catch((error) => {
-        console.error('❌ Error saving questions:', error);
-        alert('❌ Có lỗi xảy ra khi lưu câu hỏi. Vui lòng thử lại!');
-        this.isSaving = false;
-      });
+    await Promise.all(savePromises);
+    console.log('✅ All questions saved successfully!');
   }
 
   // ============================================================
@@ -310,13 +481,16 @@ export class CreateFullTestComponent implements OnInit {
       return;
     }
 
+    const priceText = this.isFree ? '🆓 Miễn phí' : this.formatPrice(this.price) + ' ₫';
+
     const confirmComplete = confirm(
       `📊 Xác nhận hoàn tất Full Test\n\n` +
       `📖 Reading: ${this.readingQuestions.length} câu hỏi\n` +
       `🎧 Listening: ${this.listeningQuestions.length} câu hỏi\n` +
       `✍️ Writing: ${this.writingQuestions.length} câu hỏi\n` +
       `🎙️ Speaking: ${this.speakingQuestions.length} câu hỏi\n\n` +
-      `Tổng: ${totalQuestions} câu hỏi\n\n` +
+      `💰 Giá: ${priceText}\n` +
+      `📚 Tổng: ${totalQuestions} câu hỏi\n\n` +
       `Bạn có chắc muốn hoàn tất?`
     );
 

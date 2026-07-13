@@ -120,16 +120,21 @@
         </thead>
         <tbody class="divide-y divide-slate-200">
           <tr *ngFor="let exam of exams" class="hover:bg-slate-50 transition">
+            <!-- Loại -->
             <td class="px-4 py-4">
               <span class="inline-block px-3 py-1 text-xs font-semibold rounded-full" 
                     [class]="exam.isFullTest ? 'bg-purple-100 text-purple-700' : 'bg-slate-100 text-slate-700'">
                 {{ exam.isFullTest ? '📚 Full Test' : '📝 Exercise' }}
               </span>
             </td>
+            
+            <!-- Bài thi -->
             <td class="px-4 py-4 font-medium text-gray-900">
               {{ exam.title }}
               <span *ngIf="exam.isFullTest" class="ml-2 text-xs text-purple-600 font-normal">(Full Test)</span>
             </td>
+            
+            <!-- Kỹ năng -->
             <td class="px-4 py-4">
               <span *ngIf="!exam.isFullTest" 
                     class="inline-block px-2 py-1 text-xs font-semibold rounded-full"
@@ -138,37 +143,61 @@
               </span>
               <span *ngIf="exam.isFullTest" class="text-gray-400 text-xs">-</span>
             </td>
+            
+            <!-- Trạng thái -->
             <td class="px-4 py-4">
               <span class="inline-block px-3 py-1 text-xs font-semibold rounded-full" [class]="getStatusClass(exam.status)">
                 {{ exam.status }}
               </span>
             </td>
+            
+            <!-- Câu hỏi -->
             <td class="px-4 py-4 text-center">
               <span class="font-semibold text-vstep">{{ exam.totalQuestions }}</span>
             </td>
+            
+            <!-- Thời gian -->
             <td class="px-4 py-4 text-center text-gray-500 text-sm">
               {{ formatTime(exam.timeLimitSeconds) }}
             </td>
+            
+            <!-- Ngày tạo -->
             <td class="px-4 py-4 text-gray-500 text-sm">
               {{ exam.created || 'N/A' }}
             </td>
+            
+            <!-- Thao tác -->
             <td class="px-4 py-4">
-              <div class="flex items-center justify-center gap-2">
-                <!-- Nút thêm câu hỏi cho Full Test -->
+              <div class="flex items-center justify-center gap-1.5">
+                <!-- ✅ NÚT THÊM CÂU HỎI CHO BÀI THI RIÊNG LẺ (Reading/Listening/Writing) -->
+                <button *ngIf="!exam.isFullTest" 
+                        class="inline-flex items-center justify-center w-8 h-8 text-sm text-emerald-600 hover:bg-emerald-50 rounded-xl transition"
+                        (click)="navigateToAddQuestions(exam.id, exam.skill)"
+                        title="Thêm câu hỏi">
+                  ➕
+                </button>
+                
+                <!-- NÚT THÊM CÂU HỎI CHO FULL TEST -->
                 <button *ngIf="exam.isFullTest" 
-                        class="inline-flex items-center px-3 py-1.5 text-sm text-purple-600 hover:bg-purple-50 rounded-xl transition"
+                        class="inline-flex items-center justify-center w-8 h-8 text-sm text-purple-600 hover:bg-purple-50 rounded-xl transition"
                         (click)="navigateToFullTestQuestions(exam.id)"
                         title="Thêm câu hỏi cho Full Test">
                   ✏️
                 </button>
+                
+                <!-- NÚT XEM BÀI THI -->
                 <a [routerLink]="['/exam', exam.id]" 
-                   class="inline-flex items-center px-3 py-1.5 text-sm text-blue-600 hover:bg-blue-50 rounded-xl transition">
-                  👁️ Xem
+                   class="inline-flex items-center justify-center w-8 h-8 text-sm text-blue-600 hover:bg-blue-50 rounded-xl transition"
+                   title="Xem bài thi">
+                  👁️
                 </a>
+                
+                <!-- NÚT XÓA BÀI THI -->
                 <button 
-                  class="inline-flex items-center px-3 py-1.5 text-sm text-red-600 hover:bg-red-50 rounded-xl transition"
-                  (click)="deleteExam(exam.id)">
-                  🗑️ Xóa
+                  class="inline-flex items-center justify-center w-8 h-8 text-sm text-red-600 hover:bg-red-50 rounded-xl transition"
+                  (click)="deleteExam(exam.id)"
+                  title="Xóa bài thi">
+                  🗑️
                 </button>
               </div>
             </td>

@@ -29,7 +29,7 @@
         📊 KẾT QUẢ FULL TEST
       </h1>
       <div class="px-4 py-2 bg-white/10 border border-amber-500/30 rounded-full text-amber-400 text-sm">
-        ⭐ Lần 2/5
+        ⭐ Thi Lần 1
       </div>
     </div>
 
@@ -50,7 +50,7 @@
         <span class="text-2xl">{{ isFullComplete() ? '✅' : '⚠️' }}</span>
         <span class="text-white font-medium">
           {{ isFullComplete() 
-            ? 'Hoàn thành 4/4 kỹ năng! 🎉 Điểm chính thức: ' + result.totalScore + '/10'
+            ? 'Hoàn thành 4/4 kỹ năng!  Điểm chính thức: ' + result.totalScore + '/40'
             : 'Hoàn thành ' + getCompletedSkills() + '/4 kỹ năng - Điểm tạm tính: ' + result.totalScore + '/10' 
           }}
         </span>
@@ -86,7 +86,7 @@
       <div class="bg-white/10 backdrop-blur rounded-xl p-4 flex items-center gap-4 border border-white/5">
         <span class="text-3xl">🎯</span>
         <div>
-          <div class="text-xl font-bold text-white">{{ result.totalScore }}/10</div>
+          <div class="text-xl font-bold text-white">{{ result.totalScore }}/40</div>
           <div class="text-xs text-white/60">Điểm tổng (4 kỹ năng)</div>
         </div>
       </div>
@@ -120,7 +120,7 @@
       <h3 class="text-lg font-semibold text-white mb-4">📊 PHÂN TÍCH KẾT QUẢ THEO KỸ NĂNG</h3>
       
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div *ngFor="let skill of result.skills" 
+        <div *ngFor="let skill of result.skills; trackBy: trackBySkillId" 
              class="bg-white rounded-xl p-5 shadow-card hover:shadow-card-hover transition-all duration-300 border-l-4"
              [class]="getSkillColorClass(skill.score)">
           
@@ -152,30 +152,30 @@
               <span *ngIf="!skill.isAutoGraded">📝 {{ skill.skillName === 'Writing' ? 'Bài viết' : 'Ghi âm' }}</span>
               <span>⏱️ {{ formatTime(skill.timeSpentSeconds) }}</span>
             </div>
+
+            <!-- Skill Actions -->
+            <div class="flex gap-2 mt-3">
+              <button *ngIf="skill.isAutoGraded && skill.status === 'completed'"
+                      class="flex-1 px-3 py-2 bg-gradient-to-r from-primary to-blue-600 text-white rounded-lg text-sm font-medium hover:shadow-lg transition"
+                      (click)="openAnswerDetail(skill)">
+                📝 Xem đáp án chi tiết
+              </button>
+              <button *ngIf="!skill.isAutoGraded && skill.status === 'completed'"
+                      class="flex-1 px-3 py-2 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-lg text-sm font-medium hover:shadow-lg transition"
+                      (click)="openAiFeedbackModal(skill)">
+                🤖 Xem AI Feedback
+              </button>
+              <button class="flex-1 px-3 py-2 bg-slate-100 text-slate-700 rounded-lg text-sm font-medium border border-slate-200 hover:bg-slate-200 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                      (click)="retakeSkill(skill.skillType, skill.examId)"
+                      [disabled]="skill.status !== 'completed'">
+                {{ skill.status === 'completed' ? '🔄 Làm lại' : '➡️ Làm bài ngay' }}
+              </button>
+            </div>
           </div>
 
           <!-- Skill Pending -->
           <div *ngIf="skill.status !== 'completed'" class="text-center py-4 bg-slate-50 rounded-lg mb-3 text-slate-500">
             ⏳ Bạn chưa làm bài thi này
-          </div>
-
-          <!-- Skill Actions -->
-          <div class="flex gap-2 mt-3">
-            <button *ngIf="skill.isAutoGraded && skill.status === 'completed'"
-                    class="flex-1 px-3 py-2 bg-gradient-to-r from-primary to-blue-600 text-white rounded-lg text-sm font-medium hover:shadow-lg transition"
-                    (click)="openAnswerDetail(skill)">
-              📝 Xem đáp án chi tiết
-            </button>
-            <button *ngIf="!skill.isAutoGraded && skill.status === 'completed'"
-                    class="flex-1 px-3 py-2 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-lg text-sm font-medium hover:shadow-lg transition"
-                    (click)="viewSkillSubmission(skill.skillType, skill.examId)">
-              📋 Xem bài làm
-            </button>
-            <button class="flex-1 px-3 py-2 bg-slate-100 text-slate-700 rounded-lg text-sm font-medium border border-slate-200 hover:bg-slate-200 transition disabled:opacity-50 disabled:cursor-not-allowed"
-                    (click)="retakeSkill(skill.skillType, skill.examId)"
-                    [disabled]="skill.status !== 'completed'">
-              {{ skill.status === 'completed' ? '🔄 Làm lại' : '➡️ Làm bài ngay' }}
-            </button>
           </div>
         </div>
       </div>
@@ -342,6 +342,172 @@ MODAL: ANSWER DETAIL (READING/LISTENING)
     <div class="flex flex-wrap gap-3 p-6 border-t border-slate-200">
       <button class="px-6 py-2 bg-slate-200 text-slate-700 rounded-lg font-medium hover:bg-slate-300 transition" (click)="closeAnswerDetail()">Đóng</button>
       <button class="px-6 py-2 bg-gradient-to-r from-primary to-blue-600 text-white rounded-lg font-medium hover:shadow-lg transition" (click)="viewSkillDetail(selectedSkill?.skillType || 0, selectedSkill?.examId || '')">
+        🔄 Làm lại bài này
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+MODAL: AI FEEDBACK (WRITING/SPEAKING)
+============================================================ -->
+<div *ngIf="showAiFeedbackModal && selectedSkill" 
+     class="fixed inset-0 bg-black/70 backdrop-blur z-[1000] flex items-center justify-center p-4"
+     (click)="closeAiFeedbackModal()">
+  <div class="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] flex flex-col" (click)="$event.stopPropagation()">
+    <div class="flex justify-between items-center p-6 border-b border-slate-200">
+      <h3 class="text-xl font-bold text-slate-800">
+        🤖 AI Feedback - {{ selectedSkill.skillName }}
+      </h3>
+      <button class="text-slate-400 hover:text-slate-600 text-2xl transition" (click)="closeAiFeedbackModal()">✕</button>
+    </div>
+    <div class="p-6 overflow-y-auto flex-1">
+      
+      <!-- WRITING FEEDBACK -->
+      <ng-container *ngIf="selectedSkill.skillName === 'Writing'">
+        <div *ngIf="writingFeedback as feedback">
+          <!-- Score Breakdown -->
+          <div class="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6">
+            <div class="bg-blue-50 rounded-lg p-3 text-center">
+              <div class="text-xs text-slate-500">Task Response</div>
+              <div class="text-lg font-bold text-blue-600">{{ feedback.TaskResponseScore || 0 }}/10</div>
+            </div>
+            <div class="bg-blue-50 rounded-lg p-3 text-center">
+              <div class="text-xs text-slate-500">Coherence</div>
+              <div class="text-lg font-bold text-blue-600">{{ feedback.CoherenceCohesionScore || 0 }}/10</div>
+            </div>
+            <div class="bg-blue-50 rounded-lg p-3 text-center">
+              <div class="text-xs text-slate-500">Lexical</div>
+              <div class="text-lg font-bold text-blue-600">{{ feedback.LexicalResourceScore || 0 }}/10</div>
+            </div>
+            <div class="bg-blue-50 rounded-lg p-3 text-center">
+              <div class="text-xs text-slate-500">Grammar</div>
+              <div class="text-lg font-bold text-blue-600">{{ feedback.GrammarRangeScore || 0 }}/10</div>
+            </div>
+            <div class="bg-blue-100 rounded-lg p-3 text-center border-2 border-blue-400">
+              <div class="text-xs text-slate-600 font-semibold">🌟 Tổng</div>
+              <div class="text-lg font-bold text-blue-700">{{ feedback.TotalScore || 0 }}/10</div>
+            </div>
+          </div>
+
+          <!-- Strengths - KHÔNG THÊM TIÊU ĐỀ THỦ CÔNG -->
+          <div *ngIf="feedback.Strengths" class="mb-4 p-4 bg-emerald-50 rounded-xl border-l-4 border-emerald-500">
+            <div class="text-sm text-slate-700 whitespace-pre-line">{{ feedback.Strengths }}</div>
+          </div>
+
+          <!-- Weaknesses - KHÔNG THÊM TIÊU ĐỀ THỦ CÔNG -->
+          <div *ngIf="feedback.Weaknesses" class="mb-4 p-4 bg-red-50 rounded-xl border-l-4 border-red-500">
+            <div class="text-sm text-slate-700 whitespace-pre-line">{{ feedback.Weaknesses }}</div>
+          </div>
+
+          <!-- Suggestions - KHÔNG THÊM TIÊU ĐỀ THỦ CÔNG -->
+          <div *ngIf="feedback.Suggestions" class="mb-4 p-4 bg-blue-50 rounded-xl border-l-4 border-blue-500">
+            <div class="text-sm text-slate-700 whitespace-pre-line">{{ feedback.Suggestions }}</div>
+          </div>
+
+          <!-- DETAILED FEEDBACK -->
+          <div *ngIf="feedback.DetailedFeedback && feedback.DetailedFeedback.length > 0" class="mt-4">
+            <div class="font-semibold text-amber-700 mb-3">📝 Phân tích lỗi chi tiết ({{ feedback.DetailedFeedback.length }} lỗi)</div>
+            <div *ngFor="let item of feedback.DetailedFeedback; let j = index" 
+                 class="mb-3 p-4 bg-amber-50 rounded-xl border border-amber-200">
+              <div class="flex items-center gap-2 mb-1">
+                <span class="px-2 py-0.5 bg-amber-500 text-white text-xs font-bold rounded-full">#{{ j + 1 }}</span>
+                <span class="font-semibold text-amber-800">{{ item.issue }}</span>
+              </div>
+              <div class="text-sm text-slate-600 italic bg-white p-2 rounded-lg mb-1">
+                "{{ item.sentence }}"
+              </div>
+              <div class="text-sm text-emerald-700">
+                ✅ Sửa: "{{ item.suggestion }}"
+              </div>
+            </div>
+          </div>
+
+          <div *ngIf="!feedback.DetailedFeedback || feedback.DetailedFeedback.length === 0" class="mt-4 p-4 bg-slate-50 rounded-xl text-center text-slate-500">
+            ℹ️ Không có phân tích lỗi chi tiết
+          </div>
+        </div>
+        <div *ngIf="!writingFeedback" class="text-center py-8 text-slate-500">
+          <div class="text-4xl mb-4">📭</div>
+          <p>Không có dữ liệu feedback cho bài viết này.</p>
+        </div>
+      </ng-container>
+
+      <!-- SPEAKING FEEDBACK -->
+      <ng-container *ngIf="selectedSkill.skillName === 'Speaking'">
+        <div *ngIf="speakingFeedback as feedback">
+          <!-- Score Breakdown -->
+          <div class="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6">
+            <div class="bg-purple-50 rounded-lg p-3 text-center">
+              <div class="text-xs text-slate-500">Content</div>
+              <div class="text-lg font-bold text-purple-600">{{ feedback.ContentScore || 0 }}/10</div>
+            </div>
+            <div class="bg-purple-50 rounded-lg p-3 text-center">
+              <div class="text-xs text-slate-500">Organization</div>
+              <div class="text-lg font-bold text-purple-600">{{ feedback.OrganizationScore || 0 }}/10</div>
+            </div>
+            <div class="bg-purple-50 rounded-lg p-3 text-center">
+              <div class="text-xs text-slate-500">Grammar</div>
+              <div class="text-lg font-bold text-purple-600">{{ feedback.GrammarScore || 0 }}/10</div>
+            </div>
+            <div class="bg-purple-50 rounded-lg p-3 text-center">
+              <div class="text-xs text-slate-500">Vocabulary</div>
+              <div class="text-lg font-bold text-purple-600">{{ feedback.VocabularyScore || 0 }}/10</div>
+            </div>
+            <div class="bg-purple-100 rounded-lg p-3 text-center border-2 border-purple-400">
+              <div class="text-xs text-slate-600 font-semibold">🌟 Tổng</div>
+              <div class="text-lg font-bold text-purple-700">{{ feedback.TotalScore || 0 }}/10</div>
+            </div>
+          </div>
+
+          <!-- Strengths - KHÔNG THÊM TIÊU ĐỀ THỦ CÔNG -->
+          <div *ngIf="feedback.Strengths" class="mb-4 p-4 bg-emerald-50 rounded-xl border-l-4 border-emerald-500">
+            <div class="text-sm text-slate-700 whitespace-pre-line">{{ feedback.Strengths }}</div>
+          </div>
+
+          <!-- Weaknesses - KHÔNG THÊM TIÊU ĐỀ THỦ CÔNG -->
+          <div *ngIf="feedback.Weaknesses" class="mb-4 p-4 bg-red-50 rounded-xl border-l-4 border-red-500">
+            <div class="text-sm text-slate-700 whitespace-pre-line">{{ feedback.Weaknesses }}</div>
+          </div>
+
+          <!-- Suggestions - KHÔNG THÊM TIÊU ĐỀ THỦ CÔNG -->
+          <div *ngIf="feedback.Suggestions" class="mb-4 p-4 bg-blue-50 rounded-xl border-l-4 border-blue-500">
+            <div class="text-sm text-slate-700 whitespace-pre-line">{{ feedback.Suggestions }}</div>
+          </div>
+
+          <!-- ERROR ANALYSIS -->
+          <div *ngIf="feedback.ErrorAnalysis && feedback.ErrorAnalysis.length > 0" class="mt-4">
+            <div class="font-semibold text-amber-700 mb-3">📝 Phân tích lỗi chi tiết ({{ feedback.ErrorAnalysis.length }} lỗi)</div>
+            <div *ngFor="let error of feedback.ErrorAnalysis; let j = index" 
+                 class="mb-3 p-4 bg-amber-50 rounded-xl border border-amber-200">
+              <div class="flex items-center gap-2 mb-1">
+                <span class="px-2 py-0.5 bg-amber-500 text-white text-xs font-bold rounded-full">#{{ j + 1 }}</span>
+                <span class="font-semibold text-amber-800">{{ error.issue }}</span>
+              </div>
+              <div class="text-sm text-slate-600 italic bg-white p-2 rounded-lg mb-1">
+                "{{ error.transcript }}"
+              </div>
+              <div class="text-sm text-emerald-700">
+                ✅ Sửa: "{{ error.correction }}"
+              </div>
+            </div>
+          </div>
+
+          <div *ngIf="!feedback.ErrorAnalysis || feedback.ErrorAnalysis.length === 0" class="mt-4 p-4 bg-slate-50 rounded-xl text-center text-slate-500">
+            ℹ️ Không có phân tích lỗi chi tiết
+          </div>
+        </div>
+        <div *ngIf="!speakingFeedback" class="text-center py-8 text-slate-500">
+          <div class="text-4xl mb-4">📭</div>
+          <p>Không có dữ liệu feedback cho bài nói này.</p>
+        </div>
+      </ng-container>
+
+    </div>
+    <div class="flex flex-wrap gap-3 p-6 border-t border-slate-200">
+      <button class="px-6 py-2 bg-slate-200 text-slate-700 rounded-lg font-medium hover:bg-slate-300 transition" (click)="closeAiFeedbackModal()">Đóng</button>
+      <button class="px-6 py-2 bg-gradient-to-r from-primary to-blue-600 text-white rounded-lg font-medium hover:shadow-lg transition" 
+              (click)="viewSkillDetail(selectedSkill.skillType || 0, selectedSkill.examId || '')">
         🔄 Làm lại bài này
       </button>
     </div>

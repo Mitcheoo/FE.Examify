@@ -52,6 +52,87 @@
 }
 
 // ============================================================
+// NOTIFICATION
+// ============================================================
+
+.notification {
+  position: fixed;
+  top: 80px;
+  right: 20px;
+  z-index: 9999;
+  max-width: 500px;
+  min-width: 300px;
+  padding: 16px 20px;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+  animation: slideInRight 0.4s ease;
+  
+  &.notification-success {
+    background: #d1fae5;
+    border: 1px solid #34d399;
+    color: #065f46;
+    
+    .notification-icon {
+      color: #059669;
+    }
+  }
+  
+  &.notification-error {
+    background: #fef2f2;
+    border: 1px solid #f87171;
+    color: #991b1b;
+    
+    .notification-icon {
+      color: #dc2626;
+    }
+  }
+  
+  .notification-content {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    
+    .notification-icon {
+      font-size: 20px;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+    
+    .notification-message {
+      flex: 1;
+      font-size: 14px;
+      line-height: 1.5;
+      white-space: pre-wrap;
+    }
+    
+    .notification-close {
+      background: none;
+      border: none;
+      font-size: 18px;
+      cursor: pointer;
+      color: inherit;
+      opacity: 0.6;
+      padding: 0 4px;
+      
+      &:hover {
+        opacity: 1;
+      }
+    }
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+// ============================================================
 // ALERTS
 // ============================================================
 
@@ -166,7 +247,7 @@
 // ============================================================
 
 .form-group {
-  margin-bottom: 12px;
+  margin-bottom: 16px;
 
   label {
     display: block;
@@ -175,16 +256,19 @@
     color: #1e293b;
     margin-bottom: 4px;
   }
+
+  .hint {
+    display: block;
+    margin-top: 4px;
+    font-size: 12px;
+    color: #94a3b8;
+  }
 }
 
 .form-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 12px;
-
-  &.options-row {
-    grid-template-columns: 1fr 1fr;
-  }
+  gap: 16px;
 }
 
 .form-input,
@@ -204,11 +288,6 @@
     border-color: #2563eb;
     box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
   }
-
-  &:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-  }
 }
 
 .form-textarea {
@@ -216,202 +295,253 @@
   min-height: 60px;
 }
 
-.question-count-badge {
-  display: inline-block;
-  padding: 6px 16px;
-  background: #dbeafe;
-  color: #2563eb;
-  border-radius: 6px;
-  font-weight: 600;
-  font-size: 16px;
-}
-
 // ============================================================
-// QUESTIONS SECTION
+// ✅ THÊM: PRICE SECTION (CHỈ CHO FULL TEST)
 // ============================================================
 
-.questions-section {
-  margin-top: 16px;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  padding: 16px;
-}
-
-.questions-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 12px;
-
-  h4 {
-    font-size: 14px;
-    font-weight: 600;
-    color: #0f172a;
-    margin: 0;
-  }
-}
-
-.btn-add-question {
-  padding: 6px 14px;
-  background: #2563eb;
-  border: none;
-  border-radius: 6px;
-  color: white;
-  font-size: 13px;
-  cursor: pointer;
-  transition: all 0.2s;
-
-  &:hover {
-    background: #1d4ed8;
-  }
-}
-
-// ============================================================
-// QUESTION FORM (TRONG MODAL)
-// ============================================================
-
-.question-form {
+.price-section {
+  margin-bottom: 20px;
   background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  padding: 16px;
-  margin-bottom: 12px;
-
-  .question-form-actions {
-    display: flex;
-    justify-content: flex-end;
-    gap: 8px;
-    margin-top: 12px;
-    padding-top: 12px;
-    border-top: 1px solid #e2e8f0;
-  }
-}
-
-.btn-cancel-form {
-  padding: 6px 16px;
-  background: #e2e8f0;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 13px;
-  color: #475569;
-  transition: all 0.2s;
-
-  &:hover {
-    background: #cbd5e1;
-  }
-}
-
-.btn-save-question {
-  padding: 6px 20px;
-  background: #2563eb;
-  border: none;
-  border-radius: 6px;
-  color: white;
-  font-size: 13px;
-  cursor: pointer;
-  transition: all 0.2s;
-
-  &:hover {
-    background: #1d4ed8;
-  }
-}
-
-// ============================================================
-// QUESTIONS LIST
-// ============================================================
-
-.questions-list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.question-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 10px 14px;
-  background: #f8fafc;
+  border-radius: 12px;
+  padding: 16px 20px;
   border: 1px solid #e5e7eb;
-  border-radius: 6px;
-  transition: all 0.2s;
 
-  &:hover {
-    border-color: #94a3b8;
-  }
-
-  .question-info {
+  .price-header {
     display: flex;
+    justify-content: space-between;
     align-items: center;
-    gap: 12px;
-    flex: 1;
-    min-width: 0;
+    margin-bottom: 12px;
 
-    .q-number {
+    .price-title {
+      font-size: 15px;
       font-weight: 600;
-      color: #0f172a;
-      font-size: 14px;
-      flex-shrink: 0;
-    }
-
-    .q-text {
-      flex: 1;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-      font-size: 14px;
       color: #1e293b;
     }
 
-    .q-answer {
-      font-size: 13px;
-      color: #059669;
-      font-weight: 500;
-      flex-shrink: 0;
+    .price-toggle {
+      display: flex;
+      align-items: center;
+      gap: 12px;
     }
   }
 
-  .question-actions {
+  .price-body {
+    padding-top: 12px;
+    border-top: 1px solid #e5e7eb;
+  }
+
+  .price-input-group {
+    max-width: 400px;
+
+    .price-label {
+      display: block;
+      font-size: 13px;
+      font-weight: 500;
+      color: #475569;
+      margin-bottom: 4px;
+    }
+
+    .price-input-wrapper {
+      display: flex;
+      align-items: center;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      overflow: hidden;
+      transition: all 0.2s;
+      background: white;
+
+      &:focus-within {
+        border-color: #2563eb;
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+      }
+
+      .price-currency {
+        padding: 8px 12px;
+        font-weight: 600;
+        color: #64748b;
+        background: #f1f5f9;
+        border-right: 1px solid #e2e8f0;
+        font-size: 14px;
+      }
+
+      .price-input {
+        flex: 1;
+        padding: 8px 12px;
+        border: none;
+        outline: none;
+        font-size: 14px;
+        font-weight: 500;
+        background: transparent;
+        color: #1e293b;
+
+        &::placeholder {
+          color: #94a3b8;
+          font-weight: 400;
+        }
+      }
+    }
+
+    .price-hint {
+      display: block;
+      font-size: 11px;
+      color: #94a3b8;
+      margin-top: 4px;
+    }
+  }
+
+  .price-preview {
+    margin-top: 10px;
+    padding: 10px 16px;
+    background: #eff6ff;
+    border-radius: 8px;
     display: flex;
-    gap: 4px;
-    flex-shrink: 0;
+    align-items: center;
+    gap: 12px;
+
+    .preview-label {
+      font-size: 13px;
+      color: #475569;
+    }
+
+    .preview-value {
+      font-size: 16px;
+      font-weight: 700;
+      color: #2563eb;
+    }
+  }
+
+  .free-badge {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 16px;
+    background: #f0fdf4;
+    border-radius: 8px;
+
+    .free-icon {
+      font-size: 20px;
+    }
+
+    .free-text {
+      font-size: 13px;
+      color: #065f46;
+      font-weight: 500;
+    }
   }
 }
 
-.btn-edit,
-.btn-delete {
-  padding: 4px 8px;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 14px;
-  transition: all 0.2s;
-}
+// ============================================================
+// TOGGLE SWITCH
+// ============================================================
 
-.btn-edit {
-  background: #dbeafe;
-  color: #2563eb;
+.toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 44px;
+  height: 24px;
+  flex-shrink: 0;
 
-  &:hover {
-    background: #bfdbfe;
+  input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+
+    &:checked + .toggle-slider {
+      background: #10b981;
+    }
+
+    &:checked + .toggle-slider::before {
+      transform: translateX(20px);
+    }
+  }
+
+  .toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    inset: 0;
+    background: #cbd5e1;
+    transition: all 0.3s;
+    border-radius: 9999px;
+
+    &::before {
+      content: '';
+      position: absolute;
+      height: 16px;
+      width: 16px;
+      left: 4px;
+      bottom: 4px;
+      background: white;
+      transition: all 0.3s;
+      border-radius: 50%;
+    }
   }
 }
 
-.btn-delete {
-  background: #fee2e2;
-  color: #ef4444;
+.toggle-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: #475569;
+}
 
-  &:hover {
-    background: #fecaca;
+// ============================================================
+// INFO BOX (BAREM)
+// ============================================================
+
+.info-box {
+  background: #f0f9ff;
+  border: 1px solid #bae6fd;
+  border-radius: 8px;
+  padding: 16px;
+  margin-top: 8px;
+
+  .info-box-title {
+    font-weight: 600;
+    color: #0c4a6e;
+    font-size: 14px;
+    margin-bottom: 12px;
+  }
+
+  .info-box-content {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+
+    .info-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 6px 12px;
+      background: white;
+      border-radius: 6px;
+      font-size: 13px;
+
+      .label {
+        color: #64748b;
+      }
+
+      .value {
+        font-weight: 600;
+        color: #0f172a;
+      }
+    }
   }
 }
 
-.empty-questions {
-  text-align: center;
-  padding: 24px;
-  color: #94a3b8;
-  font-size: 14px;
+// ============================================================
+// NOTE BOX
+// ============================================================
+
+.note-box {
+  background: #fefce8;
+  border: 1px solid #fde68a;
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin-top: 16px;
+
+  p {
+    margin: 4px 0;
+    font-size: 13px;
+    color: #78350f;
+  }
 }
 
 // ============================================================
@@ -441,20 +571,6 @@
 
   .skill-select {
     width: 100%;
-  }
-}
-
-.note-box {
-  background: #f0f9ff;
-  border: 1px solid #bae6fd;
-  border-radius: 8px;
-  padding: 14px 18px;
-  margin-top: 12px;
-
-  p {
-    margin: 4px 0;
-    font-size: 13px;
-    color: #0c4a6e;
   }
 }
 
@@ -519,10 +635,6 @@
 
   .form-row {
     grid-template-columns: 1fr;
-
-    &.options-row {
-      grid-template-columns: 1fr 1fr;
-    }
   }
 
   .mode-selection {
@@ -538,18 +650,8 @@
     }
   }
 
-  .question-item {
-    flex-wrap: wrap;
-    gap: 8px;
-
-    .question-info {
-      width: 100%;
-    }
-
-    .question-actions {
-      width: 100%;
-      justify-content: flex-end;
-    }
+  .info-box .info-box-content {
+    grid-template-columns: 1fr;
   }
 
   .form-actions {
@@ -561,15 +663,39 @@
     }
   }
 
-  .create-exam-header {
-    h2 {
-      font-size: 18px;
+  .notification {
+    top: 70px;
+    right: 10px;
+    left: 10px;
+    max-width: none;
+    min-width: auto;
+  }
+
+  .create-exam-header h2 {
+    font-size: 18px;
+  }
+
+  .price-section {
+    padding: 12px 16px;
+
+    .price-header {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 12px;
+    }
+
+    .price-input-group {
+      max-width: 100%;
     }
   }
 }
 
 @media (max-width: 480px) {
-  .form-row.options-row {
-    grid-template-columns: 1fr;
+  .create-exam-container {
+    padding: 12px;
+  }
+
+  .create-exam-card {
+    padding: 12px;
   }
 }

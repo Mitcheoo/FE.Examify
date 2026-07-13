@@ -5,6 +5,7 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { ExamService, SkillProgress } from '../../services/exam.service';
 import { AuthService } from '../../services/auth.service';
+import { WalletService } from '../../services/wallet.service'; // ✅ THÊM IMPORT
 
 @Component({
   selector: 'app-exam-detail',
@@ -19,6 +20,7 @@ export class ExamDetailComponent implements OnInit {
   private router = inject(Router);
   private cdr = inject(ChangeDetectorRef);
   private authService = inject(AuthService);
+  private walletService = inject(WalletService); // ✅ THÊM WALLET SERVICE
 
   exam: any = null;
   skills: SkillProgress[] = [];
@@ -28,6 +30,10 @@ export class ExamDetailComponent implements OnInit {
   private userId: string = '';
   private sessionId: string | null = null;
   private isClosingSession: boolean = false;
+
+  // ✅ THÊM TRẠNG THÁI KIỂM TRA MUA
+  private isCheckingPurchase: boolean = false;
+  private isPurchased: boolean = false;
 
   private skillExamIds = {
     reading: '8c0375f7-335a-49eb-b199-41cbd35f94e2',
@@ -49,7 +55,8 @@ export class ExamDetailComponent implements OnInit {
       console.log('📌 User ID:', this.userId);
       
       if (this.examId) {
-        this.loadExamDetail();
+        // ✅ THAY VÌ LOAD TRỰC TIẾP, KIỂM TRA MUA TRƯỚC
+        this.checkPurchaseAndLoad();
       } else {
         this.errorMessage = 'Không tìm thấy ID đề thi';
         this.isLoading = false;
@@ -59,12 +66,113 @@ export class ExamDetailComponent implements OnInit {
   }
 
   // ============================================================
-  // LOAD EXAM DETAIL
+  // ✅ KIỂM TRA MUA VÀ LOAD BÀI THI (THÊM MỚI)
+  // ============================================================
+
+  checkPurchaseAndLoad() {
+    this.isLoading = true;
+    this.isCheckingPurchase = true;
+    
+    // 1. Lấy thông tin bài thi
+    this.examService.getExerciseById(this.examId).subscribe({
+      next: (examData) => {
+        this.exam = examData;
+        console.log('✅ Exam loaded:', this.exam);
+        
+        // 2. Kiểm tra bài thi có phí không (Full Test hoặc bài thường)
+        if (this.exam && !this.exam.isFree && this.exam.price > 0) {
+          console.log(`💰 Bài thi có phí: ${this.exam.price}đ`);
+          
+          // 3. Kiểm tra user đã mua chưa (cho cả Full Test và bài thường)
+          this.walletService.checkPurchased(this.examId).subscribe({
+            next: (purchaseResult) => {
+              this.isPurchased = purchaseResult.isPurchased;
+              this.isCheckingPurchase = false;
+              
+              if (!this.isPurchased) {
+                // ❌ CHƯA MUA → CHẶN VÀ CHUYỂN HƯỚNG
+                console.warn('⚠️ User chưa mua bài thi này, redirecting...');
+                this.errorMessage = `Bạn cần mua bài thi này trước khi làm. Giá: ${this.exam?.price?.toLocaleString()}đ`;
+                this.isLoading = false;
+                this.cdr.detectChanges();
+                
+                // Hiển thị alert và chuyển về trang danh sách
+                alert(`⚠️ Bạn cần mua bài thi này trước khi làm.\n📖 "${this.exam?.title}"\n💰 Giá: ${this.exam?.price?.toLocaleString()}đ\n\nVui lòng quay lại trang danh sách để mua.`);
+                this.router.navigate(['/exam-list']);
+                return;
+              }
+              
+              console.log('✅ User đã mua bài thi này');
+              // ✅ ĐÃ MUA → TIẾP TỤC LOAD
+              this.continueLoadExamDetail();
+            },
+            error: (err) => {
+              console.error('❌ Error checking purchase:', err);
+              this.isCheckingPurchase = false;
+              // Nếu lỗi kiểm tra mua, vẫn cho vào làm (fallback)
+              this.continueLoadExamDetail();
+            }
+          });
+        } else {
+          // Bài thi miễn phí
+          console.log('🆓 Bài thi miễn phí');
+          this.isCheckingPurchase = false;
+          this.isPurchased = true;
+          this.continueLoadExamDetail();
+        }
+      },
+      error: (err) => {
+        console.error('❌ Error loading exam:', err);
+        this.errorMessage = 'Có lỗi xảy ra khi tải đề thi';
+        this.isLoading = false;
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  // ============================================================
+  // ✅ TIẾP TỤC LOAD CHI TIẾT (TÁCH RIÊNG ĐỂ KHÔNG ẢNH HƯỞNG CODE CŨ)
+  // ============================================================
+
+  continueLoadExamDetail() {
+    // GỌI LẠI LOGIC CŨ
+    this.loadExamDetail();
+  }
+
+  // ============================================================
+  // LOAD EXAM DETAIL (GIỮ NGUYÊN CODE CŨ)
   // ============================================================
 
   loadExamDetail() {
     console.log('🔄 Loading exam detail for ID:', this.examId);
     
+    // ✅ NẾU ĐÃ CÓ EXAM TỪ BƯỚC TRƯỚC, DÙNG LẠI
+    if (this.exam && this.exam.id === this.examId) {
+      console.log('✅ Using existing exam data');
+      if (this.exam.isFullTest) {
+        this.loadFullTestStatus();
+        const savedSession = localStorage.getItem('fulltest_session_' + this.examId + '_' + this.userId);
+        if (savedSession && savedSession !== 'null' && savedSession !== '') {
+          this.sessionId = savedSession;
+          console.log('📌 Found existing session:', this.sessionId);
+        }
+      } else {
+        this.skills = [
+          { 
+            skillType: this.getSkillType(this.exam.skill), 
+            skillName: this.getSkillName(this.exam.skill), 
+            duration: Math.floor(this.exam.timeLimitSeconds / 60), 
+            status: 'available', 
+            examId: this.examId
+          }
+        ];
+        this.isLoading = false;
+        this.cdr.detectChanges();
+      }
+      return;
+    }
+    
+    // FALLBACK: GỌI API NẾU CHƯA CÓ DATA
     this.examService.getExerciseById(this.examId).subscribe({
       next: (data) => {
         console.log('✅ Exam detail loaded:', data);
@@ -105,10 +213,11 @@ export class ExamDetailComponent implements OnInit {
   }
 
   // ============================================================
-  // FULL TEST STATUS
+  // CÁC HÀM CÒN LẠI GIỮ NGUYÊN (KHÔNG THAY ĐỔI)
   // ============================================================
 
   loadFullTestStatus() {
+    // ... GIỮ NGUYÊN CODE CŨ ...
     console.log('🔄 Loading full test status...');
     
     const sessionKey = `fulltest_session_${this.examId}_${this.userId}`;
@@ -120,7 +229,6 @@ export class ExamDetailComponent implements OnInit {
         
         if (response.hasActiveSession) {
           sessionId = response.sessionId;
-          // ✅ KIỂM TRA sessionId KHÔNG NULL TRƯỚC KHI LƯU
           if (sessionId) {
             localStorage.setItem(sessionKey, sessionId);
             console.log('📌 Using active session:', sessionId);
@@ -146,72 +254,54 @@ export class ExamDetailComponent implements OnInit {
     });
   }
 
-  // ============================================================
-// CLEAR ALL DRAFT ANSWERS
-// ============================================================
+  clearAllDraftAnswers() {
+    // ... GIỮ NGUYÊN CODE CŨ ...
+    const skillTypes = ['reading', 'listening', 'writing', 'speaking'];
+    const exerciseIds = this.skills.map(s => s.examId).filter(id => id);
+    const ids = exerciseIds.length > 0 ? exerciseIds : [
+      this.skillExamIds.reading,
+      this.skillExamIds.listening,
+      this.skillExamIds.writing,
+      this.skillExamIds.speaking
+    ];
+    
+    skillTypes.forEach((skill, index) => {
+      const examId = ids[index] || this.examId;
+      const draftKey = `${skill}_answers_${examId}_${this.userId}`;
+      localStorage.removeItem(draftKey);
+      console.log(`🗑️ Deleted draft: ${draftKey}`);
+    });
+    
+    console.log('✅ All draft answers cleared from localStorage');
+  }
 
-clearAllDraftAnswers() {
-  // Xóa draft answers của tất cả các kỹ năng
-  const skillTypes = ['reading', 'listening', 'writing', 'speaking'];
-  
-  // Lấy tất cả exercise IDs từ skills array
-  const exerciseIds = this.skills.map(s => s.examId).filter(id => id);
-  
-  // Nếu chưa có exercise IDs, dùng skillExamIds mặc định
-  const ids = exerciseIds.length > 0 ? exerciseIds : [
-    this.skillExamIds.reading,
-    this.skillExamIds.listening,
-    this.skillExamIds.writing,
-    this.skillExamIds.speaking
-  ];
-  
-  // Xóa từng draft key
-  skillTypes.forEach((skill, index) => {
-    const examId = ids[index] || this.examId;
-    const draftKey = `${skill}_answers_${examId}_${this.userId}`;
-    localStorage.removeItem(draftKey);
-    console.log(`🗑️ Deleted draft: ${draftKey}`);
-  });
-  
-  console.log('✅ All draft answers cleared from localStorage');
-}
-// ============================================================
-// CREATE NEW SESSION
-// ============================================================
-
-createNewSession() {
-  this.examService.startFullTestSession(this.examId).subscribe({
-    next: (data: any) => {
-      const sessionId = data.sessionId;
-      // ✅ KIỂM TRA sessionId KHÔNG NULL TRƯỚC KHI LƯU
-      if (sessionId) {
-        // ✅ LƯU SESSION CHÍNH
-        localStorage.setItem(`fulltest_session_${this.examId}_${this.userId}`, sessionId);
-        
-        // ✅ SET FLAG ĐỂ CÁC SKILL COMPONENT BIẾT ĐÂY LÀ SESSION MỚI
-        // Flag này sẽ được kiểm tra trong loadSavedAnswers() của từng skill
-        localStorage.setItem(`new_session_${sessionId}`, 'true');
-        console.log(`✅ Set new_session flag for: ${sessionId}`);
-        
-        // ✅ XÓA TẤT CẢ DRAFT ANSWERS CŨ TRONG LOCALSTORAGE
-        this.clearAllDraftAnswers();
-        
-        console.log('✅ Full Test session created:', sessionId);
-        this.sessionId = sessionId;
-        this.continueLoadFullTestStatus(sessionId);
-      } else {
-        console.error('❌ Session ID is null or empty');
+  createNewSession() {
+    // ... GIỮ NGUYÊN CODE CŨ ...
+    this.examService.startFullTestSession(this.examId).subscribe({
+      next: (data: any) => {
+        const sessionId = data.sessionId;
+        if (sessionId) {
+          localStorage.setItem(`fulltest_session_${this.examId}_${this.userId}`, sessionId);
+          localStorage.setItem(`new_session_${sessionId}`, 'true');
+          console.log(`✅ Set new_session flag for: ${sessionId}`);
+          this.clearAllDraftAnswers();
+          console.log('✅ Full Test session created:', sessionId);
+          this.sessionId = sessionId;
+          this.continueLoadFullTestStatus(sessionId);
+        } else {
+          console.error('❌ Session ID is null or empty');
+          this.continueLoadFullTestStatus(null);
+        }
+      },
+      error: (err) => {
+        console.error('❌ Failed to create session:', err);
         this.continueLoadFullTestStatus(null);
       }
-    },
-    error: (err) => {
-      console.error('❌ Failed to create session:', err);
-      this.continueLoadFullTestStatus(null);
-    }
-  });
-}
+    });
+  }
 
   continueLoadFullTestStatus(sessionId: string | null = null) {
+    // ... GIỮ NGUYÊN CODE CŨ ...
     this.examService.getFullTestStatus(this.examId).subscribe({
       next: (statusData) => {
         console.log('✅ Full test status loaded:', statusData);
@@ -244,11 +334,8 @@ createNewSession() {
     });
   }
 
-  // ============================================================
-  // LEGACY PROGRESS (FALLBACK)
-  // ============================================================
-
   loadLegacyProgress() {
+    // ... GIỮ NGUYÊN CODE CŨ ...
     console.log('🔄 Using legacy progress loading...');
     
     this.skills = [
@@ -280,127 +367,106 @@ createNewSession() {
     this.cdr.detectChanges();
   }
 
-  // ============================================================
-  // START SKILL
-  // ============================================================
-
- // ============================================================
-// START SKILL
-// ============================================================
-
-startSkill(skillType: string) {
-  console.log('🚀 Starting skill:', skillType);
-  const skill = this.skills.find(s => s.skillType === skillType);
-  const targetExamId = skill?.examId || this.examId;
-  
-  if (skill?.status === 'completed') {
-    alert('✅ Bạn đã hoàn thành kỹ năng này!');
-    return;
-  }
-  
-  if (skill?.status === 'locked') {
-    alert('🔒 Kỹ năng này đang bị khóa. Hãy hoàn thành kỹ năng trước!');
-    return;
-  }
-  
-  // ✅ QUAN TRỌNG: LUÔN LẤY SESSION MỚI NHẤT TỪ KEY CHÍNH
-  const fullTestSessionKey = `fulltest_session_${this.examId}_${this.userId}`;
-  const fullTestSessionId = localStorage.getItem(fullTestSessionKey);
-  
-  console.log(`📌 Current full test session: ${fullTestSessionId}`);
-  
-  // ✅ NẾU KHÔNG CÓ SESSION, TẠO MỚI
-  if (!fullTestSessionId || fullTestSessionId === 'null' || fullTestSessionId === '') {
-    console.log(`⚠️ No session found, creating one first...`);
-    this.examService.startFullTestSession(this.examId).subscribe({
-      next: (data: any) => {
-        const newSessionId = data.sessionId;
-        if (newSessionId) {
-          // Lưu session chính
-          localStorage.setItem(fullTestSessionKey, newSessionId);
-          // Lưu session riêng cho skill
-          localStorage.setItem(`fulltest_session_${this.examId}_${skillType}_${this.userId}`, newSessionId);
-          // Set flag session mới
-          localStorage.setItem(`new_session_${newSessionId}`, 'true');
-          
-          console.log(`✅ Session created: ${newSessionId}`);
-          
-          // Xóa draft answers
-          const draftKey = `${skillType}_answers_${targetExamId}_${this.userId}`;
-          localStorage.removeItem(draftKey);
-          console.log(`🗑️ Deleted draft for ${skillType}`);
-          
-          this.router.navigate(['/exam', targetExamId, skillType], {
-            queryParams: { 
-              fullTestId: this.examId,
-              sessionId: newSessionId
-            }
-          });
+  startSkill(skillType: string) {
+    // ... GIỮ NGUYÊN CODE CŨ ...
+    console.log('🚀 Starting skill:', skillType);
+    const skill = this.skills.find(s => s.skillType === skillType);
+    const targetExamId = skill?.examId || this.examId;
+    
+    if (skill?.status === 'completed') {
+      alert('✅ Bạn đã hoàn thành kỹ năng này!');
+      return;
+    }
+    
+    if (skill?.status === 'locked') {
+      alert('🔒 Kỹ năng này đang bị khóa. Hãy hoàn thành kỹ năng trước!');
+      return;
+    }
+    
+    const fullTestSessionKey = `fulltest_session_${this.examId}_${this.userId}`;
+    const fullTestSessionId = localStorage.getItem(fullTestSessionKey);
+    
+    console.log(`📌 Current full test session: ${fullTestSessionId}`);
+    
+    if (!fullTestSessionId || fullTestSessionId === 'null' || fullTestSessionId === '') {
+      console.log(`⚠️ No session found, creating one first...`);
+      this.examService.startFullTestSession(this.examId).subscribe({
+        next: (data: any) => {
+          const newSessionId = data.sessionId;
+          if (newSessionId) {
+            localStorage.setItem(fullTestSessionKey, newSessionId);
+            localStorage.setItem(`fulltest_session_${this.examId}_${skillType}_${this.userId}`, newSessionId);
+            localStorage.setItem(`new_session_${newSessionId}`, 'true');
+            
+            console.log(`✅ Session created: ${newSessionId}`);
+            
+            const draftKey = `${skillType}_answers_${targetExamId}_${this.userId}`;
+            localStorage.removeItem(draftKey);
+            console.log(`🗑️ Deleted draft for ${skillType}`);
+            
+            this.router.navigate(['/exam', targetExamId, skillType], {
+              queryParams: { 
+                fullTestId: this.examId,
+                sessionId: newSessionId
+              }
+            });
+          }
+        },
+        error: (err) => {
+          console.error('❌ Failed to create session:', err);
+          alert('Không thể tạo phiên làm bài. Vui lòng thử lại!');
         }
+      });
+      return;
+    }
+    
+    const skillSessionKey = `fulltest_session_${this.examId}_${skillType}_${this.userId}`;
+    localStorage.setItem(skillSessionKey, fullTestSessionId);
+    console.log(`📌 Using session ${fullTestSessionId} for ${skillType}`);
+    
+    const isNewSession = localStorage.getItem(`new_session_${fullTestSessionId}`) === 'true';
+    if (isNewSession) {
+      const draftKey = `${skillType}_answers_${targetExamId}_${this.userId}`;
+      localStorage.removeItem(draftKey);
+      console.log(`🗑️ Deleted draft for ${skillType}: ${draftKey}`);
+      localStorage.removeItem(`new_session_${fullTestSessionId}`);
+    }
+    
+    this.examService.getFullTestStatus(this.examId).subscribe({
+      next: (status: any) => {
+        console.log('📊 Full test status:', status);
+        
+        const allCompleted = status.skills?.every((s: any) => s.isCompleted === true);
+        
+        if (allCompleted) {
+          console.log('⚠️ Session already completed, redirecting to result...');
+          alert('Bạn đã hoàn thành bài thi này. Chuyển đến trang kết quả!');
+          this.router.navigate(['/fulltest', this.examId, 'result']);
+          return;
+        }
+        
+        console.log(`📌 Session still in progress for ${skillType}, continuing...`);
+        this.router.navigate(['/exam', targetExamId, skillType], {
+          queryParams: { 
+            fullTestId: this.examId,
+            sessionId: fullTestSessionId
+          }
+        });
       },
-      error: (err) => {
-        console.error('❌ Failed to create session:', err);
-        alert('Không thể tạo phiên làm bài. Vui lòng thử lại!');
+      error: (err: any) => {
+        console.error('❌ Failed to check session status:', err);
+        this.router.navigate(['/exam', targetExamId, skillType], {
+          queryParams: { 
+            fullTestId: this.examId,
+            sessionId: fullTestSessionId
+          }
+        });
       }
     });
-    return;
   }
-  
-  // ✅ DÙNG SESSION MỚI NHẤT CHO SKILL NÀY
-  const skillSessionKey = `fulltest_session_${this.examId}_${skillType}_${this.userId}`;
-  localStorage.setItem(skillSessionKey, fullTestSessionId);
-  console.log(`📌 Using session ${fullTestSessionId} for ${skillType}`);
-  
-  // ✅ KIỂM TRA SESSION MỚI ĐỂ XÓA DRAFT
-  const isNewSession = localStorage.getItem(`new_session_${fullTestSessionId}`) === 'true';
-  if (isNewSession) {
-    const draftKey = `${skillType}_answers_${targetExamId}_${this.userId}`;
-    localStorage.removeItem(draftKey);
-    console.log(`🗑️ Deleted draft for ${skillType}: ${draftKey}`);
-    
-    // Xóa flag sau khi đã xóa draft
-    localStorage.removeItem(`new_session_${fullTestSessionId}`);
-  }
-  
-  // ✅ KIỂM TRA SESSION CÒN ACTIVE KHÔNG
-  this.examService.getFullTestStatus(this.examId).subscribe({
-    next: (status: any) => {
-      console.log('📊 Full test status:', status);
-      
-      const allCompleted = status.skills?.every((s: any) => s.isCompleted === true);
-      
-      if (allCompleted) {
-        console.log('⚠️ Session already completed, redirecting to result...');
-        alert('Bạn đã hoàn thành bài thi này. Chuyển đến trang kết quả!');
-        this.router.navigate(['/fulltest', this.examId, 'result']);
-        return;
-      }
-      
-      console.log(`📌 Session still in progress for ${skillType}, continuing...`);
-      this.router.navigate(['/exam', targetExamId, skillType], {
-        queryParams: { 
-          fullTestId: this.examId,
-          sessionId: fullTestSessionId  // ✅ DÙNG SESSION MỚI NHẤT
-        }
-      });
-    },
-    error: (err: any) => {
-      console.error('❌ Failed to check session status:', err);
-      // Vẫn điều hướng dù có lỗi
-      this.router.navigate(['/exam', targetExamId, skillType], {
-        queryParams: { 
-          fullTestId: this.examId,
-          sessionId: fullTestSessionId
-        }
-      });
-    }
-  });
-}
-  // ============================================================
-  // VIEW FULL TEST RESULT ⭐
-  // ============================================================
 
   viewFullTestResult() {
+    // ... GIỮ NGUYÊN CODE CŨ ...
     if (this.isClosingSession) {
       console.log('⏳ Already closing session, please wait...');
       return;
@@ -426,11 +492,8 @@ startSkill(skillType: string) {
     });
   }
 
-  // ============================================================
-  // CLEAR LOCAL STORAGE
-  // ============================================================
-
   clearLocalStorageSessions() {
+    // ... GIỮ NGUYÊN CODE CŨ ...
     const sessionKey = `fulltest_session_${this.examId}_${this.userId}`;
     localStorage.removeItem(sessionKey);
     
@@ -442,11 +505,8 @@ startSkill(skillType: string) {
     console.log('🗑️ All sessions cleared from localStorage');
   }
 
-  // ============================================================
-  // RETRY FULL TEST ⭐
-  // ============================================================
-
   retryFullTest() {
+    // ... GIỮ NGUYÊN CODE CŨ ...
     console.log('🔄 Retrying full test...');
     
     this.examService.closeFullTestSession(this.examId).subscribe({
@@ -480,11 +540,8 @@ startSkill(skillType: string) {
     });
   }
 
-  // ============================================================
-  // CHECK FULL TEST COMPLETION
-  // ============================================================
-
   checkFullTestCompletion(): boolean {
+    // ... GIỮ NGUYÊN CODE CŨ ...
     const readingSkill = this.skills.find(s => s.skillType === 'reading');
     const listeningSkill = this.skills.find(s => s.skillType === 'listening');
     const writingSkill = this.skills.find(s => s.skillType === 'writing');
@@ -509,7 +566,7 @@ startSkill(skillType: string) {
   }
 
   // ============================================================
-  // GETTER HELPERS
+  // GETTER HELPERS (GIỮ NGUYÊN)
   // ============================================================
 
   getSkillName(skill: number): string {
@@ -573,7 +630,7 @@ startSkill(skillType: string) {
   }
 
   // ============================================================
-  // NAVIGATION
+  // NAVIGATION (GIỮ NGUYÊN)
   // ============================================================
 
   goBack() {

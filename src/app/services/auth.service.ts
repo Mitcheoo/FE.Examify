@@ -1,4 +1,6 @@
-﻿import { Injectable, inject } from '@angular/core';
+﻿// 📁 src/app/services/auth.service.ts
+
+import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpErrorResponse, HttpHeaders } from '@angular/common/http';
 import { BehaviorSubject, Observable, throwError } from 'rxjs';
 import { tap, catchError } from 'rxjs/operators';
@@ -68,23 +70,23 @@ export class AuthService {
     this.loadStoredData();
   }
 
+  // ============================================================
+  // STORAGE MANAGEMENT
+  // ============================================================
+
   private loadStoredData(): void {
-    // Load token
     const token = this.getToken();
-    
-    // Load user từ localStorage trước
     const savedUser = this.getUserFromStorage();
+    
     if (savedUser) {
       console.log('📦 Loaded user from localStorage:', savedUser.fullName);
       this.currentUserSubject.next(savedUser);
     }
     
-    // Kiểm tra token
     if (token && !this.isTokenExpired()) {
       console.log('✅ Token valid, setting authenticated');
       this.isAuthenticatedSubject.next(true);
       
-      // Nếu chưa có user trong storage hoặc cần cập nhật mới
       if (!savedUser) {
         this.getProfile().subscribe({
           next: (profile) => {
@@ -100,7 +102,7 @@ export class AuthService {
           }
         });
       } else {
-        // Có user rồi, vẫn gọi API để cập nhật (nhưng không block UI)
+        // Refresh profile in background
         this.getProfile().subscribe({
           next: (profile) => {
             this.currentUserSubject.next(profile);
@@ -118,12 +120,24 @@ export class AuthService {
   private getAuthHeaders(): HttpHeaders {
     const token = this.getToken();
     return new HttpHeaders({
-      'Authorization': token ? `Bearer ${token}` : ''
+      'Authorization': token ? `Bearer ${token}` : '',
+      'Content-Type': 'application/json'
     });
+  }
+
+  // ✅ THÊM METHOD NÀY CHO VOCABULARY COMPONENT
+  getAuthHeadersWithContentType(): HttpHeaders {
+    return this.getAuthHeaders();
   }
 
   getToken(): string | null {
     return localStorage.getItem('access_token');
+  }
+
+  // ✅ THÊM METHOD NÀY ĐỂ LẤY TOKEN DẠNG HEADER
+  getTokenHeader(): { Authorization: string } | { Authorization?: string } {
+    const token = this.getToken();
+    return token ? { Authorization: `Bearer ${token}` } : {};
   }
 
   isTokenExpired(): boolean {
@@ -135,12 +149,16 @@ export class AuthService {
   isLoggedIn(): boolean {
     const token = this.getToken();
     const isValid = !!token && !this.isTokenExpired();
-    console.log('🔑 isLoggedIn:', isValid);
     return isValid;
   }
 
+  // ✅ THÊM METHOD NÀY ĐỂ KIỂM TRA ADMIN
+  isAdmin(): boolean {
+    const user = this.getCurrentUser();
+    return user?.roles?.includes('Admin') ?? false;
+  }
+
   getCurrentUser(): UserProfile | null {
-    // Lấy từ subject trước, nếu null thì lấy từ storage
     const subjectValue = this.currentUserSubject.value;
     if (subjectValue) return subjectValue;
     return this.getUserFromStorage();
@@ -158,7 +176,6 @@ export class AuthService {
 
   private saveUserToStorage(user: UserProfile): void {
     localStorage.setItem('current_user', JSON.stringify(user));
-    console.log('💾 Saved user to localStorage');
   }
 
   private clearStorage(): void {
@@ -166,8 +183,11 @@ export class AuthService {
     localStorage.removeItem('refresh_token');
     localStorage.removeItem('current_user');
     localStorage.removeItem('token_expiry');
-    console.log('🗑️ Cleared all storage');
   }
+
+  // ============================================================
+  // AUTH APIs
+  // ============================================================
 
   login(credentials: LoginRequest): Observable<LoginResponse> {
     return this.http.post<LoginResponse>(this.apiUrl + '/login', credentials)
@@ -180,7 +200,6 @@ export class AuthService {
             }
           }
           
-          // Lưu user vào localStorage
           const userProfile: UserProfile = {
             id: response.userId,
             fullName: response.fullName,
@@ -188,7 +207,7 @@ export class AuthService {
             userName: response.userName,
             avatarUrl: null,
             createdAt: new Date(),
-            roles: response.roles
+            roles: response.roles || ['User']
           };
           this.saveUserToStorage(userProfile);
           this.currentUserSubject.next(userProfile);
@@ -213,7 +232,6 @@ export class AuthService {
       .pipe(
         tap(profile => {
           profile.roles ??= this.getCurrentUser()?.roles ?? [];
-          console.log('✅ Profile loaded from API:', profile.fullName);
           this.currentUserSubject.next(profile);
           this.saveUserToStorage(profile);
         }),
@@ -225,8 +243,7 @@ export class AuthService {
     const headers = this.getAuthHeaders();
     return this.http.put<{ message: string }>(this.apiUrl + '/profile', profileData, { headers })
       .pipe(
-        tap(response => {
-          // Cập nhật lại profile sau khi sửa
+        tap(() => {
           this.getProfile().subscribe();
         }),
         catchError(this.handleError<{ message: string }>('updateProfile'))
@@ -245,20 +262,27 @@ export class AuthService {
     this.clearStorage();
     this.currentUserSubject.next(null);
     this.isAuthenticatedSubject.next(false);
-    console.log('🚪 Logged out, redirecting to login');
     this.router.navigate(['/login']);
   }
+
+  // ============================================================
+  // ERROR HANDLING
+  // ============================================================
 
   private handleError<T>(operation = 'operation') {
     return (error: HttpErrorResponse): Observable<T> => {
       console.error(operation + ' failed:', error);
       let errorMessage = 'Đã có lỗi xảy ra';
+      
       if (error.status === 401) {
         errorMessage = 'Vui lòng đăng nhập lại';
         this.logout();
       } else if (error.error?.message) {
         errorMessage = error.error.message;
+      } else if (error.error?.title) {
+        errorMessage = error.error.title;
       }
+      
       return throwError(() => new Error(errorMessage));
     };
   }

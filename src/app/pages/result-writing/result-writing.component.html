@@ -1,0 +1,125 @@
+<!-- src/app/pages/result-writing/result-writing.component.html -->
+
+<div class="container mx-auto px-4 py-8 max-w-4xl">
+  <div class="mb-8">
+    <h1 class="text-3xl font-bold text-gray-800 flex items-center gap-2">
+      <span class="text-4xl">✍️</span> Kết quả bài thi Writing
+    </h1>
+    <p class="text-gray-500 mt-1">Xem lại kết quả bài thi Writing của bạn</p>
+  </div>
+
+  <!-- Loading -->
+  <div *ngIf="isLoading" class="flex justify-center items-center py-16">
+    <div class="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+  </div>
+
+  <!-- Error -->
+  <div *ngIf="!isLoading && error" class="text-center py-16">
+    <p class="text-red-500">{{ error }}</p>
+    <button class="mt-4 px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600" 
+            (click)="retry()">🔄 Thử lại</button>
+  </div>
+
+  <!-- Result -->
+  <div *ngIf="!isLoading && !error && result">
+    <!-- Summary Card -->
+    <div class="bg-white rounded-xl shadow-lg p-6 mb-6 border border-gray-100">
+      <div class="flex flex-col md:flex-row items-center gap-6">
+        <div class="flex-shrink-0">
+          <div class="w-32 h-32 rounded-full flex items-center justify-center text-4xl font-bold"
+               [class]="getScoreColor(result.totalScore)"
+               [style.background]="'conic-gradient(#3b82f6 ' + (result.totalScore / 10 * 100) + '%, #e5e7eb ' + (result.totalScore / 10 * 100) + '%)'">
+            <div class="w-28 h-28 rounded-full bg-white flex items-center justify-center flex-col">
+              <span class="text-3xl font-bold">{{ result.totalScore || 0 }}</span>
+              <span class="text-xs text-gray-400">/ 10</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex-1 text-center md:text-left">
+          <h2 class="text-2xl font-bold text-gray-800">{{ result.exerciseTitle || 'Bài thi Writing' }}</h2>
+          <div class="flex flex-wrap gap-3 mt-2 justify-center md:justify-start">
+            <span class="px-3 py-1 bg-gray-100 rounded-full text-sm text-gray-600">
+              📝 {{ result.totalQuestions || 0 }} Task
+            </span>
+            <span class="px-3 py-1 bg-gray-100 rounded-full text-sm text-gray-600">
+              ⏱️ {{ result.timeSpentSeconds || 0 }} giây
+            </span>
+          </div>
+          <div class="mt-3">
+            <span class="text-2xl">{{ getScoreEmoji(result.totalScore) }}</span>
+            <span class="text-lg font-medium ml-2" [class]="getScoreColor(result.totalScore)">
+              {{ getStatusText(result.totalScore) }}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Detail Questions -->
+    <div class="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
+      <h3 class="text-lg font-semibold text-gray-800 mb-4">📋 Chi tiết bài viết</h3>
+      
+      <div *ngIf="result.details && result.details.length > 0">
+        <div *ngFor="let detail of result.details; let i = index" 
+             class="border-b border-gray-100 py-4 last:border-0">
+          <div class="flex items-start gap-3">
+            <span class="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium"
+                  [class]="detail.score && detail.score >= 5 ? 'bg-green-100 text-green-600' : 'bg-yellow-100 text-yellow-600'">
+              {{ detail.score && detail.score >= 5 ? '✅' : '📝' }}
+            </span>
+            <div class="flex-1">
+              <div class="flex items-center justify-between">
+                <p class="font-medium text-gray-800">Task {{ i + 1 }}</p>
+                <span class="text-sm font-medium" [class]="detail.score && detail.score >= 5 ? 'text-green-600' : 'text-yellow-600'">
+                  {{ detail.score || 0 }}/10
+                </span>
+              </div>
+              <p class="text-sm text-gray-600 mt-1">{{ detail.questionText || 'Bài viết' }}</p>
+              
+              <!-- Word count -->
+              <div class="flex gap-4 mt-2 text-sm">
+                <span class="text-gray-500">📊 Số từ: <span class="font-medium">{{ detail.wordCount || 0 }}</span></span>
+                <span class="text-gray-500">📝 Yêu cầu: <span class="font-medium">{{ detail.minWords || 150 }} - {{ detail.maxWords || 300 }} từ</span></span>
+              </div>
+              
+              <!-- AI Feedback (if available) -->
+              <div *ngIf="detail.aiFeedback" class="mt-3 p-3 bg-blue-50 rounded-lg border border-blue-100">
+                <p class="text-sm font-medium text-blue-700">🤖 AI Feedback:</p>
+                <p class="text-sm text-gray-700 mt-1">{{ detail.aiFeedback }}</p>
+              </div>
+              
+              <!-- Essay preview -->
+              <div *ngIf="detail.userAnswer" class="mt-3">
+                <button class="text-sm text-blue-500 hover:text-blue-700 font-medium"
+                        (click)="toggleEssay(i)">
+                  {{ expandedEssayIndex === i ? '📖 Ẩn bài viết' : '📖 Xem bài viết' }}
+                </button>
+                <div *ngIf="expandedEssayIndex === i" 
+                     class="mt-2 p-3 bg-gray-50 rounded-lg border border-gray-200 max-h-60 overflow-y-auto">
+                  <p class="text-sm text-gray-700 whitespace-pre-wrap">{{ detail.userAnswer }}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div *ngIf="!result.details || result.details.length === 0" class="text-center py-8 text-gray-400">
+        <p>Không có chi tiết bài viết</p>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="flex gap-4 mt-6">
+      <button class="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+              (click)="goBack()">
+        ← Quay lại
+      </button>
+      <button class="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
+              (click)="retry()">
+        🔄 Làm lại
+      </button>
+    </div>
+  </div>
+</div>

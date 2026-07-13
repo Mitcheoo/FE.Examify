@@ -1,0 +1,156 @@
+<!-- src/app/pages/admin/pages/manage-exams/add-questions/components/writing-questions/writing-questions.component.html -->
+
+<div class="writing-questions-container">
+  <!-- Header -->
+  <div class="section-header">
+    <div class="header-info">
+      <h3>✍️ Writing Questions</h3>
+      <span class="question-count">{{ questions.length }} / 2 câu hỏi</span>
+      <span class="status-badge" [class.complete]="isAllValid()">
+        {{ isAllValid() ? '✅ Đã đủ' : '⚠️ Thiếu câu hỏi' }}
+      </span>
+    </div>
+    <button class="btn-save-all" (click)="saveAll()" [disabled]="!isAllValid()">
+      💾 Lưu tất cả
+    </button>
+  </div>
+
+  <div class="writing-grid">
+    <!-- ============================================================ -->
+    <!-- TASK 1: LETTER/EMAIL -->
+    <!-- ============================================================ -->
+    <div class="task-card">
+      <div class="task-header">
+        <div class="task-badge task1">Task 1</div>
+        <h4>📧 Letter / Email</h4>
+        <span class="task-status" [class.valid]="isTask1Valid()">
+          {{ isTask1Valid() ? '✅' : '⚠️' }}
+        </span>
+      </div>
+
+      <div class="task-body">
+        <div class="form-group">
+          <label>Đề bài *</label>
+          <textarea [(ngModel)]="task1.promptText" 
+                    placeholder="Nhập đề bài cho Task 1 (Letter/Email)..." 
+                    class="form-textarea" rows="4"></textarea>
+          <small class="hint">Ví dụ: Write a letter to your friend inviting them to your birthday party...</small>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>📊 Số từ tối thiểu</label>
+            <input type="number" [(ngModel)]="task1.minWords" class="form-input" min="50" step="10">
+          </div>
+          <div class="form-group">
+            <label>📊 Số từ tối đa</label>
+            <input type="number" [(ngModel)]="task1.maxWords" class="form-input" min="50" step="10">
+          </div>
+          <div class="form-group">
+            <label>⏱️ Thời gian (phút)</label>
+            <input type="number" [(ngModel)]="task1.recommendedTimeMinutes" class="form-input" min="5" step="5">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>📝 Bài mẫu (Model Answer) - Tùy chọn</label>
+          <textarea [(ngModel)]="task1.modelAnswer" 
+                    placeholder="Nhập bài mẫu..." 
+                    class="form-textarea" rows="3"></textarea>
+          <small class="hint">💡 Bài mẫu sẽ hiển thị cho học sinh sau khi làm bài</small>
+        </div>
+      </div>
+
+      <div class="task-footer">
+        <button class="btn-save-task" (click)="saveTask1()">
+          💾 Lưu Task 1
+        </button>
+      </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- TASK 2: ESSAY -->
+    <!-- ============================================================ -->
+    <div class="task-card">
+      <div class="task-header">
+        <div class="task-badge task2">Task 2</div>
+        <h4>📝 Essay</h4>
+        <span class="task-status" [class.valid]="isTask2Valid()">
+          {{ isTask2Valid() ? '✅' : '⚠️' }}
+        </span>
+      </div>
+
+      <div class="task-body">
+        <div class="form-group">
+          <label>Đề bài *</label>
+          <textarea [(ngModel)]="task2.promptText" 
+                    placeholder="Nhập đề bài cho Task 2 (Essay)..." 
+                    class="form-textarea" rows="4"></textarea>
+          <small class="hint">Ví dụ: Some people believe that technology has made our lives more complicated...</small>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>📊 Số từ tối thiểu</label>
+            <input type="number" [(ngModel)]="task2.minWords" class="form-input" min="50" step="10">
+          </div>
+          <div class="form-group">
+            <label>📊 Số từ tối đa</label>
+            <input type="number" [(ngModel)]="task2.maxWords" class="form-input" min="50" step="10">
+          </div>
+          <div class="form-group">
+            <label>⏱️ Thời gian (phút)</label>
+            <input type="number" [(ngModel)]="task2.recommendedTimeMinutes" class="form-input" min="5" step="5">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>📝 Bài mẫu (Model Answer) - Tùy chọn</label>
+          <textarea [(ngModel)]="task2.modelAnswer" 
+                    placeholder="Nhập bài mẫu..." 
+                    class="form-textarea" rows="3"></textarea>
+          <small class="hint">💡 Bài mẫu sẽ hiển thị cho học sinh sau khi làm bài</small>
+        </div>
+      </div>
+
+      <div class="task-footer">
+        <button class="btn-save-task" (click)="saveTask2()">
+          💾 Lưu Task 2
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- SUMMARY -->
+  <!-- ============================================================ -->
+  <div class="summary-section">
+    <div class="summary-card">
+      <div class="summary-item">
+        <span class="summary-label">📧 Task 1 (Letter/Email)</span>
+        <span class="summary-status" [class.complete]="isTask1Valid()">
+          {{ isTask1Valid() ? '✅ Đã có đề bài' : '⚠️ Chưa có đề bài' }}
+        </span>
+      </div>
+      <div class="summary-item">
+        <span class="summary-label">📝 Task 2 (Essay)</span>
+        <span class="summary-status" [class.complete]="isTask2Valid()">
+          {{ isTask2Valid() ? '✅ Đã có đề bài' : '⚠️ Chưa có đề bài' }}
+        </span>
+      </div>
+      <div class="summary-item">
+        <span class="summary-label">📊 Tổng số câu hỏi</span>
+        <span class="summary-status" [class.complete]="isAllValid()">
+          {{ questions.length }} / 2
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Empty State -->
+  <div *ngIf="questions.length === 0" class="empty-state">
+    <div class="empty-icon">📝</div>
+    <p>Chưa có câu hỏi Writing nào</p>
+    <p class="empty-hint">Nhập đề bài cho Task 1 và Task 2 bên trên</p>
+  </div>
+</div>

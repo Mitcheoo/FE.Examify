@@ -1,0 +1,41 @@
+// ============================================
+// LISTENING - PHONG CÁCH VSTEP
+// ============================================
+
+// ========== CONTAINER ==========
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+// ========== CARD HOVER EFFECT ==========
+.group {
+  &:hover {
+    .shadow-card-hover {
+      box-shadow: 0 8px 30px rgba(14, 172, 216, 0.12);
+    }
+  }
+}
+
+// ========== LINE CLAMP ==========
+.line-clamp-1 {
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+// ========== RESPONSIVE ==========
+@media (max-width: 768px) {
+  .container {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+}
